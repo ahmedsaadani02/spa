@@ -1,140 +1,283 @@
-﻿/* =========================
-   HEADER
-========================= */
+﻿:host {
+  display: block;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: #475569; /* slate-600 */
+  background: #fafafa;
+  min-height: 100vh;
+}
+
+/* Header */
 .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6); /* slate-200 */
+}
+
+.header-inner {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 16px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 40px;
-
-  /* ❌ plus d'effet verre */
-  background: #ffffff;
-
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  gap: 24px;
 }
 
-/* =========================
-   BRAND
-========================= */
+/* Brand */
 .brand {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
-/* ❌ ancien badge supprimé */
 .brand-mark {
-  background: transparent;
-  padding: 0;
-  margin: 0;
-  border-radius: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #0f172a; /* slate-900 */
+  color: #fff;
   display: flex;
   align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  overflow: hidden;
 }
 
-/* ✅ LOGO SPA */
 .brand-logo {
-  height: 72px;        /* 🔥 change à 72px si tu veux plus grand */
-  width: auto;
-  object-fit: contain;
-  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-/* =========================
-   TITRES
-========================= */
-.brand-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.25rem;
+.brand-mark-text {
   font-weight: 600;
-  color: var(--ink);
-  line-height: 1.2;
+  font-size: 12px;
+  letter-spacing: -0.02em;
+}
+
+.brand-text {
+  display: none;
+}
+
+.brand-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.1;
 }
 
 .brand-subtitle {
-  font-size: 0.85rem;
-  color: var(--muted);
-  margin-top: 2px;
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8; /* slate-400 */
 }
 
-/* =========================
-   NAVIGATION
-========================= */
+/* Show brand text on >= 640px */
+@media (min-width: 640px) {
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+/* Nav */
 .nav {
-  display: flex;
+  display: none;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 4px;
+}
+
+@media (min-width: 768px) {
+  .nav {
+    display: flex;
+  }
 }
 
 .nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--ink);
+  color: #64748b; /* slate-500 */
   text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav a:hover {
+  color: #0f172a;
+  background: #f8fafc; /* slate-50 */
 }
 
 .nav a.active {
-  color: var(--accent);
+  color: #0f172a;
+  background: rgba(241, 245, 249, 0.8); /* slate-100 */
 }
 
-.nav-meta {
+/* Icons (using emojis here to keep it CSS/HTML only) */
+.nav-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Actions */
+.actions {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
-.nav-user {
-  font-size: 0.85rem;
-  color: var(--muted);
-  font-weight: 600;
+.btn-primary {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  background: #0f172a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+  transition: background 0.2s ease;
 }
 
-.btn.ghost {
+.btn-primary:hover {
+  background: #1e293b;
+}
+
+@media (min-width: 1024px) {
+  .btn-primary {
+    display: inline-flex;
+  }
+}
+
+.divider {
+  display: none;
+  width: 1px;
+  height: 20px;
+  background: #e2e8f0;
+}
+
+@media (min-width: 640px) {
+  .divider {
+    display: block;
+  }
+}
+
+/* User */
+.user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-text {
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+@media (min-width: 640px) {
+  .user-text {
+    display: flex;
+  }
+}
+
+.user-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.user-role {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #94a3b8;
+  line-height: 1;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #f1f5f9; /* slate-100 */
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* Logout */
+.btn-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 32px;
+  height: 32px;
+  border: none;
   background: transparent;
-  border: 1px solid var(--border);
-  color: var(--ink);
+  color: #94a3b8; /* slate-400 */
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
 
-/* =========================
-   MAIN
-========================= */
+.btn-logout:hover {
+  color: #dc2626; /* red-600 */
+}
+
+.logout-text {
+  display: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .btn-logout {
+    width: auto;
+    padding: 0 6px;
+  }
+  .logout-text {
+    display: inline;
+  }
+}
+
+/* Main + Footer */
 .app-main {
-  padding: 32px 40px 64px;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  width: 100%;
+  flex: 1;
+  min-height: calc(100vh - 64px);
 }
 
-/* =========================
-   FOOTER
-========================= */
 .app-footer {
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 14px 16px;
+  color: #94a3b8;
+  font-size: 12px;
   text-align: center;
-  color: var(--muted);
-  padding: 20px;
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-@media (max-width: 980px) {
-  .app-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 20px 24px;
-  }
-
-  .brand-logo {
-    height: 56px; /* un peu plus petit sur mobile */
-  }
-
-  .app-main {
-    padding: 24px;
-  }
-
-  .nav {
-    width: 100%;
-    justify-content: space-between;
-  }
+  background: #fff;
 }
