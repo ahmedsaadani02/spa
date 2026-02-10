@@ -1,0 +1,80 @@
+.form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.lines {
+  display: grid;
+  gap: 10px;
+}
+
+.line-row {
+  display: grid;
+  grid-template-columns: 2.4fr 0.8fr 0.8fr 0.9fr 0.8fr 0.9fr 0.9fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.line-head {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.totals {
+  background: linear-gradient(135deg, #f7f6f2, #fff);
+}
+
+.totals-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.totals-grid strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.totals-grid .accent {
+  color: var(--accent);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 980px) {
+  .line-row {
+    grid-template-columns: 1fr;
+  }
+
+  .totals-grid {
+    grid-template-columns: 1fr;
+  }
+}

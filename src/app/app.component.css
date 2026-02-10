@@ -1,0 +1,140 @@
+﻿/* =========================
+   HEADER
+========================= */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 40px;
+
+  /* ❌ plus d'effet verre */
+  background: #ffffff;
+
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* =========================
+   BRAND
+========================= */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+/* ❌ ancien badge supprimé */
+.brand-mark {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* ✅ LOGO SPA */
+.brand-logo {
+  height: 72px;        /* 🔥 change à 72px si tu veux plus grand */
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* =========================
+   TITRES
+========================= */
+.brand-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.brand-subtitle {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* =========================
+   NAVIGATION
+========================= */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.nav a {
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.nav a.active {
+  color: var(--accent);
+}
+
+.nav-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-user {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ink);
+}
+
+/* =========================
+   MAIN
+========================= */
+.app-main {
+  padding: 32px 40px 64px;
+}
+
+/* =========================
+   FOOTER
+========================= */
+.app-footer {
+  text-align: center;
+  color: var(--muted);
+  padding: 20px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 980px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px;
+  }
+
+  .brand-logo {
+    height: 56px; /* un peu plus petit sur mobile */
+  }
+
+  .app-main {
+    padding: 24px;
+  }
+
+  .nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

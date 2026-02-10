@@ -1,0 +1,167 @@
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h1>Gestion Stock</h1>
+      <p>Suivi des niveaux par couleur avec historique complet.</p>
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="filters" [formGroup]="filters">
+      <label class="field">
+        <span>Recherche</span>
+        <input class="input" type="search" formControlName="search" placeholder="Reference ou nom">
+      </label>
+      <label class="field">
+        <span>Serie</span>
+        <select class="input" formControlName="serie">
+          <option value="all">Toutes</option>
+          <option value="40">40</option>
+          <option value="67">67</option>
+          <option value="porte-securite">Porte securite</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Categorie</span>
+        <select class="input" formControlName="category">
+          <option value="all">Toutes</option>
+          <option value="profil">Profils</option>
+          <option value="accessoire">Accessoires</option>
+          <option value="joint">Joints</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Couleur</span>
+        <select class="input" formControlName="color">
+          <option value="all">Toutes</option>
+          <option value="blanc">Blanc</option>
+          <option value="gris">Gris</option>
+          <option value="noir">Noir</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="summary">
+      <div>
+        <span>Total articles</span>
+        <strong>{{ totalItems }}</strong>
+      </div>
+      <div class="alert">
+        <span>Articles en alerte</span>
+        <strong>{{ alertItems }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="stock-groups">
+    <div class="stock-group" *ngFor="let group of groupedItems">
+      <div class="group-header">
+        <h2>Serie {{ group.serie | titlecase }} - {{ group.category | titlecase }}</h2>
+        <span class="tag">{{ group.items.length }} articles</span>
+      </div>
+
+      <div class="stock-grid">
+        <article
+          class="stock-card"
+          *ngFor="let item of group.items; trackBy: trackById"
+          [class.low-stock]="isLowStock(item)"
+        >
+          <div class="stock-image">
+            <img [src]="item.imageUrl" alt="Stock item">
+            <span class="badge" *ngIf="isLowStock(item)">Rupture</span>
+          </div>
+          <div class="stock-info">
+            <div class="stock-ref">{{ item.reference }}</div>
+            <div class="stock-label">{{ item.label }}</div>
+          </div>
+
+          <div class="stock-colors">
+            <div class="color-row" *ngFor="let color of getAvailableColors(item)">
+              <span class="color-name">{{ color }}</span>
+              <span class="color-qty">{{ getQuantity(item, color) }}</span>
+              <span class="color-alert" *ngIf="getQuantity(item, color) <= item.lowStockThreshold">
+                Rupture proche
+              </span>
+            </div>
+          </div>
+
+          <div class="stock-actions">
+            <button class="btn outline" type="button" (click)="openMove(item, 'IN')">Ajouter</button>
+            <button class="btn ghost" type="button" (click)="openMove(item, 'OUT')">Retirer</button>
+            <button class="btn danger" type="button" (click)="openMove(item, 'ADJUST')">Ajuster</button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+</section>
+
+<div class="modal-backdrop" *ngIf="modal.open">
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2>Mouvement {{ modal.type === 'IN' ? 'Ajouter' : modal.type === 'OUT' ? 'Retirer' : 'Ajuster' }}</h2>
+      <button class="btn ghost" type="button" (click)="closeModal()">Fermer</button>
+    </div>
+
+    <div class="modal-body" *ngIf="modal.item as item">
+      <div class="modal-item">
+        <strong>{{ item.reference }}</strong>
+        <span>{{ item.label }}</span>
+      </div>
+
+      <form class="modal-form" [formGroup]="movementForm">
+        <label class="field" *ngIf="modal.availableColors.length > 1">
+          <span>Couleur</span>
+          <select class="input" formControlName="color">
+            <option *ngFor="let color of modal.availableColors" [value]="color">{{ color }}</option>
+          </select>
+        </label>
+
+        <label class="field" *ngIf="modal.availableColors.length === 1">
+          <span>Couleur</span>
+          <div class="tag">{{ modal.availableColors[0] }}</div>
+        </label>
+
+        <label class="field">
+          <span>Quantite</span>
+          <input
+            class="input"
+            type="number"
+            [attr.min]="modal.type === 'ADJUST' ? null : 1"
+            step="1"
+            formControlName="delta"
+          >
+        </label>
+
+        <div class="field" *ngIf="modal.type === 'ADJUST'">
+          <span>Signe</span>
+          <div class="radio-row">
+            <label class="radio">
+              <input type="radio" formControlName="adjustSign" value="+">
+              <span>+</span>
+            </label>
+            <label class="radio">
+              <input type="radio" formControlName="adjustSign" value="-">
+              <span>-</span>
+            </label>
+          </div>
+        </div>
+
+        <label class="field">
+          <span>Raison</span>
+          <input class="input" type="text" formControlName="reason" placeholder="Inventaire, commande, casse...">
+        </label>
+
+        <label class="field">
+          <span>Employe</span>
+          <input class="input" type="text" formControlName="actor" placeholder="Nom">
+        </label>
+      </form>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn ghost" type="button" (click)="closeModal()">Annuler</button>
+      <button class="btn primary" type="button" (click)="submitMovement()">Valider</button>
+    </div>
+  </div>
+</div>

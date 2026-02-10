@@ -1,0 +1,38 @@
+<header class="app-header" *ngIf="!isLoginRoute">
+  <div class="brand">
+    <div class="brand-mark">
+      <img
+        src="assets/logospa.png"
+        alt="SPA &ndash; Pratiques Aluminium"
+        class="brand-logo"
+      />
+    </div>
+
+    <div>
+      <div class="brand-title">SPA &mdash; Soci&eacute;t&eacute; d&rsquo;Aluminium</div>
+      <div class="brand-subtitle">Facturation | Vente &amp; Fabrication</div>
+    </div>
+  </div>
+  <nav class="nav" *ngIf="isLoggedIn">
+    <a *ngIf="isAdmin" routerLink="/invoices" routerLinkActive="active">Factures</a>
+    <a *ngIf="isAdmin" routerLink="/quotes" routerLinkActive="active">Devis</a>
+    <a routerLink="/stock" routerLinkActive="active">Stock</a>
+    <a *ngIf="isAdmin" routerLink="/stock/history" routerLinkActive="active">Historique Stock</a>
+    <a *ngIf="isAdmin" routerLink="/estimation" routerLinkActive="active">Estimation</a>
+    <a *ngIf="isAdmin" class="btn primary" routerLink="/invoices/new">Nouvelle facture</a>
+    <div class="nav-meta">
+      <span class="nav-user" *ngIf="username">
+        Connect&eacute;: {{ username }} ({{ role }})
+      </span>
+      <button class="btn ghost" type="button" (click)="logout()">D&eacute;connexion</button>
+    </div>
+  </nav>
+</header>
+
+<main class="app-main">
+  <router-outlet></router-outlet>
+</main>
+
+<footer class="app-footer" *ngIf="!isLoginRoute">
+  SPA &mdash; Soci&eacute;t&eacute; d&rsquo;Aluminium &middot; Merci pour votre confiance
+</footer>

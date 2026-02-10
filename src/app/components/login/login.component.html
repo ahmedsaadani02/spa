@@ -1,0 +1,123 @@
+<div class="login-page">
+  <div class="bg">
+    <div class="grain"></div>
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+  </div>
+
+  <div class="shell">
+    <!-- Left brand panel -->
+    <section class="brand-panel">
+      <div class="brand-top">
+        <img src="assets/logospa.png" alt="SPA" class="brand-logo" />
+        <div class="brand-text">
+          <div class="brand-name">SPA — Société d’Aluminium</div>
+          <div class="brand-sub">Facturation • Stock • Devis • Estimation</div>
+        </div>
+      </div>
+
+      <div class="brand-quote">
+        <div class="quote-mark">“</div>
+        <p>
+          Une plateforme simple et robuste pour gérer vos factures, devis et stock,
+          avec un rendu prêt à l’impression.
+        </p>
+        <div class="quote-footer">
+          <div class="avatar">SPA</div>
+          <div>
+            <div class="who">Système interne</div>
+            <div class="meta">Production • Vente • Atelier</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="brand-bottom">
+        <span>Statut : OK</span>
+        <span>© SPA</span>
+      </div>
+    </section>
+
+    <!-- Right login card -->
+    <section class="login-panel">
+      <div class="card">
+        <div class="card-head">
+          <h1>Connexion</h1>
+          <p>Entrez vos identifiants pour accéder à l’espace de travail.</p>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+          <label class="field">
+            <span>Nom d’utilisateur</span>
+            <input
+              class="input"
+              type="text"
+              formControlName="username"
+              placeholder="ex: admin"
+              autocomplete="username"
+            />
+            <small class="hint" *ngIf="form.controls.username.touched && form.controls.username.invalid">
+              Champ requis (min. 3 caractères).
+            </small>
+          </label>
+
+          <label class="field">
+            <span>Mot de passe</span>
+
+            <div class="password-wrap">
+              <input
+                class="input"
+                [type]="showPassword ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="••••••••"
+                autocomplete="current-password"
+              />
+              <button type="button" class="icon-btn" (click)="togglePassword()" [attr.aria-label]="showPassword ? 'Masquer' : 'Afficher'">
+                <span class="dot" *ngIf="!showPassword"></span>
+                <span class="dot open" *ngIf="showPassword"></span>
+              </button>
+            </div>
+
+            <small class="hint" *ngIf="form.controls.password.touched && form.controls.password.invalid">
+              Champ requis (min. 4 caractères).
+            </small>
+          </label>
+
+          <div class="row">
+            <label class="check">
+              <input type="checkbox" formControlName="remember" />
+              <span>Rester connecté</span>
+            </label>
+
+            <span class="help">Besoin d’accès ? Contactez l’admin.</span>
+          </div>
+
+          <div class="error" *ngIf="error">{{ error }}</div>
+
+          <button class="btn primary" type="submit" [disabled]="loading">
+            <span *ngIf="!loading">Se connecter</span>
+            <span *ngIf="loading">Connexion…</span>
+          </button>
+
+          <!-- Comptes de test (discrets, pros) -->
+          <div class="test-accounts">
+            <div class="ta-title">Comptes de test</div>
+            <div class="ta-grid">
+              <div class="ta">
+                <div class="ta-role">Admin</div>
+                <div class="ta-cred"><b>admin</b> / admin123</div>
+              </div>
+              <div class="ta">
+                <div class="ta-role">Employé</div>
+                <div class="ta-cred"><b>employee</b> / emp123</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="footnote">
+            Accès employé : <b>Stock</b> uniquement • Accès admin : <b>tout</b>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>

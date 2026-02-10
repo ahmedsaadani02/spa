@@ -1,0 +1,96 @@
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h1>Historique Stock</h1>
+      <p>Journal des mouvements par mois.</p>
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="filters" [formGroup]="filters">
+      <label class="field">
+        <span>Mois</span>
+        <input class="input" type="month" formControlName="month">
+      </label>
+      <label class="field">
+        <span>Reference</span>
+        <input class="input" type="search" formControlName="reference" placeholder="Reference">
+      </label>
+      <label class="field">
+        <span>Couleur</span>
+        <select class="input" formControlName="color">
+          <option value="all">Toutes</option>
+          <option value="blanc">Blanc</option>
+          <option value="gris">Gris</option>
+          <option value="noir">Noir</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Employe</span>
+        <input class="input" type="search" formControlName="actor" placeholder="Nom">
+      </label>
+      <label class="field">
+        <span>Categorie</span>
+        <select class="input" formControlName="category">
+          <option value="all">Toutes</option>
+          <option value="profil">Profils</option>
+          <option value="accessoire">Accessoires</option>
+          <option value="joint">Joints</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="summary">
+      <div>
+        <span>Total entrees</span>
+        <strong>{{ summary.inTotal }}</strong>
+      </div>
+      <div>
+        <span>Total sorties</span>
+        <strong>{{ summary.outTotal }}</strong>
+      </div>
+      <div>
+        <span>Net</span>
+        <strong>{{ summary.net }}</strong>
+      </div>
+      <div>
+        <span>Mouvements</span>
+        <strong>{{ summary.count }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="table">
+      <div class="table-row table-head">
+        <div>Date</div>
+        <div>Reference</div>
+        <div>Categorie</div>
+        <div>Couleur</div>
+        <div>Type</div>
+        <div>Delta</div>
+        <div>Avant</div>
+        <div>Apres</div>
+        <div>Raison</div>
+        <div>Employe</div>
+      </div>
+
+      <div class="table-row" *ngFor="let row of movements">
+        <div>{{ row.movement.at | date:'dd/MM/yyyy HH:mm' }}</div>
+        <div class="mono">{{ row.movement.reference }}</div>
+        <div>{{ row.category }}</div>
+        <div>{{ row.movement.color }}</div>
+        <div>{{ formatType(row.movement.type) }}</div>
+        <div class="mono">{{ formatDelta(row.movement.delta) }}</div>
+        <div class="mono">{{ row.movement.before }}</div>
+        <div class="mono">{{ row.movement.after }}</div>
+        <div>{{ row.movement.reason }}</div>
+        <div>{{ row.movement.actor }}</div>
+      </div>
+    </div>
+
+    <div class="empty" *ngIf="movements.length === 0">
+      Aucun mouvement pour ce mois.
+    </div>
+  </section>
+</section>

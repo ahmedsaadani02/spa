@@ -1,0 +1,7 @@
+﻿node_modules/gi
+dist/
+out/
+release/
+*.log
+.DS_Store
+node_modules

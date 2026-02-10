@@ -1,0 +1,286 @@
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h1>Estimation de prix</h1>
+      <p>Construisez le produit (branches) et calculez le coût total en temps réel.</p>
+    </div>
+    <div class="panel-actions no-print">
+      <button class="btn ghost" type="button" (click)="reset()">Réinitialiser</button>
+      <button class="btn primary" type="button" (click)="print()">Imprimer estimation</button>
+    </div>
+  </div>
+
+  <form class="estimation-grid" [formGroup]="form">
+
+    <!-- =======================
+         SÉRIES / BARRES
+    ======================== -->
+    <section class="card">
+      <div class="section-head">
+        <h2>Séries & barres</h2>
+        <button class="btn outline" type="button" (click)="addSerie()">Ajouter série</button>
+      </div>
+
+      <div class="series" formArrayName="series">
+        <div class="series-row series-head">
+          <div>Série</div>
+          <div>Longueur barre (m)</div>
+          <div>Prix barre (DT)</div>
+          <div></div>
+        </div>
+
+        <div
+          class="series-row"
+          *ngFor="let s of series.controls; let i = index"
+          [formGroupName]="i"
+        >
+          <input class="input" formControlName="nom" placeholder="Série 40">
+          <input class="input" type="number" min="0.1" step="0.01" formControlName="longueurBarre">
+          <input class="input" type="number" min="0" step="0.01" formControlName="prixBarre">
+          <button class="btn danger" type="button" (click)="removeSerie(i)" [disabled]="series.length <= 1">
+            Supprimer
+          </button>
+        </div>
+
+        <div class="hint">
+          Astuce : mets <strong>6.30</strong> pour une barre de 6m30.
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================
+         PRODUIT / DIMENSIONS
+    ======================== -->
+    <section class="card">
+      <div class="section-head">
+        <h2>Produit à fabriquer</h2>
+        <button class="btn outline" type="button" (click)="generatePieces()">
+          Générer branches
+        </button>
+      </div>
+
+      <div class="grid-2" formGroupName="produit">
+        <label class="field">
+          <span>Type</span>
+          <select class="input" formControlName="type">
+            <option value="fenetre">Fenêtre</option>
+            <option value="porte">Porte</option>
+            <option value="box">Box</option>
+            <option value="custom">Custom (manuel)</option>
+          </select>
+        </label>
+
+        <label class="field" *ngIf="productType !== 'custom'">
+          <span>Largeur (m)</span>
+          <input class="input" type="number" min="0" step="0.01" formControlName="largeur">
+        </label>
+
+        <label class="field" *ngIf="productType !== 'custom'">
+          <span>Hauteur (m)</span>
+          <input class="input" type="number" min="0" step="0.01" formControlName="hauteur">
+        </label>
+
+        <label class="field" *ngIf="productType === 'box'">
+          <span>Profondeur (m)</span>
+          <input class="input" type="number" min="0" step="0.01" formControlName="profondeur">
+        </label>
+
+        <label class="field checkbox" *ngIf="productType === 'porte'">
+          <input type="checkbox" formControlName="cadreRenfort">
+          <span>Ajouter renfort (traverse)</span>
+        </label>
+      </div>
+
+      <div class="hint" *ngIf="productType !== 'custom'">
+        Clique sur <strong>Générer branches</strong> pour créer automatiquement les montants et traverses.
+      </div>
+    </section>
+
+    <!-- =======================
+         BRANCHES / PIÈCES
+    ======================== -->
+    <section class="card">
+      <div class="section-head">
+        <h2>Branches / profilés</h2>
+        <button class="btn outline" type="button" (click)="addPiece()">Ajouter branche</button>
+      </div>
+
+      <div class="pieces" formArrayName="pieces">
+        <div class="piece-row piece-head">
+          <div>Désignation</div>
+          <div>Série</div>
+          <div>Longueur (m)</div>
+          <div>Qté</div>
+          <div>Total (m)</div>
+          <div></div>
+        </div>
+
+        <div
+          class="piece-row"
+          *ngFor="let p of pieces.controls; let i = index"
+          [formGroupName]="i"
+        >
+          <input class="input" formControlName="designation" placeholder="Montant, traverse...">
+
+          <select class="input" formControlName="serieId">
+            <option *ngFor="let opt of seriesOptions" [value]="opt.id">{{ opt.nom }}</option>
+          </select>
+
+          <input class="input" type="number" min="0" step="0.01" formControlName="longueur">
+          <input class="input" type="number" min="1" step="1" formControlName="quantite">
+
+          <div class="amount">{{ pieceTotalMetres(i) | number:'1.2-2' }}</div>
+
+          <button class="btn danger" type="button" (click)="removePiece(i)">
+            Supprimer
+          </button>
+        </div>
+
+        <div class="empty" *ngIf="pieces.length === 0">
+          Aucune branche. Clique sur <strong>Générer branches</strong> ou ajoute manuellement.
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================
+         OPTIONS DE COUPE
+    ======================== -->
+    <section class="card">
+      <h2>Options de coupe</h2>
+      <div class="grid-2" formGroupName="options">
+        <label class="field">
+          <span>Marge chute (%)</span>
+          <input class="input" type="number" min="0" step="0.1" formControlName="margeChute">
+        </label>
+        <label class="field">
+          <span>Pertes par coupe (cm)</span>
+          <input class="input" type="number" min="0" step="0.01" formControlName="pertesCoupeCm">
+        </label>
+      </div>
+      <div class="hint">
+        Les pertes par coupe sont appliquées sur <strong>le nombre de pièces</strong> (qté totale).
+      </div>
+    </section>
+
+    <!-- =======================
+         VERRE
+    ======================== -->
+    <section class="card">
+      <h2>Verre</h2>
+      <div class="grid-2" formGroupName="verre">
+        <label class="field checkbox">
+          <input type="checkbox" formControlName="activerVerre">
+          <span>Inclure le vitrage</span>
+        </label>
+        <label class="field">
+          <span>Prix verre (DT/m²)</span>
+          <input class="input" type="number" min="0" step="0.01" formControlName="prixVerreM2">
+        </label>
+      </div>
+
+      <div class="hint" *ngIf="result.surfaceVerre > 0">
+        Surface verre estimée : <strong>{{ result.surfaceVerre | number:'1.2-2' }} m²</strong>
+      </div>
+    </section>
+
+    <!-- =======================
+         ACCESSOIRES
+    ======================== -->
+    <section class="card">
+      <div class="section-head">
+        <h2>Accessoires</h2>
+        <button class="btn outline" type="button" (click)="addAccessory()">Ajouter accessoire</button>
+      </div>
+
+      <div class="accessories" formArrayName="accessoires">
+        <div class="accessory-row accessory-head">
+          <div>Désignation</div>
+          <div>Qté</div>
+          <div>PU (DT)</div>
+          <div></div>
+        </div>
+
+        <div
+          class="accessory-row"
+          *ngFor="let acc of accessoires.controls; let i = index"
+          [formGroupName]="i"
+        >
+          <input class="input" formControlName="designation" placeholder="Poignée, visserie...">
+          <input class="input" type="number" min="0" step="1" formControlName="quantite">
+          <input class="input" type="number" min="0" step="0.01" formControlName="prixUnitaire">
+          <button class="btn danger" type="button" (click)="removeAccessory(i)">Supprimer</button>
+        </div>
+
+        <div class="empty" *ngIf="accessoires.length === 0">
+          Aucun accessoire ajouté.
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================
+         RÉSULTATS
+    ======================== -->
+    <section class="card results">
+      <h2>Résultats</h2>
+
+      <div class="results-grid">
+        <div>
+          <span>Conso totale (toutes séries)</span>
+          <strong>{{ result.consommationTotaleMetres | number:'1.2-2' }} m</strong>
+        </div>
+        <div>
+          <span>Longueur achetée totale</span>
+          <strong>{{ result.longueurAcheteeTotale | number:'1.2-2' }} m</strong>
+        </div>
+        <div>
+          <span>Chute totale</span>
+          <strong>{{ result.chuteTotale | number:'1.2-2' }} m</strong>
+        </div>
+        <div>
+          <span>Coût barres</span>
+          <strong>{{ result.coutBarres | number:'1.2-2' }} DT</strong>
+        </div>
+        <div>
+          <span>Coût verre</span>
+          <strong>{{ result.coutVerre | number:'1.2-2' }} DT</strong>
+        </div>
+        <div>
+          <span>Coût accessoires</span>
+          <strong>{{ result.coutAccessoires | number:'1.2-2' }} DT</strong>
+        </div>
+        <div class="grand-total">
+          <span>Coût total</span>
+          <strong>{{ result.coutTotal | number:'1.2-2' }} DT</strong>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Détail par série</h3>
+      <table class="breakdown" *ngIf="result.series.length > 0">
+        <thead>
+          <tr>
+            <th>Série</th>
+            <th class="num">Pièces (m)</th>
+            <th class="num">Pertes (m)</th>
+            <th class="num">Conso (m)</th>
+            <th class="num">Nb barres</th>
+            <th class="num">Acheté (m)</th>
+            <th class="num">Chute (m)</th>
+            <th class="num">Coût (DT)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of result.series">
+            <td>{{ s.nom }}</td>
+            <td class="num">{{ s.longueurPieces | number:'1.2-2' }}</td>
+            <td class="num">{{ s.pertes | number:'1.2-2' }}</td>
+            <td class="num">{{ s.consommation | number:'1.2-2' }}</td>
+            <td class="num">{{ s.nbBarres }}</td>
+            <td class="num">{{ s.longueurAchetee | number:'1.2-2' }}</td>
+            <td class="num">{{ s.chute | number:'1.2-2' }}</td>
+            <td class="num">{{ s.cout | number:'1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </form>
+</section>

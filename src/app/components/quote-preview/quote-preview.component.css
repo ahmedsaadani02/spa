@@ -1,0 +1,379 @@
+/* =========================
+   TOOLBAR (screen only)
+========================= */
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* =========================
+   PAGE (screen)
+========================= */
+.invoice-page {
+  background: #fff;
+  width: min(100%, 210mm);
+  height: 297mm;
+  margin: 0 auto;
+  padding: 14mm 16mm;
+  box-shadow: var(--shadow);
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* =========================
+   TOP HEADER (FR | LOGO | AR)
+========================= */
+.top-header {
+  display: grid;
+  grid-template-columns: 1fr 160px 1fr;
+  align-items: start;
+  gap: 12px;
+}
+
+.company-fr,
+.company-ar {
+  font-size: 12px;
+  line-height: 1.25;
+  color: #0a4ea1;
+}
+
+.company-fr .line1,
+.company-ar .line1 {
+  font-weight: 900;
+  font-size: 13.8px;
+  margin-bottom: 2px;
+  color: #083a7a;
+}
+
+.company-ar {
+  text-align: right;
+  font-family: "Tahoma", "Arial", sans-serif;
+}
+
+.top-logo {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 2px;
+  text-align: center;
+  gap: 10px;
+}
+
+.top-logo img {
+  display: block;
+  margin: 0 auto;
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.logo-fallback {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 900;
+  font-size: 26px;
+}
+
+.client-under-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 14px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.client-under-logo .client-name {
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 0.6px;
+  margin: 0 0 2px 0;
+  color: #111;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  width: max-content;
+  text-align: center;
+}
+
+.client-under-logo .client-sub {
+  font-size: 13px;
+  margin: 0;
+  color: #111;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  width: max-content;
+  text-align: center;
+}
+
+/* =========================
+   CLIENT (adresse) + DATE (right)
+========================= */
+.client-row {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  align-items: start;
+}
+
+.client-center {
+  justify-self: center;
+  text-align: center;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.client-title { display: none; }
+
+.client-name {
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 0.6px;
+  margin-bottom: 4px;
+  color: #111;
+}
+
+.client-sub {
+  font-size: 13px;
+  margin-top: 2px;
+  color: #111;
+}
+
+.date-right {
+  grid-column: 2;
+  justify-self: end;
+  text-align: right;
+  font-size: 13px;
+  color: #111;
+}
+
+.date-right .muted { color: #333; }
+.date-right .date-strong { font-weight: 900; }
+
+/* =========================
+   TITLE + ORDER LINE
+========================= */
+.invoice-title {
+  margin-top: 18px;
+  text-align: center;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 0.8px;
+  color: #111;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+.order-line {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #111;
+}
+
+.muted { color: #666; }
+
+/* =========================
+   TABLE
+========================= */
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #111;
+}
+
+.invoice-table th,
+.invoice-table td {
+  border: 1px solid #2a2a2a;
+  padding: 7px 8px;
+  vertical-align: top;
+}
+
+.invoice-table thead th {
+  text-align: center;
+  font-weight: 900;
+}
+
+.col-ord { width: 48px; }
+.col-u   { width: 50px; }
+.col-q   { width: 86px; }
+.col-pu  { width: 110px; }
+.col-pt  { width: 120px; }
+
+.center { text-align: center; }
+.num { text-align: right; }
+
+/* =========================
+   TOTALS BOX
+========================= */
+.totals-area {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.totals {
+  border-collapse: collapse;
+  width: 320px;
+  font-size: 13px;
+  color: #111;
+}
+
+.totals td {
+  border: 1px solid #2a2a2a;
+  padding: 7px 10px;
+}
+
+.totals td:first-child { width: 65%; }
+.totals .grand td { font-weight: 900; }
+
+/* =========================
+   TOTAL IN WORDS
+========================= */
+.ttc-words {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: #111;
+}
+
+/* =========================
+   SIGNATURE + CACHET
+   - visible seulement PRINT/PDF
+========================= */
+.sign-stamp {
+  position: absolute;
+  right: 18mm;
+  bottom: 28mm;
+  width: 60mm;
+  height: auto;
+  display: none;
+}
+
+.sign-stamp img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.print-only { display: none; }
+
+/* =========================
+   FOOTER (always bottom, blue)
+========================= */
+.invoice-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #0a4ea1;
+  font-size: 11.5px;
+  text-align: center;
+  color: #0a4ea1;
+  font-weight: 700;
+}
+
+/* =========================
+   EMPTY
+========================= */
+.empty {
+  text-align: center;
+  color: var(--muted);
+}
+
+/* =========================
+   PRINT (FORCE IDENTIQUE)
+========================= */
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+  .no-print { display: none !important; }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .invoice-page {
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    padding: 14mm 16mm !important;
+    overflow: hidden !important;
+
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .top-header {
+    grid-template-columns: 1fr 160px 1fr !important;
+    gap: 12px !important;
+  }
+
+  .company-ar { text-align: right !important; }
+
+  table, tr, td, th {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  img {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-only { display: block !important; }
+  .sign-stamp { display: block !important; }
+}
+
+/* =========================
+   RESPONSIVE (screen only)
+========================= */
+@media (max-width: 980px) {
+  .invoice-page {
+    height: auto;
+    min-height: 297mm;
+    padding: 20px;
+  }
+
+  .top-header {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .company-ar { text-align: center; }
+
+  .client-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .date-right { text-align: center; justify-self: center; }
+}
