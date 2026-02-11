@@ -5,4 +5,5 @@ release/
 *.log
 .DS_Store
 node_modules
-.angular
+.angular/
+.angular/cache
