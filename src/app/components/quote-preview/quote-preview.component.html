@@ -128,7 +128,7 @@
   </div>
 
   <!-- SIGNATURE + CACHET (print/pdf only) -->
-  <div class="sign-stamp print-only">
+  <div class="sign-stamp print-only" *ngIf="!isPdfExport">
     <img src="assets/signature-cachet.png" alt="Signature et cachet" />
   </div>
 

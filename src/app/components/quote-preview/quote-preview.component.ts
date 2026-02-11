@@ -29,6 +29,9 @@ export class QuotePreviewComponent implements OnInit {
   // Logo
   logoAvailable = true;
 
+  // PDF export flag
+  isPdfExport = false;
+
   // ✅ Total Hors TVA en lettres
   totalHorsTvaText = '';
 
@@ -85,22 +88,31 @@ export class QuotePreviewComponent implements OnInit {
   }
 
   print(): void {
+    this.isPdfExport = false;
+    this.cdr.detectChanges();
     window.print();
   }
 
   savePdfWeb(): void {
+    this.isPdfExport = true;
+    this.cdr.detectChanges();
     window.print();
+    this.isPdfExport = false;
+    this.cdr.detectChanges();
   }
 
   async exportPdf(): Promise<void> {
     if (!this.quote) return;
 
-    if (!this.electron.isElectron) {
-      this.savePdfWeb();
-      return;
-    }
-
     try {
+      this.isPdfExport = true;
+      this.cdr.detectChanges();
+
+      if (!this.electron.isElectron) {
+        window.print();
+        return;
+      }
+
       const anyElectron: any = this.electron as any;
 
       if (typeof anyElectron.exportPdf === 'function') {
@@ -113,10 +125,13 @@ export class QuotePreviewComponent implements OnInit {
         return;
       }
 
-      alert('Export PDF non configure dans ElectronService.');
+      alert('Export PDF non configur\u00e9 dans ElectronService.');
     } catch (e) {
       console.error(e);
       alert('Erreur export PDF. Voir console.');
+    } finally {
+      this.isPdfExport = false;
+      this.cdr.detectChanges();
     }
   }
 

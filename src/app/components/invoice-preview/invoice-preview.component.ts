@@ -8,9 +8,9 @@ import { ElectronService } from '../../services/electron.service';
 
 type TotalsFinal = {
   fodec: number;
-  totalHorsTVA: number; // HT + FODEC
-  tva: number;          // 19% sur (HT + FODEC)
-  timbre: number;       // 1.000
+  totalHorsTVA: number;
+  tva: number;
+  timbre: number;
   totalTTCFinal: number;
 };
 
@@ -44,6 +44,9 @@ export class InvoicePreviewComponent implements OnInit {
   // Logo
   logoAvailable = true;
 
+  // PDF export flag
+  isPdfExport = false;
+
   // Debug
   readonly isDev = isDevMode();
   debugUrl = '';
@@ -69,7 +72,6 @@ export class InvoicePreviewComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    // debug visible tout de suite
     this.debugUrl =
       (window.location.href || window.location.pathname || window.location.hash || '(no-url)') + '';
     this.debugId = '(loading...)';
@@ -78,14 +80,12 @@ export class InvoicePreviewComponent implements OnInit {
 
     await this.store.load();
 
-    // id via query ?id=... OU via /invoices/:id/preview
     let id =
       this.route.snapshot.queryParamMap.get('id') ??
       this.route.snapshot.paramMap.get('id') ??
       this.route.snapshot.paramMap.get('invoiceId') ??
       '';
 
-    // fallback parsing URL
     const href = window.location.href || '';
     if (!id && href) {
       const m1 = href.match(/\/invoices\/([^\/?#]+)\/preview/i);
@@ -121,13 +121,8 @@ export class InvoicePreviewComponent implements OnInit {
     this.invoice = inv;
 
     if (inv) {
-      // calc totals "classiques" via service
       this.totals = this.calc.totals(inv);
-
-      // calc totals "facture SPA" avec fodec + timbre
       this.computeFinalTotals();
-
-      // TTC en lettres
       this.totalTtcText = this.numberToFrenchWords(this.totalsFinal.totalTTCFinal);
     } else if (this.isDev) {
       console.warn('[InvoicePreview] invoice NOT FOUND for id:', id);
@@ -146,24 +141,31 @@ export class InvoicePreviewComponent implements OnInit {
   }
 
   print(): void {
+    this.isPdfExport = false;
+    this.cdr.detectChanges();
     window.print();
   }
 
-  // ✅ Web: "Enregistrer en PDF" via navigateur
   savePdfWeb(): void {
+    this.isPdfExport = true;
+    this.cdr.detectChanges();
     window.print();
+    this.isPdfExport = false;
+    this.cdr.detectChanges();
   }
 
   async exportPdf(): Promise<void> {
     if (!this.invoice) return;
 
-    // si pas electron => fallback print
-    if (!this.electron.isElectron) {
-      this.savePdfWeb();
-      return;
-    }
+    this.isPdfExport = true;
+    this.cdr.detectChanges();
 
     try {
+      if (!this.electron.isElectron) {
+        window.print();
+        return;
+      }
+
       const anyElectron: any = this.electron as any;
 
       if (typeof anyElectron.exportPdf === 'function') {
@@ -176,14 +178,16 @@ export class InvoicePreviewComponent implements OnInit {
         return;
       }
 
-      alert('Export PDF non configuré dans ElectronService.');
+      alert('Export PDF non configur\u00e9 dans ElectronService.');
     } catch (e) {
       console.error(e);
       alert('Erreur export PDF. Voir console.');
+    } finally {
+      this.isPdfExport = false;
+      this.cdr.detectChanges();
     }
   }
 
-  // ---------- Totaux avec FODEC & timbre ----------
   private computeFinalTotals(): void {
     const baseHT = Number(this.totals.totalHTApresRemise || this.totals.totalHT || 0);
 
@@ -212,7 +216,6 @@ export class InvoicePreviewComponent implements OnInit {
     }
   }
 
-  // ---------- TTC en lettres ----------
   private numberToFrenchWords(value: number): string {
     const rounded = Math.round(value * 1000) / 1000;
     const dinars = Math.floor(rounded);
@@ -225,11 +228,11 @@ export class InvoicePreviewComponent implements OnInit {
   }
 
   private toWordsFr(n: number): string {
-    if (!Number.isFinite(n)) return 'zéro';
-    if (n === 0) return 'zéro';
+    if (!Number.isFinite(n)) return 'z\u00e9ro';
+    if (n === 0) return 'z\u00e9ro';
 
     const units = [
-      'zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf',
+      'z\u00e9ro','un','deux','trois','quatre','cinq','six','sept','huit','neuf',
       'dix','onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf'
     ];
     const tens = [

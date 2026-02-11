@@ -19,6 +19,8 @@ interface MovementModalState {
   availableColors: StockColor[];
 }
 
+type ToastType = 'success' | 'error' | 'info';
+
 @Component({
   selector: 'app-stock',
   standalone: true,
@@ -28,6 +30,8 @@ interface MovementModalState {
 })
 export class StockComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
+  private toastTimer?: number;
+  private toastOpenTimer?: number;
 
   filters = this.fb.group({
     search: [''],
@@ -41,7 +45,8 @@ export class StockComponent implements OnInit, OnDestroy {
     delta: [1, [Validators.required]],
     adjustSign: ['+' as '+' | '-'],
     reason: ['', Validators.required],
-    actor: ['', Validators.required]
+    employeeName: ['Oussema', Validators.required],
+    employeeCode: ['', Validators.required]
   });
 
   groupedItems: StockGroup[] = [];
@@ -55,10 +60,30 @@ export class StockComponent implements OnInit, OnDestroy {
     availableColors: ['blanc', 'gris', 'noir']
   };
 
+  toast = {
+    open: false,
+    type: 'info' as ToastType,
+    title: '',
+    message: ''
+  };
+
+  readonly toastIcons: Record<ToastType, string> = {
+    success: '\u2705',
+    error: '\u274C',
+    info: '\u2139\uFE0F'
+  };
+
+  readonly employees = [
+    { name: 'Oussema', code: '2002' },
+    { name: 'Zied', code: '1998' },
+    { name: 'Sabri', code: '1705' },
+    { name: 'Kamel', code: '1100' }
+  ];
+
   constructor(private fb: FormBuilder, private store: StockStoreService) {}
 
-  ngOnInit(): void {
-    void this.store.load();
+  async ngOnInit(): Promise<void> {
+    await this.store.load();
 
     combineLatest([
       this.store.items$,
@@ -90,6 +115,12 @@ export class StockComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    if (this.toastTimer) {
+      window.clearTimeout(this.toastTimer);
+    }
+    if (this.toastOpenTimer) {
+      window.clearTimeout(this.toastOpenTimer);
+    }
   }
 
   trackById(index: number, item: StockItem): string {
@@ -110,7 +141,8 @@ export class StockComponent implements OnInit, OnDestroy {
       delta: 1,
       adjustSign: '+',
       reason: '',
-      actor: ''
+      employeeName: this.employees[0]?.name ?? '',
+      employeeCode: ''
     });
   }
 
@@ -121,6 +153,48 @@ export class StockComponent implements OnInit, OnDestroy {
       type: 'IN',
       availableColors: ['blanc', 'gris', 'noir']
     };
+  }
+
+  showToast(type: ToastType, message: string): void {
+    const title = type === 'success' ? 'Succès' : type === 'error' ? 'Erreur' : 'Info';
+    if (this.toastTimer) {
+      window.clearTimeout(this.toastTimer);
+    }
+    if (this.toastOpenTimer) {
+      window.clearTimeout(this.toastOpenTimer);
+    }
+
+    this.toast = {
+      open: false,
+      type,
+      title,
+      message
+    };
+
+    this.toastOpenTimer = window.setTimeout(() => {
+      this.toast = {
+        open: true,
+        type,
+        title,
+        message
+      };
+      this.toastTimer = window.setTimeout(() => this.closeToast(), 2200);
+    }, 10);
+  }
+
+  closeToast(): void {
+    this.toast = {
+      ...this.toast,
+      open: false
+    };
+    if (this.toastTimer) {
+      window.clearTimeout(this.toastTimer);
+      this.toastTimer = undefined;
+    }
+    if (this.toastOpenTimer) {
+      window.clearTimeout(this.toastOpenTimer);
+      this.toastOpenTimer = undefined;
+    }
   }
 
   async submitMovement(): Promise<void> {
@@ -134,6 +208,14 @@ export class StockComponent implements OnInit, OnDestroy {
     const delta = Math.abs(Number(raw.delta) || 0);
     if (delta === 0) return;
 
+    const employeeName = raw.employeeName ?? '';
+    const employeeCode = String(raw.employeeCode ?? '').trim();
+    const employee = this.employees.find((candidate) => candidate.name === employeeName);
+    if (!employee || employee.code !== employeeCode) {
+      this.showToast('error', 'Code employé incorrect');
+      return;
+    }
+
     const signedDelta = this.modal.type === 'ADJUST'
       ? (raw.adjustSign === '-' ? -delta : delta)
       : delta;
@@ -144,9 +226,16 @@ export class StockComponent implements OnInit, OnDestroy {
       type: this.modal.type,
       delta: signedDelta,
       reason: raw.reason ?? '',
-      actor: raw.actor ?? ''
+      actor: employeeName
     });
 
+    const toastType: ToastType = this.modal.type === 'IN' ? 'success' : 'info';
+    const toastMessage = this.modal.type === 'IN'
+      ? 'Produit ajouté'
+      : this.modal.type === 'OUT'
+        ? 'Produit retiré'
+        : 'Stock ajusté';
+    this.showToast(toastType, toastMessage);
     this.closeModal();
   }
 
@@ -154,11 +243,30 @@ export class StockComponent implements OnInit, OnDestroy {
     return Number(item.quantities[color] ?? 0) || 0;
   }
 
+  getColorStatus(item: StockItem, color: StockColor): 'is-zero' | 'is-low' | 'is-ok' {
+    const quantity = this.getQuantity(item, color);
+    if (quantity <= 0) return 'is-zero';
+    if (quantity <= 3) return 'is-low';
+    return 'is-ok';
+  }
+
+  getColorStatusLabel(item: StockItem, color: StockColor): string {
+    const status = this.getColorStatus(item, color);
+    if (status === 'is-zero') return 'Rupture';
+    if (status === 'is-low') return 'Stock épuisé';
+    return 'OK';
+  }
+
   getAvailableColors(item: StockItem): StockColor[] {
     const colors = Object.keys(item.quantities) as StockColor[];
     const order: StockColor[] = ['blanc', 'gris', 'noir'];
     const sorted = colors.sort((a, b) => order.indexOf(a) - order.indexOf(b));
     return sorted.length > 0 ? sorted : ['noir'];
+  }
+
+  isItemFullyOut(item: StockItem): boolean {
+    const colors = this.getAvailableColors(item);
+    return colors.every((color) => this.getQuantity(item, color) <= 0);
   }
 
   isLowStock(item: StockItem): boolean {

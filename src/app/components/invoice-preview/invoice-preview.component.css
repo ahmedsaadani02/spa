@@ -1,4 +1,4 @@
-﻿/* =========================
+/* =========================
    TOOLBAR (screen only)
 ========================= */
 .preview-toolbar {
@@ -50,12 +50,6 @@
   font-size: 12px;
   line-height: 1.25;
   color: #0a4ea1;
-  white-space: normal !important;
-  overflow-wrap: normal !important;
-  word-break: normal !important;
-  hyphens: none !important;
-  max-width: none !important;
-  width: auto !important;
 }
 
 .company-fr .line1,
@@ -73,49 +67,13 @@
 
 .top-logo {
   display: flex;
-  flex-direction: column;  /* ✅ logo + client empilés */
+  flex-direction: column;
   justify-content: flex-start;
   align-items: center;
   padding-top: 2px;
   text-align: center;
-  gap: 10px;               /* ✅ espace logo/client */
+  gap: 10px;
 }
-.client-under-logo{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 14px;
-  text-align: center;
-  line-height: 1.2;
-}
-
-.client-under-logo .client-name{
-  font-weight: 900;
-  font-size: 22px;     /* ✅ identique facture */
-  letter-spacing: 0.6px;
-  margin: 0 0 2px 0;   /* ✅ très peu d’espace */
-  color: #111;
-  width: max-content;
-  text-align: center;
-  white-space: nowrap !important;
-  overflow-wrap: normal !important;
-  word-break: keep-all !important;
-  hyphens: none !important;
-}
-
-.client-under-logo .client-sub{
-  font-size: 13px;     /* ✅ identique facture */
-  margin: 0;           /* ✅ enlève le grand espace */
-  color: #111;
-  line-height: 1.15;
-  width: max-content;
-  text-align: center;
-  white-space: nowrap !important;
-  overflow-wrap: normal !important;
-  word-break: keep-all !important;
-  hyphens: none !important;
-}
-
 
 .top-logo img {
   display: block;
@@ -133,8 +91,44 @@
   font-size: 26px;
 }
 
+.client-under-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 14px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.client-under-logo .client-name {
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 0.6px;
+  margin: 0 0 2px 0;
+  color: #111;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  width: max-content;
+  text-align: center;
+}
+
+.client-under-logo .client-sub {
+  font-size: 13px;
+  margin: 0;
+  color: #111;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  width: max-content;
+  text-align: center;
+}
+
 /* =========================
-   CLIENT (center) + DATE (right)
+   CLIENT (adresse) + DATE (right)
 ========================= */
 .client-row {
   margin-top: 14px;
@@ -143,7 +137,6 @@
   align-items: start;
 }
 
-/* ✅ FIX centrer vraiment */
 .client-center {
   justify-self: center;
   text-align: center;
@@ -260,7 +253,7 @@
 .totals .grand td { font-weight: 900; }
 
 /* =========================
-   TTC IN WORDS
+   TOTAL IN WORDS
 ========================= */
 .ttc-words {
   margin-top: 12px;
@@ -270,15 +263,14 @@
 
 /* =========================
    SIGNATURE + CACHET
-   - visible seulement PRINT/PDF
 ========================= */
 .sign-stamp {
   position: absolute;
   right: 18mm;
-  bottom: 28mm; /* juste au-dessus du footer */
+  bottom: 28mm;
   width: 60mm;
   height: auto;
-  display: none; /* screen: hidden */
+  display: none;
 }
 
 .sign-stamp img {
@@ -287,7 +279,6 @@
   object-fit: contain;
 }
 
-/* helper */
 .print-only { display: none; }
 
 /* =========================
@@ -357,7 +348,6 @@
     print-color-adjust: exact !important;
   }
 
-  /* ✅ afficher signature/cachet uniquement à l’impression */
   .print-only { display: block !important; }
   .sign-stamp { display: block !important; }
 }
@@ -374,6 +364,7 @@
 
   .top-header {
     grid-template-columns: 1fr;
+    text-align: center;
   }
 
   .company-ar { text-align: center; }

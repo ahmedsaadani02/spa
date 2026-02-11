@@ -1,37 +1,85 @@
-<section class="panel card">
+<section class="panel card no-print">
   <div class="panel-header">
     <div>
       <h1>Liste des devis</h1>
       <p>G&eacute;rez l&rsquo;historique des devis en un coup d&rsquo;&oelig;il.</p>
     </div>
-    <div class="panel-actions">
+    <div class="panel-actions no-print">
       <input
         class="input"
         type="search"
         placeholder="Rechercher par num&eacute;ro ou client"
         [formControl]="searchControl"
       >
+      <select class="input" [formControl]="monthControl" aria-label="Mois &agrave; imprimer">
+        <option value="all">Tous les mois</option>
+        <option *ngFor="let month of monthOptions$ | async" [value]="month.key">
+          {{ month.label }}
+        </option>
+      </select>
+      <button class="btn ghost" type="button" (click)="printSelectedMonth()">Imprimer</button>
       <a class="btn primary" routerLink="/quotes/new">Nouveau</a>
     </div>
   </div>
 
-  <div class="table">
-    <div class="table-row table-head">
-      <div>Num&eacute;ro</div>
-      <div>Date</div>
-      <div>Client</div>
-      <div>Total TTC</div>
-      <div>Actions</div>
+  <div class="month-group" *ngFor="let group of groupedQuotes$ | async">
+    <div class="month-header">
+      <div class="month-title">{{ group.label }}</div>
+      <div class="month-meta">{{ group.items.length }} devis</div>
     </div>
-    <div class="table-row" *ngFor="let quote of filteredQuotes$ | async">
-      <div class="mono">{{ quote.numero }}</div>
-      <div>{{ quote.date | date:'dd/MM/yyyy' }}</div>
-      <div>{{ quote.client.nom }}</div>
-      <div class="amount">{{ totalTTC(quote) | number:'1.2-2' }} DT</div>
-      <div class="actions">
-        <a class="btn outline" [routerLink]="['/quotes', quote.id, 'preview']">Aper&ccedil;u</a>
-        <a class="btn ghost" [routerLink]="['/quotes', quote.id, 'edit']">Modifier</a>
-        <button class="btn danger" type="button" (click)="deleteQuote(quote)">Supprimer</button>
+
+    <div class="table">
+      <div class="table-row table-head">
+        <div>Num&eacute;ro</div>
+        <div>Date</div>
+        <div>Client</div>
+        <div>TOTAL HORS T.V.A</div>
+        <div>Actions</div>
+      </div>
+      <div class="table-row" *ngFor="let quote of group.items">
+        <div class="mono">{{ quote.numero }}</div>
+        <div>{{ quote.date | date:'dd/MM/yyyy' }}</div>
+        <div>{{ quote.client.nom }}</div>
+        <div class="amount">{{ totalHorsTVA(quote) | number:'1.2-2' }} DT</div>
+        <div class="actions">
+          <a
+            class="icon-btn icon-btn--ghost"
+            [routerLink]="['/quotes', quote.id, 'preview']"
+            aria-label="Aper&ccedil;u"
+            title="Aper&ccedil;u"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </a>
+          <a
+            class="icon-btn icon-btn--outline"
+            [routerLink]="['/quotes', quote.id, 'edit']"
+            aria-label="Modifier"
+            title="Modifier"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+            </svg>
+          </a>
+          <button
+            class="icon-btn icon-btn--danger"
+            type="button"
+            (click)="deleteQuote(quote)"
+            aria-label="Supprimer"
+            title="Supprimer"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 6h18" />
+              <path d="M8 6V4h8v2" />
+              <path d="M19 6l-1 14H6L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -40,3 +88,35 @@
     Aucun devis trouv&eacute;.
   </div>
 </section>
+
+<section class="print-area" [class.print-only]="isPrintMode">
+  <ng-container *ngIf="printQuotes$ | async as printedQuotes">
+    <div class="print-header">
+      <div class="print-title">Liste des devis &mdash; {{ selectedMonthLabel }}</div>
+      <div class="print-meta">
+        Date d&rsquo;impression : {{ printDate | date:'dd/MM/yyyy HH:mm' }}
+      </div>
+    </div>
+
+    <div class="print-table">
+      <div class="print-row print-head">
+        <div>NUM&Eacute;RO</div>
+        <div>DATE</div>
+        <div>CLIENT</div>
+        <div>TOTAL HORS T.V.A</div>
+      </div>
+      <div class="print-row" *ngFor="let quote of printedQuotes">
+        <div class="mono">{{ quote.numero }}</div>
+        <div>{{ quote.date | date:'dd/MM/yyyy' }}</div>
+        <div>{{ quote.client.nom }}</div>
+        <div class="amount">{{ totalHorsTVA(quote) | number:'1.2-2' }} DT</div>
+      </div>
+    </div>
+  </ng-container>
+</section>
+
+<div class="toast no-print" *ngIf="toast.open">
+  <span class="toast-icon">ℹ️</span>
+  <span class="toast-message">{{ toast.message }}</span>
+  <button class="toast-close" type="button" (click)="closeToast()">×</button>
+</div>

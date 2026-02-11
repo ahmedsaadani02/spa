@@ -1,4 +1,3 @@
-
 <div class="preview-toolbar no-print">
   <button class="btn ghost" (click)="back()">Retour</button>
   <div class="toolbar-actions">
@@ -15,7 +14,7 @@
   <header class="top-header">
     <div class="company-fr">
       <div class="line1">SOCIETE PRATIQUES ALUMINIUM</div>
-      <div>59, Av. de l’Indépendance - Cité Ettadhamen</div>
+      <div>59, Av. de l&rsquo;Ind&eacute;pendance - Cit&eacute; Ettadhamen</div>
       <div>2041 ARIANA</div>
     </div>
 
@@ -34,16 +33,20 @@
         <div class="client-sub">
           {{ inv.client.adresse }}
         </div>
-        <div class="client-sub" *ngIf="inv.client.mf">
+        <div class="client-sub">
           CODE T.V.A : {{ inv.client.mf }}
         </div>
       </div>
     </div>
 
     <div class="company-ar" dir="rtl" lang="ar">
-      <div class="line1">شركة تطبيقات الألومنيوم</div>
-      <div>59، شارع الاستقلال - حي التضامن</div>
-      <div>2041 أريانة</div>
+      <div class="line1">
+        &#1588;&#1585;&#1603;&#1577; &#1578;&#1591;&#1576;&#1610;&#1602;&#1575;&#1578; &#1575;&#1604;&#1571;&#1604;&#1605;&#1606;&#1610;&#1608;&#1605;
+      </div>
+      <div>
+        59&#1548; &#1588;&#1575;&#1585;&#1593; &#1575;&#1604;&#1575;&#1587;&#1578;&#1602;&#1604;&#1575;&#1604; - &#1581;&#1610; &#1575;&#1604;&#1578;&#1590;&#1575;&#1605;&#1606;
+      </div>
+      <div>2041 &#1571;&#1585;&#1610;&#1575;&#1606;&#1577;</div>
     </div>
   </header>
 
@@ -57,11 +60,11 @@
 
   <!-- ======= TITLE ======= -->
   <div class="invoice-title">
-    FACTURE N° <span class="mono">{{ inv.numero }}</span>
+    FACTURE N&deg; <span class="mono">{{ inv.numero }}</span>
   </div>
 
   <div class="order-line">
-    Bon de Commande N° <span class="muted">—</span>
+    Bon de Commande N&deg; <span class="muted">&mdash;</span>
   </div>
 
   <!-- ======= TABLE ======= -->
@@ -133,14 +136,18 @@
 
   <!-- ======= TTC IN WORDS ======= -->
   <div class="ttc-words">
-    Arrêtée la présente facture à la somme de :
+    Arr&ecirc;t&eacute;e la pr&eacute;sente facture &agrave; la somme de :
     <strong>{{ totalTtcText }}</strong>
+  </div>
+
+  <div class="sign-stamp print-only" *ngIf="!isPdfExport">
+    <img src="assets/signature-cachet.png" alt="Signature et cachet">
   </div>
 
   <!-- ======= FOOTER ======= -->
   <footer class="invoice-footer">
     R.C. : B035 145 2004 - M.F. : 89 83 00 W/A/M/000 - RIB : 25079 0000000 213 555 60 zitouna Mutuelle ville<br>
-    Tél. : 71 515 491 - Fax : 70 661 034 - E-mail : saadani.karim@planet.tn
+    T&eacute;l. : 71 515 491 - Fax : 70 661 034 - E-mail : saadani.karim@planet.tn
   </footer>
 </div>
 

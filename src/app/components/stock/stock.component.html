@@ -64,11 +64,11 @@
         <article
           class="stock-card"
           *ngFor="let item of group.items; trackBy: trackById"
-          [class.low-stock]="isLowStock(item)"
+          [class.low-stock]="isItemFullyOut(item)"
         >
           <div class="stock-image">
             <img [src]="item.imageUrl" alt="Stock item">
-            <span class="badge" *ngIf="isLowStock(item)">Rupture</span>
+            <span class="badge" *ngIf="isItemFullyOut(item)">Rupture</span>
           </div>
           <div class="stock-info">
             <div class="stock-ref">{{ item.reference }}</div>
@@ -76,11 +76,11 @@
           </div>
 
           <div class="stock-colors">
-            <div class="color-row" *ngFor="let color of getAvailableColors(item)">
+            <div class="color-row" *ngFor="let color of getAvailableColors(item)" [ngClass]="getColorStatus(item, color)">
               <span class="color-name">{{ color }}</span>
               <span class="color-qty">{{ getQuantity(item, color) }}</span>
-              <span class="color-alert" *ngIf="getQuantity(item, color) <= item.lowStockThreshold">
-                Rupture proche
+              <span class="color-alert">
+                {{ getColorStatusLabel(item, color) }}
               </span>
             </div>
           </div>
@@ -153,8 +153,15 @@
         </label>
 
         <label class="field">
-          <span>Employe</span>
-          <input class="input" type="text" formControlName="actor" placeholder="Nom">
+          <span>Employé</span>
+          <select class="input" formControlName="employeeName">
+            <option *ngFor="let employee of employees" [value]="employee.name">{{ employee.name }}</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Code employé</span>
+          <input class="input" type="password" formControlName="employeeCode" placeholder="Code">
         </label>
       </form>
     </div>
@@ -164,4 +171,14 @@
       <button class="btn primary" type="button" (click)="submitMovement()">Valider</button>
     </div>
   </div>
+</div>
+
+<div class="toast" *ngIf="toast.open" [ngClass]="toast.type">
+  <div class="toast-header">
+    <span class="toast-icon">{{ toastIcons[toast.type] }}</span>
+    <div class="toast-title">{{ toast.title }}</div>
+    <button class="toast-close" type="button" (click)="closeToast()">×</button>
+  </div>
+  <div class="toast-message">{{ toast.message }}</div>
+  <div class="toast-progress"></div>
 </div>
