@@ -1,0 +1,81 @@
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h1>Parametres</h1>
+      <p>Protection et restauration de la base SQLite.</p>
+    </div>
+  </div>
+
+  <section class="card settings-card update-card">
+    <h2>Mise a jour</h2>
+
+    <div class="settings-actions">
+      <button class="btn-run" type="button" (click)="checkForUpdates()" [disabled]="checkingUpdates || !hasUpdatesApi">
+        {{ checkingUpdates ? 'Recherche...' : 'Verifier les mises a jour' }}
+      </button>
+
+      <button
+        class="btn-restore"
+        type="button"
+        *ngIf="updateStatus === 'downloaded'"
+        [disabled]="installingUpdate"
+        (click)="installUpdateNow()"
+      >
+        {{ installingUpdate ? 'Installation...' : 'Installer et redemarrer' }}
+      </button>
+
+      <span class="settings-hint" *ngIf="!hasUpdatesApi">Disponible uniquement dans Electron.</span>
+    </div>
+
+    <div class="settings-feedback">Statut: {{ getUpdateStatusLabel() }}</div>
+    <div class="settings-feedback" *ngIf="updateMessage">{{ updateMessage }}</div>
+    <div class="settings-feedback" *ngIf="updateStatus === 'downloading'">
+      Telechargement: {{ updateProgress | number:'1.0-0' }}%
+    </div>
+    <div class="settings-feedback err" *ngIf="updateError">{{ updateError }}</div>
+  </section>
+
+  <section class="card settings-card">
+    <div class="settings-actions">
+      <button class="btn-run" type="button" (click)="createBackup()" [disabled]="creatingBackup || !hasDbApi">
+        {{ creatingBackup ? 'Sauvegarde...' : 'Sauvegarder la base' }}
+      </button>
+      <span class="settings-hint" *ngIf="!hasDbApi">Disponible uniquement dans Electron.</span>
+    </div>
+
+    <div class="settings-feedback ok" *ngIf="infoMessage">{{ infoMessage }}</div>
+    <div class="settings-feedback err" *ngIf="errorMessage">{{ errorMessage }}</div>
+    <div class="settings-feedback" *ngIf="loading">Chargement des sauvegardes...</div>
+
+    <table class="backups-table" *ngIf="!loading">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Taille</th>
+          <th>Fichier</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let backup of backups; trackBy: trackByBackup">
+          <td>{{ backup.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ formatSize(backup.size) }}</td>
+          <td>{{ backup.fileName }}</td>
+          <td>
+            <button
+              class="btn-restore"
+              type="button"
+              [disabled]="restoringFileName !== null || !hasDbApi"
+              (click)="restoreBackup(backup)"
+            >
+              {{ restoringFileName === backup.fileName ? 'Restauration...' : 'Restaurer' }}
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="backups.length === 0">
+          <td colspan="4" class="empty-backups">Aucune sauvegarde disponible.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</section>

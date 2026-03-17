@@ -42,6 +42,32 @@
         <div>{{ quote.client.nom }}</div>
         <div class="amount">{{ totalHorsTVA(quote) | number:'1.2-2' }} DT</div>
         <div class="actions">
+          <button
+            *ngIf="canConvertToInvoice && !hasLinkedInvoice(quote)"
+            class="icon-btn icon-btn--primary"
+            type="button"
+            (click)="convertToInvoice(quote)"
+            aria-label="Convertir en facture"
+            title="Convertir en facture"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 7h8" />
+              <path d="M8 12h8" />
+              <path d="M8 17h5" />
+              <path d="M15 17l3 3 4-5" />
+            </svg>
+          </button>
+          <a
+            *ngIf="hasLinkedInvoice(quote) && getLinkedInvoiceId(quote)"
+            class="icon-btn icon-btn--done"
+            [routerLink]="['/invoices', getLinkedInvoiceId(quote), 'preview']"
+            aria-label="Voir la facture"
+            title="Voir la facture"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
+          </a>
           <a
             class="icon-btn icon-btn--ghost"
             [routerLink]="['/quotes', quote.id, 'preview']"
@@ -53,6 +79,18 @@
               <circle cx="12" cy="12" r="3" />
             </svg>
           </a>
+          <button
+            class="icon-btn icon-btn--ghost"
+            type="button"
+            (click)="duplicateQuote(quote)"
+            aria-label="Dupliquer"
+            title="Dupliquer ce devis"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+              <rect x="4" y="4" width="11" height="11" rx="2"></rect>
+            </svg>
+          </button>
           <a
             class="icon-btn icon-btn--outline"
             [routerLink]="['/quotes', quote.id, 'edit']"
@@ -88,6 +126,25 @@
     Aucun devis trouv&eacute;.
   </div>
 </section>
+
+<div class="confirm-backdrop no-print" *ngIf="convertConfirm.open">
+  <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="quote-convert-title">
+    <div class="confirm-header">
+      <h3 id="quote-convert-title">Confirmer la conversion</h3>
+    </div>
+    <p class="confirm-text" *ngIf="convertConfirm.quote as quote">
+      Voulez-vous convertir le devis <strong>{{ quote.numero }}</strong> en facture ?
+    </p>
+    <div class="confirm-actions">
+      <button class="btn ghost" type="button" (click)="cancelConvertToInvoice()" [disabled]="convertConfirm.submitting">
+        Annuler
+      </button>
+      <button class="btn primary" type="button" (click)="confirmConvertToInvoice()" [disabled]="convertConfirm.submitting">
+        {{ convertConfirm.submitting ? 'Conversion...' : 'Confirmer' }}
+      </button>
+    </div>
+  </div>
+</div>
 
 <section class="print-area" [class.print-only]="isPrintMode">
   <ng-container *ngIf="printQuotes$ | async as printedQuotes">

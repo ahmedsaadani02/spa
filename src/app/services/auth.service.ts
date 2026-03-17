@@ -1,68 +1,148 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import {
+  AppUser,
+  AuthBeginLoginResult,
+  AuthPasswordActionResult,
+  PermissionSet,
+  UserRole
+} from '../models/auth.models';
+import { AuthRepository } from '../repositories/auth.repository';
 
-type UserRole = 'admin' | 'employee';
+const EMPTY_PERMISSIONS: PermissionSet = {
+  viewStock: false,
+  addStock: false,
+  removeStock: false,
+  adjustStock: false,
+  manageStock: false,
+  manageEmployees: false,
+  manageInvoices: false,
+  manageQuotes: false,
+  manageClients: false,
+  manageEstimations: false,
+  manageArchives: false,
+  manageInventory: false,
+  viewHistory: false,
+  manageSalary: false,
+  manageAll: false
+};
 
-interface AuthSession {
-  token: string;
-  username: string;
-  role: UserRole;
-}
-
-const STORAGE_KEY = 'spa_auth_session_v1';
+const EMPLOYEE_ALLOWED_PERMISSIONS = new Set<keyof PermissionSet>([
+  'viewStock',
+  'addStock',
+  'removeStock',
+  'adjustStock',
+  'manageStock'
+]);
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  /**
-   * Simple auth without backend.
-   * Stores a minimal session in localStorage (NOT secure).
-   */
-  login(username: string, password: string): boolean {
-    const normalized = (username || '').trim();
+  private readonly currentUserSubject = new BehaviorSubject<AppUser | null>(null);
+  readonly currentUser$ = this.currentUserSubject.asObservable();
 
-    if (normalized === 'admin' && password === 'admin123') {
-      this.writeSession({ token: 'ok', username: 'admin', role: 'admin' });
-      return true;
-    }
+  private initialized = false;
+  private initPromise: Promise<void> | null = null;
 
-    if (normalized === 'employee' && password === 'emp123') {
-      this.writeSession({ token: 'ok', username: 'employee', role: 'employee' });
-      return true;
-    }
+  constructor(private authRepository: AuthRepository) {}
 
-    return false;
+  async ensureInitialized(): Promise<void> {
+    if (this.initialized) return;
+    if (this.initPromise) return this.initPromise;
+
+    this.initPromise = (async () => {
+      const user = await this.authRepository.getCurrentUser();
+      this.currentUserSubject.next(user);
+      this.initialized = true;
+    })().finally(() => {
+      this.initPromise = null;
+    });
+
+    return this.initPromise;
   }
 
-  logout(): void {
-    localStorage.removeItem(STORAGE_KEY);
+  async login(username: string, password: string): Promise<boolean> {
+    const user = await this.authRepository.login(username, password);
+    this.currentUserSubject.next(user);
+    return !!user;
+  }
+
+  async beginLogin(identity: string, password: string): Promise<AuthBeginLoginResult> {
+    const result = await this.authRepository.beginLogin(identity, password);
+    if (result.status === 'success' && result.user) {
+      this.currentUserSubject.next(result.user);
+    }
+    return result;
+  }
+
+  setupProtectedPassword(email: string, newPassword: string): Promise<AuthPasswordActionResult> {
+    return this.authRepository.setupProtectedPassword(email, newPassword);
+  }
+
+  async logout(): Promise<void> {
+    await this.authRepository.logout();
+    this.currentUserSubject.next(null);
+  }
+
+  async refreshCurrentUser(): Promise<AppUser | null> {
+    const user = await this.authRepository.getCurrentUser();
+    this.currentUserSubject.next(user);
+    return user;
+  }
+
+  async resetPassword(employeeId: string, newPassword: string): Promise<boolean> {
+    return this.authRepository.resetPassword(employeeId, newPassword);
   }
 
   isLoggedIn(): boolean {
-    const session = this.readSession();
-    return !!session?.token && !!session?.role;
+    return !!this.currentUserSubject.value;
+  }
+
+  currentUser(): AppUser | null {
+    return this.currentUserSubject.value;
   }
 
   role(): UserRole | null {
-    return this.readSession()?.role ?? null;
+    return this.currentUserSubject.value?.role ?? null;
   }
 
   username(): string | null {
-    return this.readSession()?.username ?? null;
+    return this.currentUserSubject.value?.username ?? null;
   }
 
-  private readSession(): AuthSession | null {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(raw) as AuthSession;
-    } catch {
-      return null;
-    }
+  displayName(): string | null {
+    return this.currentUserSubject.value?.nom ?? null;
   }
 
-  private writeSession(session: AuthSession): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  permissions(): PermissionSet {
+    return this.currentUserSubject.value?.permissions ?? EMPTY_PERMISSIONS;
+  }
+
+  hasPermission(permission: keyof PermissionSet): boolean {
+    const user = this.currentUserSubject.value;
+    if (!user) return false;
+    if (user.role === 'admin' || user.role === 'developer' || user.role === 'owner') return true;
+    if (user.role === 'employee' && !EMPLOYEE_ALLOWED_PERMISSIONS.has(permission)) {
+      return false;
+    }
+    return !!user.permissions[permission];
+  }
+
+  getDefaultRoute(): string {
+    if (!this.isLoggedIn()) return '/login';
+    if (this.role() === 'employee') {
+      return this.hasPermission('viewStock') ? '/stock' : '/access-denied';
+    }
+
+    if (this.hasPermission('manageInvoices')) return '/invoices';
+    if (this.hasPermission('manageQuotes')) return '/quotes';
+    if (this.hasPermission('manageEstimations')) return '/estimation';
+    if (this.hasPermission('manageClients')) return '/clients';
+    if (this.hasPermission('manageArchives')) return '/stock/archives';
+    if (this.hasPermission('manageInventory')) return '/inventaire';
+    if (this.hasPermission('viewHistory')) return '/stock/history';
+    if (this.hasPermission('viewStock')) return '/stock';
+    if (this.hasPermission('manageEmployees')) return '/employees';
+    if (this.hasPermission('manageSalary')) return '/employees';
+    return '/access-denied';
   }
 }

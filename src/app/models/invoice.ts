@@ -7,6 +7,7 @@ export interface Invoice {
   id: string;
   numero: string;
   date: string;
+  clientId: string | null;
   client: Client;
   lignes: InvoiceLine[];
   remiseType?: RemiseType;
@@ -14,4 +15,6 @@ export interface Invoice {
   remiseAvantTVA?: boolean;
   notes?: string;
   conditions?: string;
+  quoteId?: string | null;
+  sourceQuoteNumber?: string;
 }

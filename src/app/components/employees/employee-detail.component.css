@@ -1,0 +1,160 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.period {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.period-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.period-header h2 {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.period-hint {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.period-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(140px, 0.8fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.period-field {
+  margin: 0;
+}
+
+.period-select {
+  background: #fff;
+}
+
+.period-apply-btn {
+  min-height: 40px;
+  justify-content: center;
+}
+
+.cards-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metric-sub {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.metric.rest {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: 1fr 0.9fr 1.2fr auto;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list-row {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 0.8fr auto;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+}
+
+.list-head {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.overtime-form {
+  grid-template-columns: 1fr 0.9fr 1.2fr auto;
+}
+
+.overtime-row {
+  grid-template-columns: 1fr 1.2fr 0.8fr 0.8fr 0.9fr auto;
+}
+
+.reset-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.error {
+  color: var(--danger);
+}
+
+.success {
+  color: var(--accent);
+}
+
+.empty {
+  color: var(--muted);
+  padding: 6px 0;
+}
+
+@media (max-width: 1100px) {
+  .cards-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inline-form {
+    grid-template-columns: 1fr;
+  }
+
+  .list-row {
+    grid-template-columns: 1fr;
+  }
+
+  .overtime-row {
+    grid-template-columns: 1fr;
+  }
+
+  .period-controls {
+    grid-template-columns: 1fr;
+  }
+}

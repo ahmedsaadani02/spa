@@ -1,22 +1,21 @@
-﻿<section class="form-header">
+<section class="form-header">
   <div>
     <h1>{{ isEdit ? 'Modifier la facture' : 'Nouvelle facture' }}</h1>
-    <p>Les montants sont recalculés en temps réel.</p>
+    <p>Les montants sont recalcules en temps reel.</p>
   </div>
   <div class="form-header-actions">
     <a class="btn ghost" routerLink="/invoices">Retour liste</a>
   </div>
 </section>
 
-<!-- ✅ AJOUT: ngSubmit pour permettre une soumission normale -->
 <form class="form-grid" [formGroup]="form" (ngSubmit)="save(false)">
   <section class="card">
     <h2>Informations facture</h2>
     <div class="grid-3">
       <label class="field">
-        <span>Numéro</span>
+        <span>Numero</span>
         <input class="input" formControlName="numero" type="text">
-        <span class="error" *ngIf="numeroConflict">Ce numéro existe déjà.</span>
+        <span class="error" *ngIf="numeroConflict">Ce numero existe deja.</span>
       </label>
 
       <label class="field">
@@ -34,13 +33,14 @@
   <section class="card">
     <h2>Client</h2>
     <div formGroupName="client" class="grid-2">
-      <label class="field">
-        <span>Nom</span>
-        <input class="input" formControlName="nom" type="text">
-      </label>
+      <app-client-autocomplete
+        [formGroup]="clientFormGroup"
+        clientControlName="nom"
+        (clientSelected)="onClientSelected($event)"
+      ></app-client-autocomplete>
 
       <label class="field">
-        <span>Téléphone</span>
+        <span>Telephone</span>
         <input class="input" formControlName="tel" type="text">
       </label>
 
@@ -68,12 +68,11 @@
       <button type="button" class="btn outline" (click)="addLine()">Ajouter ligne</button>
     </div>
 
-    <!-- ✅ IMPORTANT: wrapper formArrayName="lignes" -->
     <div class="lines" formArrayName="lignes">
       <div class="line-row line-head">
-        <div>Désignation</div>
-        <div>Unité</div>
-        <div>Qté</div>
+        <div>Designation</div>
+        <div>Unite</div>
+        <div>Qte</div>
         <div>PU</div>
         <div>TVA</div>
         <div>HT</div>
@@ -81,22 +80,14 @@
         <div></div>
       </div>
 
-      <div
-        class="line-row"
-        *ngFor="let line of lignes.controls; let i = index"
-        [formGroupName]="i"
-      >
-        <input class="input" formControlName="designation" placeholder="Profilé aluminium 6063">
+      <div class="line-row" *ngFor="let line of lignes.controls; let i = index" [formGroupName]="i">
+        <input class="input" formControlName="designation" placeholder="Profile aluminium 6063">
         <input class="input" formControlName="unite" placeholder="m">
         <input class="input" formControlName="quantite" type="number" min="0" step="0.01">
         <input class="input" formControlName="prixUnitaire" type="number" min="0" step="0.01">
-
-        <!-- ✅ TVA FIXE À 19% (affichage seulement) -->
         <div class="tag">19%</div>
-
         <div class="amount">{{ lineHT(i) | number:'1.2-2' }}</div>
         <div class="amount">{{ lineTTC(i) | number:'1.2-2' }}</div>
-
         <button type="button" class="btn danger" (click)="removeLine(i)">Supprimer</button>
       </div>
     </div>
@@ -163,11 +154,7 @@
 
   <div class="form-actions">
     <button class="btn ghost" type="button" (click)="cancel()">Annuler</button>
-
-    <!-- ✅ Enregistrer: type submit -->
     <button class="btn outline" type="submit">Enregistrer</button>
-
-    <!-- ✅ Aperçu: garde click -->
-    <button class="btn primary" type="button" (click)="save(true)">Enregistrer & Aperçu</button>
+    <button class="btn primary" type="button" (click)="save(true)">Enregistrer & Apercu</button>
   </div>
 </form>

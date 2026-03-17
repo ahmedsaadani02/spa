@@ -124,6 +124,7 @@ export class InvoiceStorageService {
       id: this.createId(),
       numero: `SPA-${year}-0001`,
       date: today,
+      clientId: null,
       client: {
         nom: 'AluDesign SARL',
         adresse: 'Zone Industrielle, Sfax',

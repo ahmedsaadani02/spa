@@ -5,11 +5,17 @@
   "description": "SPA Societe d'Aluminium - application desktop de facturation",
   "main": "electron/main.js",
   "scripts": {
-    "start": "ng serve",
+    "start": "npm run web:serve",
+    "web:setup": "npm install --prefix server",
+    "web:serve": "concurrently -k \"node server/server.js\" \"ng serve --port 4200 --proxy-config proxy.conf.json\"",
     "build": "ng build",
-    "electron:serve": "concurrently -k \"ng serve --port 4200\" \"wait-on http://localhost:4200 && electron .\"",
-    "electron:build": "ng build --configuration production && electron-builder",
-    "electron:pack": "ng build --configuration production && electron-builder --dir"
+    "icons:generate": "node scripts/generate-app-icons.js",
+    "rebuild:native": "node scripts/rebuild-native.js",
+    "rebuild:native:builder": "electron-builder install-app-deps",
+    "electron:serve": "npm run icons:generate && npm run rebuild:native && concurrently -k \"ng serve --port 4200\" \"wait-on http://localhost:4200 && node scripts/run-electron-dev.js\"",
+    "electron:build": "npm run icons:generate && npm run rebuild:native && ng build --configuration production && electron-builder",
+    "electron:pack": "npm run icons:generate && npm run rebuild:native && ng build --configuration production && electron-builder --dir",
+    "postinstall": "node scripts/postinstall.js"
   },
   "dependencies": {
     "@angular/common": "^21.0.0",
@@ -18,34 +24,75 @@
     "@angular/forms": "^21.0.0",
     "@angular/platform-browser": "^21.0.0",
     "@angular/router": "^21.0.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "11.10.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "electron-updater": "^6.8.3",
+    "express": "^5.2.1",
+    "html2pdf.js": "^0.14.0",
+    "resend": "^6.9.3",
     "rxjs": "^7.8.1",
     "tslib": "^2.6.3",
     "zone.js": "^0.15.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^21.0.0",
-    "@angular/cli": "^19.2.19",
+    "@angular/cli": "^21.2.2",
     "@angular/compiler-cli": "^21.0.0",
+    "@electron/rebuild": "4.0.3",
     "@types/node": "^22.0.0",
     "concurrently": "^9.1.0",
-    "electron": "^37.0.0",
-    "electron-builder": "^26.7.0",
+    "electron": "37.10.3",
+    "electron-builder": "26.8.1",
     "typescript": "~5.9.0",
     "wait-on": "^7.2.0"
+  },
+  "engines": {
+    "node": ">=22 <23",
+    "npm": ">=10"
   },
   "build": {
     "appId": "com.spa.invoice",
     "productName": "SPA Facturation",
+    "icon": "icon.ico",
     "files": [
-      "dist/spa-invoice/**",
-      "electron/**"
+      "dist/**/*",
+      "electron/**/*",
+      "server/server.js",
+      "server/database.js",
+      "!server/node_modules/**/*",
+      "!server/package.json",
+      "!server/package-lock.json",
+      "package.json"
     ],
     "directories": {
       "buildResources": "build"
     },
-    "asar": true
+    "asar": true,
+    "asarUnpack": [
+      "server/server.js",
+      "server/database.js",
+      "**/node_modules/better-sqlite3/**",
+      "**/*.node"
+    ],
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "http://192.168.10.13:8080/updates/"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "installerHeaderIcon": "icon.ico"
+    }
   },
   "overrides": {
-  "ora": "5.4.1"
-}
+    "ora": "5.4.1"
+  }
 }

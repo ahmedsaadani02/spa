@@ -1,87 +1,78 @@
-import { Injectable, isDevMode } from '@angular/core';
+import { Injectable, inject, isDevMode } from '@angular/core';
+import { Client } from '../models/client';
 import { Quote } from '../models/quote';
-import { ElectronService } from './electron.service';
-import { QuoteStorageService } from './quote-storage.service';
+import { QUOTES_REPOSITORY, QuotesRepository } from '../repositories/quotes.repository';
+import { ClientPersistenceService } from './client-persistence.service';
+import type { SpaQuoteConvertResult } from '../types/electron';
 
 @Injectable({
   providedIn: 'root'
 })
 export class QuotePersistenceService {
-  constructor(
-    private electron: ElectronService,
-    private indexedDb: QuoteStorageService
-  ) {}
-
-  private get useElectron(): boolean {
-    return this.electron.isElectron;
-  }
+  private readonly repository = inject<QuotesRepository>(QUOTES_REPOSITORY);
+  private readonly clients = inject(ClientPersistenceService);
 
   async getAll(): Promise<Quote[]> {
-    if (this.useElectron) {
-      if (!this.electron.hasQuotesApi()) {
-        if (isDevMode()) {
-          console.warn('[QuotePersistence] Electron API missing: quotes.getAll');
-        }
-        return [];
-      }
-
-      const all = await this.electron.quotesGetAll();
-      return Array.isArray(all) ? all : [];
+    const all = await this.repository.getAll();
+    if (!Array.isArray(all) && isDevMode()) {
+      console.warn('[QuotePersistence] Repository returned invalid list');
+      return [];
     }
-
-    return this.indexedDb.getAll();
+    return Array.isArray(all) ? all : [];
   }
 
   async getById(id: string): Promise<Quote | null> {
-    if (this.useElectron) {
-      if (!this.electron.hasQuotesApi()) {
-        if (isDevMode()) {
-          console.warn('[QuotePersistence] Electron API missing: quotes.getById');
-        }
-        return null;
-      }
-
-      return (await this.electron.quotesGetById(id)) ?? null;
-    }
-
-    return this.indexedDb.getById(id);
+    return (await this.repository.getById(id)) ?? null;
   }
 
   async put(quote: Quote): Promise<void> {
-    if (this.useElectron) {
-      if (!this.electron.hasQuotesApi()) {
-        if (isDevMode()) {
-          console.warn('[QuotePersistence] Electron API missing: quotes.put');
-        }
-        return;
-      }
-
-      await this.electron.quotesPut(quote);
-      return;
-    }
-
-    await this.indexedDb.put(quote);
+    const normalized = await this.attachClient(quote);
+    await this.repository.put(normalized);
   }
 
   async delete(id: string): Promise<void> {
-    if (this.useElectron) {
-      if (!this.electron.hasQuotesApi()) {
-        if (isDevMode()) {
-          console.warn('[QuotePersistence] Electron API missing: quotes.delete');
-        }
-        return;
-      }
-
-      await this.electron.quotesDelete(id);
-      return;
-    }
-
-    await this.indexedDb.delete(id);
+    await this.repository.delete(id);
   }
 
   async ensureSeed(): Promise<void> {
-    if (!this.useElectron) {
-      await this.indexedDb.ensureSeed();
+    await this.repository.ensureSeed?.();
+  }
+
+  async convertToInvoice(quoteId: string): Promise<SpaQuoteConvertResult> {
+    if (!this.repository.convertToInvoice) {
+      return { ok: false, message: 'QUOTE_CONVERT_UNAVAILABLE' };
     }
+    return this.repository.convertToInvoice(quoteId);
+  }
+
+  private async attachClient(quote: Quote): Promise<Quote> {
+    const linked = await this.clients.findOrCreate(quote.client, quote.clientId ?? null);
+    if (!linked) {
+      return {
+        ...quote,
+        clientId: null
+      };
+    }
+
+    return {
+      ...quote,
+      clientId: linked.id ?? null,
+      client: this.toQuoteClient(linked)
+    };
+  }
+
+  private toQuoteClient(client: Client): Client {
+    const tel = (client.tel || client.telephone || '').trim();
+    return {
+      id: client.id ?? null,
+      nom: (client.nom || '').trim(),
+      adresse: (client.adresse || '').trim(),
+      tel,
+      telephone: tel,
+      mf: (client.mf || '').trim(),
+      email: (client.email || '').trim().toLowerCase(),
+      createdAt: client.createdAt,
+      updatedAt: client.updatedAt
+    };
   }
 }

@@ -41,8 +41,7 @@ export class StockHistoryComponent implements OnInit, OnDestroy {
   constructor(private fb: FormBuilder, private store: StockStoreService) {}
 
   ngOnInit(): void {
-    void this.store.load();
-
+    console.log('[stock-history-page] load requested');
     combineLatest([
       this.store.movements$,
       this.filters.valueChanges.pipe(startWith(this.filters.getRawValue()))
@@ -62,7 +61,8 @@ export class StockHistoryComponent implements OnInit, OnDestroy {
           const refText = `${movement.reference} ${movement.label}`.toLowerCase();
           const matchesReference = !reference || refText.includes(reference);
           const matchesColor = color === 'all' || movement.color === color;
-          const matchesActor = !actor || movement.actor.toLowerCase().includes(actor);
+          const actorText = `${movement.actor ?? ''} ${movement.username ?? ''} ${movement.employeeId ?? ''}`.toLowerCase();
+          const matchesActor = !actor || actorText.includes(actor);
           const matchesCategory = category === 'all' || movement.category === category;
           return matchesReference && matchesColor && matchesActor && matchesCategory;
         });
@@ -71,7 +71,11 @@ export class StockHistoryComponent implements OnInit, OnDestroy {
           movement,
           category: movement.category
         }));
+        console.log(`[stock-history-page] rendered items count: ${this.movements.length}`);
+        console.log('[stock-history-page] empty state condition:', this.movements.length === 0);
       });
+
+    void this.store.load();
   }
 
   ngOnDestroy(): void {
@@ -88,6 +92,12 @@ export class StockHistoryComponent implements OnInit, OnDestroy {
   formatDelta(value: number): string {
     const sign = value > 0 ? '+' : '';
     return `${sign}${value}`;
+  }
+
+  actorLabel(movement: StockMovement): string {
+    if (movement.actor && movement.actor.trim()) return movement.actor;
+    if (movement.username && movement.username.trim()) return movement.username;
+    return movement.employeeId ?? 'unknown';
   }
 
   private currentMonth(): string {

@@ -16,5 +16,7 @@ export interface StockMovement {
   after: number;
   reason: string;
   actor: string;
+  employeeId?: string | null;
+  username?: string | null;
   at: string;
 }

@@ -1,0 +1,257 @@
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h1>Inventaire et valorisation</h1>
+      <p>Pilotage premium des quantites, prix unitaires et valeur stock par produit.</p>
+    </div>
+
+    <div class="panel-actions">
+      <span class="tag">Produits: {{ totalProducts }}</span>
+      <span class="tag tag-strong">Valeur totale: {{ totalStockValue | number:'1.2-2' }} DT</span>
+    </div>
+  </div>
+
+  <section class="card inventory-summary">
+    <label class="field search-field">
+      <span>Recherche produit</span>
+      <input
+        class="input"
+        type="search"
+        [formControl]="searchControl"
+        placeholder="Reference, nom, designation, categorie, serie, couleur..."
+      />
+    </label>
+
+    <div class="summary-item">
+      <span>Produits affiches</span>
+      <strong>{{ rows.length }}</strong>
+    </div>
+
+    <div class="summary-item">
+      <span>Valorisation affichee</span>
+      <strong>{{ filteredStockValue | number:'1.2-2' }} DT</strong>
+    </div>
+  </section>
+
+  <div class="price-interaction-notice" *ngIf="priceInteractionMessage">
+    {{ priceInteractionMessage }}
+  </div>
+
+  <section class="inventory-board" *ngIf="rows.length; else emptyState">
+    <article class="inventory-product-card" *ngFor="let row of rows; trackBy: trackByRow">
+      <section class="zone zone-identity">
+        <div class="identity-ref">{{ row.item.reference }}</div>
+        <h3 class="identity-label">{{ row.item.label }}</h3>
+        <p class="identity-meta">{{ row.item.category }} | {{ row.item.serie }} | Unite: {{ row.item.unit }}</p>
+
+        <div class="identity-metrics">
+          <div class="identity-metric">
+            <span>Quantite totale</span>
+            <strong>{{ row.qtyTotal }}</strong>
+          </div>
+          <div class="identity-metric">
+            <span>Couleurs actives</span>
+            <strong>{{ getRowColors(row).length }}</strong>
+          </div>
+        </div>
+
+        <div class="identity-colors">
+          <span class="qty-pill" *ngFor="let color of getRowColors(row); trackBy: trackByColor">
+            <span
+              class="color-dot"
+              [style.background]="getColorVisual(color).dot"
+              [style.boxShadow]="getColorVisual(color).ring"
+            ></span>
+            <span class="pill-label">{{ colorLabel(color) }}</span>
+            <strong>{{ getColorQty(row, color) }}</strong>
+          </span>
+        </div>
+      </section>
+
+      <section class="zone zone-valuation">
+        <div class="valuation-title">Detail valorisation par couleur</div>
+
+        <div class="valuation-table-wrap">
+          <table class="valuation-mini-table">
+            <colgroup>
+              <col class="col-color" />
+              <col class="col-qty" />
+              <col class="col-unit" />
+              <col class="col-value" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Couleur</th>
+                <th class="align-right">Quantite</th>
+                <th class="align-right">Prix unitaire</th>
+                <th class="align-right">Valeur</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let color of getRowColors(row); trackBy: trackByColor">
+                <td>
+                  <div class="valuation-color-cell">
+                    <span
+                      class="color-dot"
+                      [style.background]="getColorVisual(color).dot"
+                      [style.boxShadow]="getColorVisual(color).ring"
+                    ></span>
+                    <span
+                      class="color-chip"
+                      [style.background]="getColorVisual(color).chipBg"
+                      [style.borderColor]="getColorVisual(color).chipBorder"
+                      [style.color]="getColorVisual(color).chipText"
+                    >
+                      {{ colorLabel(color) }}
+                    </span>
+                  </div>
+                </td>
+                <td class="align-right qty-strong">{{ getColorQty(row, color) }}</td>
+                <td class="align-right">
+                  <div class="unit-price-cell">
+                    <ng-container *ngIf="isColorEditing(row, color); else priceReadonly">
+                      <label class="price-editor">
+                        <input
+                          class="input price-input"
+                          [formControl]="priceControl"
+                          (keydown)="onPriceInputKeydown($event, row, color)"
+                          (blur)="onPriceInputBlur(row, color)"
+                          autofocus
+                        />
+                        <span class="currency">DT</span>
+                      </label>
+                      <div class="editor-hint">Entree pour valider, Echap pour annuler.</div>
+                      <div class="price-error" *ngIf="priceEditError">{{ priceEditError }}</div>
+                    </ng-container>
+
+                    <ng-template #priceReadonly>
+                      <button
+                        class="add-price-btn"
+                        type="button"
+                        *ngIf="showAddPrice(row, color) && supportsPriceEditing"
+                        (click)="startAddPrice(row, color)"
+                      >
+                        Ajouter prix
+                      </button>
+
+                      <span
+                        class="editable-price"
+                        *ngIf="!showAddPrice(row, color) || !supportsPriceEditing"
+                        [class.disabled]="!supportsPriceEditing || isSavingColor(row, color)"
+                        (click)="supportsPriceEditing && !isSavingColor(row, color) ? startPriceEdit(row, color) : null"
+                      >
+                        {{ getColorPrice(row, color) | number:'1.2-2' }} DT
+                      </span>
+                    </ng-template>
+                  </div>
+                </td>
+                <td class="align-right valuation-money">{{ getColorValue(row, color) | number:'1.2-2' }} DT</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="valuation-footer-simple">
+          <div class="footer-simple-item">
+            <span>Quantite totale</span>
+            <strong>{{ row.qtyTotal }}</strong>
+          </div>
+          <div class="footer-simple-item footer-simple-total">
+            <span>Total produit</span>
+            <strong>{{ row.totalValue | number:'1.2-2' }} DT</strong>
+          </div>
+        </footer>
+      </section>
+
+      <aside class="zone zone-pilotage">
+        <div class="pilotage-total-card">
+          <span>Total produit</span>
+          <strong>{{ row.totalValue | number:'1.2-2' }} DT</strong>
+        </div>
+
+        <div class="pilotage-status">
+          <span>Etat prix</span>
+          <span class="price-status" [class.missing]="row.priceStatus === 'missing'">
+            {{ row.priceStatus === 'ok' ? 'Complet' : 'A completer' }}
+          </span>
+        </div>
+
+        <div class="pilotage-history" *ngIf="supportsPriceEditing; else historyDisabled">
+          <div class="history-title">Historique prix</div>
+          <div class="history-lines">
+            <button
+              class="btn ghost history-btn"
+              type="button"
+              *ngFor="let color of getRowColors(row); trackBy: trackByColor"
+              [disabled]="getColorPrice(row, color) <= 0"
+              (click)="openPriceHistory(row, color)"
+            >
+              {{ colorLabel(color) }}
+            </button>
+          </div>
+        </div>
+
+        <ng-template #historyDisabled>
+          <div class="pilotage-history-disabled">Historique indisponible en mode web.</div>
+        </ng-template>
+      </aside>
+    </article>
+  </section>
+</section>
+
+<ng-template #emptyState>
+  <section class="card empty-state">
+    Aucun produit ne correspond au filtre actuel.
+  </section>
+</ng-template>
+
+<div class="modal-backdrop" *ngIf="historyModal.open">
+  <div class="modal-card history-modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <div>
+        <h2>Historique prix</h2>
+        <p>{{ historyModal.productLabel }} - {{ historyModal.colorLabel }}</p>
+      </div>
+      <button class="btn ghost" type="button" (click)="closePriceHistory()">Fermer</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="history-error" *ngIf="historyModal.error">{{ historyModal.error }}</div>
+      <div class="history-loading" *ngIf="historyModal.loading">Chargement...</div>
+
+      <table class="history-table" *ngIf="!historyModal.loading && historyModal.entries.length">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Avant</th>
+            <th>Apres</th>
+            <th>Auteur</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of historyModal.entries; trackBy: trackByHistory">
+            <td>{{ entry.changedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ entry.oldPrice | number:'1.2-2' }} DT</td>
+            <td>{{ entry.newPrice | number:'1.2-2' }} DT</td>
+            <td>{{ entry.changedBy }}</td>
+            <td>
+              <button
+                class="btn ghost"
+                type="button"
+                [disabled]="historyModal.restoringId === entry.id"
+                (click)="restoreHistoryPrice(entry)"
+              >
+                {{ historyModal.restoringId === entry.id ? 'Restauration...' : 'Restaurer ce prix' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="!historyModal.loading && !historyModal.entries.length">
+        Aucun historique pour cette couleur.
+      </div>
+    </div>
+  </div>
+</div>

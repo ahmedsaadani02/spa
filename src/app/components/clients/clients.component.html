@@ -1,0 +1,87 @@
+<section class="panel card">
+  <div class="panel-header">
+    <div>
+      <h1>Clients</h1>
+      <p>Base clients r&eacute;utilisable pour les factures et les devis.</p>
+    </div>
+    <div class="panel-actions">
+      <input
+        class="input"
+        type="search"
+        [formControl]="searchControl"
+        placeholder="Rechercher nom, t&eacute;l., email, MF"
+      >
+      <button class="btn outline" type="button" (click)="startCreate()">Nouveau client</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="table">
+      <div class="table-row table-head">
+        <div>Nom</div>
+        <div>T&eacute;l&eacute;phone</div>
+        <div>Email</div>
+        <div>MF</div>
+        <div>Actions</div>
+      </div>
+
+      <div class="table-row" *ngFor="let client of filteredClients; trackBy: trackByClientId">
+        <div class="name">
+          <strong>{{ client.nom }}</strong>
+          <span class="muted" *ngIf="client.adresse">{{ client.adresse }}</span>
+        </div>
+        <div>{{ client.tel || client.telephone || '-' }}</div>
+        <div>{{ client.email || '-' }}</div>
+        <div>{{ client.mf || '-' }}</div>
+        <div class="actions">
+          <button class="btn ghost" type="button" (click)="editClient(client)">Modifier</button>
+          <button class="btn danger" type="button" (click)="deleteClient(client)">Supprimer</button>
+        </div>
+      </div>
+
+      <div class="empty" *ngIf="filteredClients.length === 0">
+        Aucun client trouv&eacute;.
+      </div>
+    </div>
+
+    <form class="editor card" [formGroup]="form" (ngSubmit)="saveClient()">
+      <h2>{{ editingId ? 'Modifier client' : 'Ajouter client' }}</h2>
+
+      <label class="field">
+        <span>Nom</span>
+        <input class="input" type="text" formControlName="nom">
+      </label>
+
+      <label class="field">
+        <span>T&eacute;l&eacute;phone</span>
+        <input class="input" type="text" formControlName="tel">
+      </label>
+
+      <label class="field">
+        <span>Adresse</span>
+        <textarea class="input" rows="3" formControlName="adresse"></textarea>
+      </label>
+
+      <label class="field">
+        <span>MF</span>
+        <input class="input" type="text" formControlName="mf">
+      </label>
+
+      <label class="field">
+        <span>Email</span>
+        <input class="input" type="email" formControlName="email">
+      </label>
+
+      <div class="notice" *ngIf="notice.open" [class.error]="notice.type === 'error'">
+        {{ notice.message }}
+      </div>
+
+      <div class="editor-actions">
+        <button class="btn ghost" type="button" (click)="startCreate()">Vider</button>
+        <button class="btn primary" type="submit" [disabled]="isSaving">
+          {{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

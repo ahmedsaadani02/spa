@@ -1,35 +1,57 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { PermissionSet } from '../models/auth.models';
 import { AuthService } from '../services/auth.service';
 
-type UserRole = 'admin' | 'employee';
+type GuardPermission = keyof PermissionSet;
 
-export const roleGuard: CanActivateFn = (route) => {
+const hasRequiredPermissions = (
+  auth: AuthService,
+  permissions: GuardPermission[],
+  mode: 'all' | 'any'
+): boolean => {
+  if (!permissions.length) return true;
+  if (mode === 'all') {
+    return permissions.every((permission) => auth.hasPermission(permission));
+  }
+  return permissions.some((permission) => auth.hasPermission(permission));
+};
+
+const isEmployeeAllowedRoute = (routePath: string): boolean => routePath === 'stock';
+
+export const permissionGuard: CanActivateFn = async (route) => {
   const auth = inject(AuthService);
   const router = inject(Router);
+  await auth.ensureInitialized();
 
   if (!auth.isLoggedIn()) {
     return router.createUrlTree(['/login']);
   }
 
-  const role = auth.role();
-  const allowed = (route.data?.['roles'] as UserRole[] | undefined) ?? [];
-
-  if (!role || (allowed.length > 0 && !allowed.includes(role))) {
-    return router.createUrlTree([role === 'employee' ? '/stock' : '/invoices']);
+  const routePath = String(route.routeConfig?.path ?? '').toLowerCase();
+  if (auth.role() === 'employee' && !isEmployeeAllowedRoute(routePath)) {
+    return router.createUrlTree(['/stock']);
   }
 
-  return true;
+  const permissions = (route.data?.['permissions'] as GuardPermission[] | undefined) ?? [];
+  const mode = (route.data?.['permissionMode'] as 'all' | 'any' | undefined) ?? 'any';
+  if (hasRequiredPermissions(auth, permissions, mode)) {
+    return true;
+  }
+
+  return router.createUrlTree(['/access-denied']);
 };
 
-export const redirectGuard: CanActivateFn = () => {
+export const roleGuard = permissionGuard;
+
+export const redirectGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
+  await auth.ensureInitialized();
 
-  const role = auth.role();
-  if (!role) {
+  if (!auth.isLoggedIn()) {
     return router.createUrlTree(['/login']);
   }
 
-  return router.createUrlTree([role === 'employee' ? '/stock' : '/invoices']);
+  return router.createUrlTree([auth.getDefaultRoute()]);
 };

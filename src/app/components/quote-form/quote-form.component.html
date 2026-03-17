@@ -1,7 +1,7 @@
 <section class="form-header">
   <div>
     <h1>{{ isEdit ? 'Modifier le devis' : 'Nouveau devis' }}</h1>
-    <p>Les montants sont recalcul&eacute;s en temps r&eacute;el.</p>
+    <p>Les montants sont recalcules en temps reel.</p>
   </div>
   <div class="form-header-actions">
     <a class="btn ghost" routerLink="/quotes">Retour liste</a>
@@ -13,9 +13,9 @@
     <h2>Informations devis</h2>
     <div class="grid-3">
       <label class="field">
-        <span>Num&eacute;ro</span>
+        <span>Numero</span>
         <input class="input" formControlName="numero" type="text">
-        <span class="error" *ngIf="numeroConflict">Ce num&eacute;ro existe d&eacute;j&agrave;.</span>
+        <span class="error" *ngIf="numeroConflict">Ce numero existe deja.</span>
       </label>
 
       <label class="field">
@@ -33,13 +33,14 @@
   <section class="card">
     <h2>Client</h2>
     <div formGroupName="client" class="grid-2">
-      <label class="field">
-        <span>Nom</span>
-        <input class="input" formControlName="nom" type="text">
-      </label>
+      <app-client-autocomplete
+        [formGroup]="clientFormGroup"
+        clientControlName="nom"
+        (clientSelected)="onClientSelected($event)"
+      ></app-client-autocomplete>
 
       <label class="field">
-        <span>T&eacute;l&eacute;phone</span>
+        <span>Telephone</span>
         <input class="input" formControlName="tel" type="text">
       </label>
 
@@ -69,26 +70,20 @@
 
     <div class="lines" formArrayName="lignes">
       <div class="line-row line-head">
-        <div>D&eacute;signation</div>
-        <div>Unit&eacute;</div>
-        <div>Qt&eacute;</div>
+        <div>Designation</div>
+        <div>Unite</div>
+        <div>Qte</div>
         <div>PU</div>
         <div>HT</div>
         <div></div>
       </div>
 
-      <div
-        class="line-row"
-        *ngFor="let line of lignes.controls; let i = index"
-        [formGroupName]="i"
-      >
-        <input class="input" formControlName="designation" placeholder="Profil&eacute; aluminium 6063">
+      <div class="line-row" *ngFor="let line of lignes.controls; let i = index" [formGroupName]="i">
+        <input class="input" formControlName="designation" placeholder="Profile aluminium 6063">
         <input class="input" formControlName="unite" placeholder="m">
         <input class="input" formControlName="quantite" type="number" min="0" step="0.01">
         <input class="input" formControlName="prixUnitaire" type="number" min="0" step="0.01">
-
         <div class="amount">{{ lineHT(i) | number:'1.2-2' }}</div>
-
         <button type="button" class="btn danger" (click)="removeLine(i)">Supprimer</button>
       </div>
     </div>
@@ -113,7 +108,7 @@
   </section>
 
   <section class="card">
-    <h2>Notes &amp; Conditions</h2>
+    <h2>Notes & Conditions</h2>
     <div class="grid-2">
       <label class="field">
         <span>Notes</span>
@@ -126,7 +121,6 @@
     </div>
   </section>
 
-  <!-- ✅ TOTAUX DEVIS (HT + remise seulement) -->
   <section class="card totals">
     <h2>Totaux</h2>
     <div class="totals-grid">
@@ -150,6 +144,6 @@
   <div class="form-actions">
     <button class="btn ghost" type="button" (click)="cancel()">Annuler</button>
     <button class="btn outline" type="submit">Enregistrer</button>
-    <button class="btn primary" type="button" (click)="save(true)">Enregistrer &amp; Aper&ccedil;u</button>
+    <button class="btn primary" type="button" (click)="save(true)">Enregistrer & Apercu</button>
   </div>
 </form>

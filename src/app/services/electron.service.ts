@@ -1,92 +1,127 @@
 import { Injectable } from '@angular/core';
 import { Invoice } from '../models/invoice';
 import { Quote } from '../models/quote';
+import { getSpaApi } from '../bridge/spa-bridge';
+import type { SpaApi, SpaDocumentPdfResult, SpaDocumentRequest, SpaPrintResult } from '../types/electron';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ElectronService {
+  private get spa(): SpaApi | null {
+    return getSpaApi();
+  }
+
   get isElectron(): boolean {
-    return typeof window !== 'undefined' && (!!window.electronAPI || !!window.apiInvoices || !!window.apiQuotes);
+    return !!this.spa;
   }
 
   hasInvoicesApi(): boolean {
-    return !!window.apiInvoices;
+    return !!this.spa?.invoices;
   }
 
   hasQuotesApi(): boolean {
-    return !!window.apiQuotes;
+    return !!this.spa?.quotes;
   }
 
-  async exportPdf(): Promise<{ canceled: boolean; filePath?: string } | null> {
+  async exportPdf(): Promise<SpaDocumentPdfResult | null> {
     if (!this.isElectron) {
       return null;
     }
 
-    return window.electronAPI?.exportPdf() ?? null;
+    if (this.spa?.documents?.exportPdf) {
+      return this.spa.documents.exportPdf({ docType: 'invoice', documentNumber: 'facture' });
+    }
+    return this.spa?.exportPdf() ?? null;
+  }
+
+  async printDocument(
+    docType: 'invoice' | 'quote',
+    documentNumber?: string,
+    html?: string,
+    title?: string
+  ): Promise<SpaPrintResult | null> {
+    if (!this.isElectron || !this.spa?.documents?.print) {
+      return null;
+    }
+    const request: SpaDocumentRequest = { docType, documentNumber, html, title };
+    return this.spa.documents.print(request);
+  }
+
+  async exportDocumentPdf(
+    docType: 'invoice' | 'quote',
+    documentNumber?: string,
+    html?: string,
+    title?: string
+  ): Promise<SpaDocumentPdfResult | null> {
+    if (!this.isElectron || !this.spa?.documents?.exportPdf) {
+      return null;
+    }
+    const request: SpaDocumentRequest = { docType, documentNumber, html, title };
+    return this.spa.documents.exportPdf(request);
   }
 
   async invoicesGetAll(): Promise<Invoice[]> {
-    if (!this.isElectron || !window.apiInvoices?.getAll) {
+    if (!this.isElectron || !this.spa?.invoices?.getAll) {
       return [];
     }
 
-    return window.apiInvoices.getAll();
+    return this.spa.invoices.getAll();
   }
 
   async invoicesGetById(id: string): Promise<Invoice | null> {
-    if (!this.isElectron || !window.apiInvoices?.getById) {
+    if (!this.isElectron || !this.spa?.invoices?.getById) {
       return null;
     }
 
-    return window.apiInvoices.getById(id);
+    return this.spa.invoices.getById(id);
   }
 
   async invoicesPut(invoice: Invoice): Promise<void> {
-    if (!this.isElectron || !window.apiInvoices?.put) {
+    if (!this.isElectron || !this.spa?.invoices?.put) {
       return;
     }
 
-    await window.apiInvoices.put(invoice);
+    await this.spa.invoices.put(invoice);
   }
 
   async invoicesDelete(id: string): Promise<void> {
-    if (!this.isElectron || !window.apiInvoices?.delete) {
+    if (!this.isElectron || !this.spa?.invoices?.delete) {
       return;
     }
 
-    await window.apiInvoices.delete(id);
+    await this.spa.invoices.delete(id);
   }
 
   async quotesGetAll(): Promise<Quote[]> {
-    if (!this.isElectron || !window.apiQuotes?.getAll) {
+    if (!this.isElectron || !this.spa?.quotes?.getAll) {
       return [];
     }
 
-    return window.apiQuotes.getAll();
+    return this.spa.quotes.getAll();
   }
 
   async quotesGetById(id: string): Promise<Quote | null> {
-    if (!this.isElectron || !window.apiQuotes?.getById) {
+    if (!this.isElectron || !this.spa?.quotes?.getById) {
       return null;
     }
 
-    return window.apiQuotes.getById(id);
+    return this.spa.quotes.getById(id);
   }
 
   async quotesPut(quote: Quote): Promise<void> {
-    if (!this.isElectron || !window.apiQuotes?.put) {
+    if (!this.isElectron || !this.spa?.quotes?.put) {
       return;
     }
 
-    await window.apiQuotes.put(quote);
+    await this.spa.quotes.put(quote);
   }
 
   async quotesDelete(id: string): Promise<void> {
-    if (!this.isElectron || !window.apiQuotes?.delete) {
+    if (!this.isElectron || !this.spa?.quotes?.delete) {
       return;
     }
 
-    await window.apiQuotes.delete(id);
+    await this.spa.quotes.delete(id);
   }
 }

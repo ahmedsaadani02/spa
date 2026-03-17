@@ -2,6 +2,13 @@
   <button class="btn ghost" (click)="back()">Retour</button>
   <div class="toolbar-actions">
     <button class="btn outline" (click)="edit()" [disabled]="!quote">Modifier</button>
+    <button class="btn ghost" (click)="duplicate()" [disabled]="!quote">Dupliquer</button>
+    <button class="btn outline" *ngIf="canConvertToInvoice && !isQuoteConverted()" (click)="convertToInvoice()" [disabled]="!quote">
+      Convertir en facture
+    </button>
+    <button class="btn ghost" *ngIf="isQuoteConverted()" (click)="openConvertedInvoice()">
+      Voir facture
+    </button>
     <button class="btn primary" (click)="print()" [disabled]="!quote">Imprimer</button>
 
     <button class="btn outline" (click)="exportPdf()" [disabled]="!quote">
@@ -10,133 +17,162 @@
   </div>
 </div>
 
-<div class="invoice-page" *ngIf="quote as q">
-  <!-- ======= TOP HEADER (FR | LOGO | AR) ======= -->
-  <header class="top-header">
-    <div class="company-fr">
-      <div class="line1">SOCIETE PRATIQUES ALUMINIUM</div>
-      <div>59, Av. de l&rsquo;Ind&eacute;pendance - Cit&eacute; Ettadhamen</div>
-      <div>2041 ARIANA</div>
+<div class="quote-notice no-print" *ngIf="notice.open" [ngClass]="'quote-notice--' + notice.type">
+  <span>{{ notice.message }}</span>
+  <button class="btn ghost" *ngIf="notice.invoiceId" type="button" (click)="openConvertedInvoice()">Ouvrir</button>
+  <button class="btn ghost" type="button" (click)="closeNotice()">Fermer</button>
+</div>
+
+<div class="confirm-backdrop no-print" *ngIf="convertConfirmOpen">
+  <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="quote-preview-convert-title">
+    <div class="confirm-header">
+      <h3 id="quote-preview-convert-title">Confirmer la conversion</h3>
     </div>
+    <p class="confirm-text" *ngIf="quote">
+      Voulez-vous convertir le devis <strong>{{ quote.numero }}</strong> en facture ?
+    </p>
+    <div class="confirm-actions">
+      <button class="btn ghost" type="button" (click)="cancelConvertToInvoice()" [disabled]="convertSubmitting">
+        Annuler
+      </button>
+      <button class="btn primary" type="button" (click)="confirmConvertToInvoice()" [disabled]="convertSubmitting">
+        {{ convertSubmitting ? 'Conversion...' : 'Confirmer' }}
+      </button>
+    </div>
+  </div>
+</div>
 
-    <div class="top-logo">
-      <img
-        *ngIf="logoAvailable"
-        src="assets/logospa.png"
-        alt="SPA logo"
-        (error)="logoAvailable = false"
-      />
-      <div *ngIf="!logoAvailable" class="logo-fallback">SPA</div>
+<div class="invoice-page" #printRoot *ngIf="quote as q">
+  <div class="invoice-layout">
+    <!-- ======= TOP HEADER (FR | LOGO | AR) ======= -->
+    <header class="top-header invoice-header">
+      <div class="company-fr">
+        <div class="line1">SOCIETE PRATIQUES ALUMINIUM</div>
+        <div>59, Av. de l&rsquo;Ind&eacute;pendance - Cit&eacute; Ettadhamen</div>
+        <div>2041 ARIANA</div>
+      </div>
 
-      <div class="client-under-logo">
-        <div class="client-name">
-          {{ q.client.nom }}
-        </div>
-        <div class="client-sub">
-          {{ q.client.adresse }}
-        </div>
-        <div class="client-sub">
-          CODE T.V.A : {{ q.client.mf }}
+      <div class="top-logo">
+        <img
+          *ngIf="logoAvailable"
+          src="assets/logospa.png"
+          alt="SPA logo"
+          (error)="logoAvailable = false"
+        />
+        <div *ngIf="!logoAvailable" class="logo-fallback">SPA</div>
+
+        <div class="client-under-logo">
+          <div class="client-name">
+            {{ q.client.nom }}
+          </div>
+          <div class="client-sub">
+            {{ q.client.adresse }}
+          </div>
+          <div class="client-sub">
+            CODE T.V.A : {{ q.client.mf }}
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="company-ar" dir="rtl" lang="ar">
-      <div class="line1">
-        &#1588;&#1585;&#1603;&#1577; &#1578;&#1591;&#1576;&#1610;&#1602;&#1575;&#1578; &#1575;&#1604;&#1571;&#1604;&#1605;&#1606;&#1610;&#1608;&#1605;
+      <div class="company-ar" dir="rtl" lang="ar">
+        <div class="line1">
+          &#1588;&#1585;&#1603;&#1577; &#1578;&#1591;&#1576;&#1610;&#1602;&#1575;&#1578; &#1575;&#1604;&#1571;&#1604;&#1605;&#1606;&#1610;&#1608;&#1605;
+        </div>
+        <div>
+          59&#1548; &#1588;&#1575;&#1585;&#1593; &#1575;&#1604;&#1575;&#1587;&#1578;&#1602;&#1604;&#1575;&#1604; - &#1581;&#1610; &#1575;&#1604;&#1578;&#1590;&#1575;&#1605;&#1606;
+        </div>
+        <div>2041 &#1571;&#1585;&#1610;&#1575;&#1606;&#1577;</div>
       </div>
-      <div>
-        59&#1548; &#1588;&#1575;&#1585;&#1593; &#1575;&#1604;&#1575;&#1587;&#1578;&#1602;&#1604;&#1575;&#1604; - &#1581;&#1610; &#1575;&#1604;&#1578;&#1590;&#1575;&#1605;&#1606;
+    </header>
+
+    <main class="invoice-content">
+      <!-- ======= DATE RIGHT ======= -->
+      <section class="client-row">
+        <div class="date-right">
+          <div class="muted">Tunis, le</div>
+          <div class="date-strong">{{ q.date | date:'dd/MM/yyyy' }}</div>
+        </div>
+      </section>
+
+      <!-- ======= TITLE ======= -->
+      <div class="invoice-title">
+        DEVIS N&deg; <span class="mono">{{ q.numero }}</span>
       </div>
-      <div>2041 &#1571;&#1585;&#1610;&#1575;&#1606;&#1577;</div>
+
+      <div class="order-line">
+        Bon de Commande N&deg; <span class="muted">&mdash;</span>
+      </div>
+
+      <!-- ======= TABLE ======= -->
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th class="col-ord">ORD</th>
+            <th>DESIGNATIONS</th>
+            <th class="col-u">U</th>
+            <th class="col-q">QUANT</th>
+            <th class="col-pu">P.UNIT</th>
+            <th class="col-pt">P.TOTAL</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let line of q.lignes; let i = index">
+            <td class="center">{{ i + 1 }}</td>
+            <td>{{ line.designation }}</td>
+            <td class="center">{{ line.unite }}</td>
+            <td class="center">{{ line.quantite | number:'1.0-3' }}</td>
+            <td class="num">{{ line.prixUnitaire | number:'1.3-3' }}</td>
+            <td class="num">{{ calc.lineHT(line) | number:'1.3-3' }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ======= TOTALS RIGHT BOX (DEVIS: PAS DE TVA / PAS DE TTC) ======= -->
+      <div class="totals-area">
+        <table class="totals">
+          <tbody>
+            <tr>
+              <td>TOTAL HT</td>
+              <td class="num">{{ totals.totalHT | number:'1.3-3' }}</td>
+            </tr>
+
+            <tr *ngIf="totals.remise > 0">
+              <td>Remise</td>
+              <td class="num">- {{ totals.remise | number:'1.3-3' }}</td>
+            </tr>
+
+            <tr>
+              <td>Fodec (1%)</td>
+              <td class="num">{{ totals.fodec | number:'1.3-3' }}</td>
+            </tr>
+
+            <tr class="grand">
+              <td>TOTAL Hors T.V.A</td>
+              <td class="num">{{ totals.totalHorsTVA | number:'1.3-3' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ======= TOTAL IN WORDS (HORS TVA) ======= -->
+      <div class="ttc-words">
+        Arr&ecirc;t&eacute; le pr&eacute;sent devis &agrave; la somme de :
+        <strong>{{ totalHorsTvaText }}</strong>
+      </div>
+    </main>
+
+    <!-- SIGNATURE + CACHET (print/pdf only) -->
+    <div class="sign-stamp print-only" *ngIf="!isPdfExport">
+      <img src="assets/signature-cachet.png" alt="Signature et cachet" />
     </div>
-  </header>
 
-  <!-- ======= DATE RIGHT ======= -->
-  <section class="client-row">
-    <div class="date-right">
-      <div class="muted">Tunis, le</div>
-      <div class="date-strong">{{ q.date | date:'dd/MM/yyyy' }}</div>
-    </div>
-  </section>
-
-  <!-- ======= TITLE ======= -->
-  <div class="invoice-title">
-    DEVIS N&deg; <span class="mono">{{ q.numero }}</span>
+    <!-- ======= FOOTER ======= -->
+    <footer class="invoice-footer">
+      R.C. : B035 145 2004 - M.F. : 89 83 00 W/A/M/000 - RIB : 25079 0000000 213 555 60 zitouna Mutuelle ville<br>
+      T&eacute;l. : 71 515 491 - Fax : 70 661 034 - E-mail : saadani.karim@planet.tn
+    </footer>
   </div>
-
-  <div class="order-line">
-    Bon de Commande N&deg; <span class="muted">&mdash;</span>
-  </div>
-
-  <!-- ======= TABLE ======= -->
-  <table class="invoice-table">
-    <thead>
-      <tr>
-        <th class="col-ord">ORD</th>
-        <th>DESIGNATIONS</th>
-        <th class="col-u">U</th>
-        <th class="col-q">QUANT</th>
-        <th class="col-pu">P.UNIT</th>
-        <th class="col-pt">P.TOTAL</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <tr *ngFor="let line of q.lignes; let i = index">
-        <td class="center">{{ i + 1 }}</td>
-        <td>{{ line.designation }}</td>
-        <td class="center">{{ line.unite }}</td>
-        <td class="center">{{ line.quantite | number:'1.0-3' }}</td>
-        <td class="num">{{ line.prixUnitaire | number:'1.3-3' }}</td>
-        <td class="num">{{ calc.lineHT(line) | number:'1.3-3' }}</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- ======= TOTALS RIGHT BOX (DEVIS: PAS DE TVA / PAS DE TTC) ======= -->
-  <div class="totals-area">
-    <table class="totals">
-      <tbody>
-        <tr>
-          <td>TOTAL HT</td>
-          <td class="num">{{ totals.totalHT | number:'1.3-3' }}</td>
-        </tr>
-
-        <tr *ngIf="totals.remise > 0">
-          <td>Remise</td>
-          <td class="num">- {{ totals.remise | number:'1.3-3' }}</td>
-        </tr>
-
-        <tr>
-          <td>Fodec (1%)</td>
-          <td class="num">{{ totals.fodec | number:'1.3-3' }}</td>
-        </tr>
-
-        <tr class="grand">
-          <td>TOTAL Hors T.V.A</td>
-          <td class="num">{{ totals.totalHorsTVA | number:'1.3-3' }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- ======= TOTAL IN WORDS (HORS TVA) ======= -->
-  <div class="ttc-words">
-    Arr&ecirc;t&eacute; le pr&eacute;sent devis &agrave; la somme de :
-    <strong>{{ totalHorsTvaText }}</strong>
-  </div>
-
-  <!-- SIGNATURE + CACHET (print/pdf only) -->
-  <div class="sign-stamp print-only" *ngIf="!isPdfExport">
-    <img src="assets/signature-cachet.png" alt="Signature et cachet" />
-  </div>
-
-  <!-- ======= FOOTER ======= -->
-  <footer class="invoice-footer">
-    R.C. : B035 145 2004 - M.F. : 89 83 00 W/A/M/000 - RIB : 25079 0000000 213 555 60 zitouna Mutuelle ville<br>
-    T&eacute;l. : 71 515 491 - Fax : 70 661 034 - E-mail : saadani.karim@planet.tn
-  </footer>
 </div>
 
 <div class="empty card" *ngIf="!quote">

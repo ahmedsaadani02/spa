@@ -1,87 +1,70 @@
-import { Injectable, isDevMode } from '@angular/core';
+import { Injectable, inject, isDevMode } from '@angular/core';
+import { Client } from '../models/client';
 import { Invoice } from '../models/invoice';
-import { ElectronService } from './electron.service';
-import { InvoiceStorageService } from './invoice-storage.service';
+import { INVOICES_REPOSITORY, InvoicesRepository } from '../repositories/invoices.repository';
+import { ClientPersistenceService } from './client-persistence.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InvoicePersistenceService {
-  constructor(
-    private electron: ElectronService,
-    private indexedDb: InvoiceStorageService
-  ) {}
-
-  private get useElectron(): boolean {
-    return this.electron.isElectron;
-  }
+  private readonly repository = inject<InvoicesRepository>(INVOICES_REPOSITORY);
+  private readonly clients = inject(ClientPersistenceService);
 
   async getAll(): Promise<Invoice[]> {
-    if (this.useElectron) {
-      if (!this.electron.hasInvoicesApi()) {
-        if (isDevMode()) {
-          console.warn('[InvoicePersistence] Electron API missing: invoices.getAll');
-        }
-        return [];
-      }
-
-      const all = await this.electron.invoicesGetAll();
-      return Array.isArray(all) ? all : [];
+    const all = await this.repository.getAll();
+    if (!Array.isArray(all) && isDevMode()) {
+      console.warn('[InvoicePersistence] Repository returned invalid list');
+      return [];
     }
-
-    return this.indexedDb.getAll();
+    return Array.isArray(all) ? all : [];
   }
 
   async getById(id: string): Promise<Invoice | null> {
-    if (this.useElectron) {
-      if (!this.electron.hasInvoicesApi()) {
-        if (isDevMode()) {
-          console.warn('[InvoicePersistence] Electron API missing: invoices.getById');
-        }
-        return null;
-      }
-
-      return (await this.electron.invoicesGetById(id)) ?? null;
-    }
-
-    return this.indexedDb.getById(id);
+    return (await this.repository.getById(id)) ?? null;
   }
 
   async put(invoice: Invoice): Promise<void> {
-    if (this.useElectron) {
-      if (!this.electron.hasInvoicesApi()) {
-        if (isDevMode()) {
-          console.warn('[InvoicePersistence] Electron API missing: invoices.put');
-        }
-        return;
-      }
-
-      await this.electron.invoicesPut(invoice);
-      return;
-    }
-
-    await this.indexedDb.put(invoice);
+    const normalized = await this.attachClient(invoice);
+    await this.repository.put(normalized);
   }
 
   async delete(id: string): Promise<void> {
-    if (this.useElectron) {
-      if (!this.electron.hasInvoicesApi()) {
-        if (isDevMode()) {
-          console.warn('[InvoicePersistence] Electron API missing: invoices.delete');
-        }
-        return;
-      }
-
-      await this.electron.invoicesDelete(id);
-      return;
-    }
-
-    await this.indexedDb.delete(id);
+    await this.repository.delete(id);
   }
 
   async ensureSeed(): Promise<void> {
-    if (!this.useElectron) {
-      await this.indexedDb.ensureSeed();
+    await this.repository.ensureSeed?.();
+  }
+
+  private async attachClient(invoice: Invoice): Promise<Invoice> {
+    const linked = await this.clients.findOrCreate(invoice.client, invoice.clientId ?? null);
+    if (!linked) {
+      return {
+        ...invoice,
+        clientId: null
+      };
     }
+
+    return {
+      ...invoice,
+      clientId: linked.id ?? null,
+      client: this.toInvoiceClient(linked)
+    };
+  }
+
+  private toInvoiceClient(client: Client): Client {
+    const tel = (client.tel || client.telephone || '').trim();
+    return {
+      id: client.id ?? null,
+      nom: (client.nom || '').trim(),
+      adresse: (client.adresse || '').trim(),
+      tel,
+      telephone: tel,
+      mf: (client.mf || '').trim(),
+      email: (client.email || '').trim().toLowerCase(),
+      createdAt: client.createdAt,
+      updatedAt: client.updatedAt
+    };
   }
 }

@@ -1,0 +1,131 @@
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h1>Produits archives</h1>
+      <p>Gestion des produits archives avec restauration ou suppression definitive.</p>
+    </div>
+
+    <div class="panel-actions">
+      <span class="tag">Archives: {{ archivedProductsCount }}</span>
+      <a class="btn archives-nav-btn" routerLink="/stock">Retour au stock actif</a>
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="filters">
+      <label class="field">
+        <span>Recherche</span>
+        <input
+          class="input"
+          type="search"
+          [value]="archivedSearch"
+          (input)="archivedSearch = $any($event.target).value"
+          placeholder="Reference ou nom du produit"
+          aria-label="Recherche archives stock"
+        />
+      </label>
+    </div>
+  </section>
+
+  <section class="stock-grid" *ngIf="filteredArchivedProducts.length; else archivedEmpty">
+    <article class="stock-card archived-card" *ngFor="let item of filteredArchivedProducts; trackBy: trackByArchivedId">
+      <div class="stock-image" [class.is-missing]="isArchivedImageMissing(item)">
+        <img
+          [src]="getArchivedImageSrc(item)"
+          [attr.alt]="item.label"
+          loading="lazy"
+          decoding="async"
+          (error)="onArchivedImageError($event, item)"
+        />
+        <div class="image-placeholder" *ngIf="isArchivedImageMissing(item)">
+          <span>Image indisponible</span>
+        </div>
+        <span class="badge">Archive</span>
+      </div>
+
+      <div class="stock-info">
+        <div class="stock-ref">{{ item.reference }}</div>
+        <div class="stock-label">{{ item.label }}</div>
+        <div class="stock-desc" *ngIf="item.description">{{ item.description }}</div>
+        <div class="stock-desc">{{ getCategoryLabel(item.category) }} | {{ getSerieLabel(item.serie) }} | {{ item.unit }}</div>
+        <div class="stock-desc archived-at" *ngIf="item.archivedAt">Archive le {{ item.archivedAt | date:'dd/MM/yyyy HH:mm' }}</div>
+      </div>
+
+      <div class="stock-colors">
+        <span class="color-pill" *ngFor="let color of item.colors">{{ getColorLabel(color) }}</span>
+      </div>
+
+      <div class="stock-actions" *ngIf="canManageCatalog">
+        <button
+          class="btn archive-action-btn archive-action-btn--restore"
+          type="button"
+          (click)="restoreArchivedProduct(item)"
+          [disabled]="isRestoring(item)"
+        >
+          {{ isRestoring(item) ? 'Restauration...' : 'Restaurer' }}
+        </button>
+        <button
+          class="btn archive-action-btn archive-action-btn--delete"
+          type="button"
+          (click)="openPurgeModal(item)"
+        >
+          Supprimer definitivement
+        </button>
+      </div>
+    </article>
+  </section>
+
+<ng-template #archivedEmpty>
+  <section class="card empty-state">
+      <h2>{{ hasArchivedSearch ? 'Aucun resultat' : 'Aucun produit archive' }}</h2>
+      <p>
+        {{
+          hasArchivedSearch
+            ? 'Aucun produit archive ne correspond a votre recherche.'
+            : 'Les produits archives apparaitront ici automatiquement.'
+        }}
+      </p>
+      <a class="btn outline" routerLink="/stock">Retour au stock actif</a>
+  </section>
+</ng-template>
+</section>
+
+<div class="modal-backdrop" *ngIf="purgeModal.open">
+  <div class="modal-card modal-card--compact" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2>Suppression definitive</h2>
+      <button class="btn ghost" type="button" (click)="closePurgeModal()" [disabled]="purgingProduct">Fermer</button>
+    </div>
+
+    <div class="modal-content-scroll modal-body" *ngIf="purgeModal.item as item">
+      <div class="modal-item">
+        <strong>{{ item.reference }}</strong>
+        <span>{{ item.label }}</span>
+      </div>
+      <p>
+        Cette action est irreversible. Le produit sera retire du catalogue actif et de l'archive, tout en conservant l'historique des mouvements.
+      </p>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn ghost" type="button" (click)="closePurgeModal()" [disabled]="purgingProduct">Annuler</button>
+      <button class="btn danger-outline" type="button" (click)="confirmPurgeProduct()" [disabled]="purgingProduct">
+        {{ purgingProduct ? 'Suppression...' : 'Supprimer definitivement' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrapper" *ngIf="toast.open" [ngClass]="'toast-' + toast.type">
+  <div class="toast-icon-wrap">
+    <span class="toast-icon">{{ toast.icon }}</span>
+  </div>
+  <div class="toast-body">
+    <div class="toast-title">{{ toast.title }}</div>
+    <div class="toast-message">{{ toast.message }}</div>
+  </div>
+  <button class="toast-close" type="button" (click)="closeToast()">x</button>
+  <div class="toast-progress-bar">
+    <div class="toast-progress-fill" [style.width.%]="toast.progress"></div>
+  </div>
+</div>

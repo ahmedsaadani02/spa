@@ -268,6 +268,15 @@
   text-align: right;
 }
 
+.info{
+  color: #8fe1ff;
+  background: rgba(71, 184, 255, .08);
+  border: 1px solid rgba(71, 184, 255, .22);
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+}
+
 .error{
   color: #ff6b6b;
   background: rgba(255, 107, 107, .08);
@@ -302,6 +311,21 @@
 .btn:disabled{
   opacity: .65;
   cursor: not-allowed;
+}
+
+.link-btn{
+  border: none;
+  background: transparent;
+  color: #86b8ff;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.link-btn.secondary{
+  justify-self: center;
+  margin-top: 2px;
 }
 
 .btn.primary:hover{

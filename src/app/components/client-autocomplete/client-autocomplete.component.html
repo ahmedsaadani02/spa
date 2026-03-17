@@ -1,0 +1,93 @@
+<div class="client-picker" [formGroup]="formGroup">
+  <label class="field">
+    <span>Client</span>
+    <div class="picker-row">
+      <div class="picker-input-wrap">
+        <input
+          class="input"
+          [formControlName]="clientControlName"
+          type="text"
+          autocomplete="off"
+          (focus)="onFocus()"
+          (blur)="onBlur()"
+          (keydown)="onKeydown($event)"
+        >
+        <button class="picker-toggle" type="button" (mousedown)="toggleDropdown($event)" aria-label="Afficher les clients">
+          v
+        </button>
+      </div>
+      <button class="btn outline new-client-btn" type="button" (click)="openCreateModalFromQuery()">
+        + Nouveau client
+      </button>
+    </div>
+  </label>
+
+  <div class="picker-dropdown card" *ngIf="dropdownOpen">
+    <button
+      class="picker-item"
+      type="button"
+      *ngFor="let client of suggestions; let i = index; trackBy: trackByClient"
+      [class.active]="isSuggestionActive(i)"
+      (mousedown)="selectClient(client)"
+    >
+      <span class="picker-title">{{ client.nom }}</span>
+      <span class="picker-meta">
+        {{ client.tel || client.telephone || '-' }}
+        <ng-container *ngIf="client.email"> | {{ client.email }}</ng-container>
+        <ng-container *ngIf="client.mf"> | MF {{ client.mf }}</ng-container>
+      </span>
+    </button>
+
+    <button
+      class="picker-item create-item"
+      type="button"
+      *ngIf="canCreateFromQuery"
+      [class.active]="isCreateOptionActive()"
+      (mousedown)="openCreateModalFromQuery()"
+    >
+      + Creer un nouveau client "{{ query }}"
+    </button>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+  <div class="modal-card card" (click)="$event.stopPropagation()">
+    <h3>Creer client</h3>
+
+    <form class="modal-form" [formGroup]="createForm" (ngSubmit)="createClient()">
+      <label class="field">
+        <span>Nom</span>
+        <input class="input" type="text" formControlName="nom">
+      </label>
+
+      <label class="field">
+        <span>Telephone</span>
+        <input class="input" type="text" formControlName="tel">
+      </label>
+
+      <label class="field">
+        <span>Email</span>
+        <input class="input" type="email" formControlName="email">
+      </label>
+
+      <label class="field">
+        <span>Adresse</span>
+        <textarea class="input" rows="3" formControlName="adresse"></textarea>
+      </label>
+
+      <label class="field">
+        <span>MF</span>
+        <input class="input" type="text" formControlName="mf">
+      </label>
+
+      <div class="error" *ngIf="createError">{{ createError }}</div>
+
+      <div class="modal-actions">
+        <button class="btn ghost" type="button" (click)="closeCreateModal()" [disabled]="isCreating">Annuler</button>
+        <button class="btn primary" type="submit" [disabled]="isCreating">
+          {{ isCreating ? 'Creation...' : 'Creer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

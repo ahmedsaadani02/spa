@@ -7,3 +7,6 @@ release/
 node_modules
 .angular/
 .angular/cache
+.env
+.env.local
+.env.*.local

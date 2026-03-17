@@ -1,0 +1,114 @@
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h1>{{ isEditMode ? 'Modifier salarie' : 'Nouveau salarie' }}</h1>
+      <p>Creation de compte, role et permissions ERP.</p>
+    </div>
+    <div class="actions">
+      <a class="btn ghost" routerLink="/employees">Retour</a>
+    </div>
+  </div>
+
+  <section class="card" *ngIf="!loading">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+      <div class="grid-3">
+        <label class="field">
+          <span>Nom</span>
+          <input class="input" type="text" formControlName="nom" />
+        </label>
+        <label class="field">
+          <span>Telephone</span>
+          <input class="input" type="text" formControlName="telephone" />
+        </label>
+        <label class="field">
+          <span>Email</span>
+          <input class="input" type="email" formControlName="email" />
+        </label>
+      </div>
+
+      <div class="grid-3">
+        <label class="field">
+          <span>Poste</span>
+          <input class="input" type="text" formControlName="poste" />
+        </label>
+        <label class="field">
+          <span>Adresse</span>
+          <input class="input" type="text" formControlName="adresse" />
+        </label>
+        <label class="field">
+          <span>Salaire de base</span>
+          <input class="input" type="number" min="0" step="0.01" formControlName="salaireBase" />
+        </label>
+      </div>
+
+      <div class="grid-3">
+        <label class="field">
+          <span>Date embauche</span>
+          <input class="input" type="date" formControlName="dateEmbauche" />
+        </label>
+        <label class="field">
+          <span>Role</span>
+          <select class="input" formControlName="role">
+            <option value="developer" *ngIf="canAssignSensitiveRoles">developer</option>
+            <option value="owner" *ngIf="canAssignSensitiveRoles">owner</option>
+            <option value="admin">admin</option>
+            <option value="employee">employee</option>
+          </select>
+        </label>
+        <label class="field checkbox">
+          <span>Actif logiciel</span>
+          <label><input type="checkbox" formControlName="isActive" /> Actif</label>
+        </label>
+        <label class="field checkbox">
+          <span>Actif RH</span>
+          <label><input type="checkbox" formControlName="actif" /> Actif</label>
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Username</span>
+          <input class="input" type="text" formControlName="username" autocomplete="username" />
+        </label>
+        <label class="field">
+          <span>{{ isEditMode ? 'Nouveau mot de passe (optionnel)' : 'Mot de passe initial' }}</span>
+          <input class="input" type="password" formControlName="initialPassword" autocomplete="new-password" />
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label class="field checkbox">
+          <span>Force setup password</span>
+          <label><input type="checkbox" formControlName="mustSetupPassword" [disabled]="!canManageProtectedFlags" /> Oui</label>
+        </label>
+      </div>
+
+      <section class="permissions-layout">
+        <fieldset class="permissions-block" *ngFor="let block of permissionBlocks">
+          <legend>{{ block.title }}</legend>
+          <label class="permission-item" *ngFor="let permission of block.items">
+            <input
+              type="checkbox"
+              [formControlName]="permission.key"
+              [disabled]="permission.key === 'canManageAll' && !canUseGlobalManageAll"
+              (change)="onPermissionToggle(permission.key)"
+            />
+            <span>{{ permission.label }}</span>
+          </label>
+          <p class="permission-note" *ngIf="block.title === 'Global' && !canUseGlobalManageAll">
+            &quot;G&eacute;rer tout&quot; est r&eacute;serv&eacute; aux r&ocirc;les &eacute;lev&eacute;s (admin, developer, owner).
+          </p>
+        </fieldset>
+      </section>
+
+      <div class="error" *ngIf="error">{{ error }}</div>
+
+      <div class="actions">
+        <button class="btn ghost" type="button" routerLink="/employees">Annuler</button>
+        <button class="btn primary" type="submit" [disabled]="saving">
+          {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</section>

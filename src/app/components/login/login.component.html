@@ -6,118 +6,108 @@
   </div>
 
   <div class="shell">
-    <!-- Left brand panel -->
     <section class="brand-panel">
       <div class="brand-top">
         <img src="assets/logospa.png" alt="SPA" class="brand-logo" />
         <div class="brand-text">
-          <div class="brand-name">SPA — Société d’Aluminium</div>
-          <div class="brand-sub">Facturation • Stock • Devis • Estimation</div>
+          <div class="brand-name">SPA - Societe d'Aluminium</div>
+          <div class="brand-sub">Facturation - Stock - Devis - Estimation</div>
         </div>
       </div>
 
       <div class="brand-quote">
-        <div class="quote-mark">“</div>
+        <div class="quote-mark">"</div>
         <p>
-          Une plateforme simple et robuste pour gérer vos factures, devis et stock,
-          avec un rendu prêt à l’impression.
+          Connexion ERP simplifiee :
+          developer/pdg par email + mot de passe,
+          autres utilisateurs par username + mot de passe.
         </p>
-        <div class="quote-footer">
-          <div class="avatar">SPA</div>
-          <div>
-            <div class="who">Système interne</div>
-            <div class="meta">Production • Vente • Atelier</div>
-          </div>
-        </div>
       </div>
 
       <div class="brand-bottom">
         <span>Statut : OK</span>
-        <span>© SPA</span>
+        <span>&copy; SPA</span>
       </div>
     </section>
 
-    <!-- Right login card -->
     <section class="login-panel">
       <div class="card">
         <div class="card-head">
-          <h1>Connexion</h1>
-          <p>Entrez vos identifiants pour accéder à l’espace de travail.</p>
+          <h1 *ngIf="step === 'login'">Connexion</h1>
+          <h1 *ngIf="step === 'setup-protected'">Creation mot de passe protege</h1>
         </div>
 
-        <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+        <form *ngIf="step === 'login'" [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="form">
           <label class="field">
-            <span>Nom d’utilisateur</span>
-            <input
-              class="input"
-              type="text"
-              formControlName="username"
-              placeholder="ex: admin"
-              autocomplete="username"
-            />
-            <small class="hint" *ngIf="form.controls.username.touched && form.controls.username.invalid">
-              Champ requis (min. 3 caractères).
-            </small>
+            <span>Username (employes) ou email (developer/pdg)</span>
+            <input class="input" type="text" formControlName="identity" autocomplete="username" />
           </label>
 
           <label class="field">
             <span>Mot de passe</span>
-
             <div class="password-wrap">
               <input
                 class="input"
                 [type]="showPassword ? 'text' : 'password'"
                 formControlName="password"
-                placeholder="••••••••"
                 autocomplete="current-password"
               />
-              <button type="button" class="icon-btn" (click)="togglePassword()" [attr.aria-label]="showPassword ? 'Masquer' : 'Afficher'">
+              <button type="button" class="icon-btn" (click)="togglePassword()">
                 <span class="dot" *ngIf="!showPassword"></span>
                 <span class="dot open" *ngIf="showPassword"></span>
               </button>
             </div>
-
-            <small class="hint" *ngIf="form.controls.password.touched && form.controls.password.invalid">
-              Champ requis (min. 4 caractères).
-            </small>
           </label>
 
           <div class="row">
             <label class="check">
               <input type="checkbox" formControlName="remember" />
-              <span>Rester connecté</span>
+              <span>Rester connecte</span>
             </label>
-
-            <span class="help">Besoin d’accès ? Contactez l’admin.</span>
           </div>
-
-          <div class="error" *ngIf="error">{{ error }}</div>
 
           <button class="btn primary" type="submit" [disabled]="loading">
             <span *ngIf="!loading">Se connecter</span>
-            <span *ngIf="loading">Connexion…</span>
+            <span *ngIf="loading">Connexion...</span>
           </button>
 
-          <!-- Comptes de test (discrets, pros) -->
-          <div class="test-accounts">
-            <div class="ta-title">Comptes de test</div>
-            <div class="ta-grid">
-              <div class="ta">
-                <div class="ta-role">Admin</div>
-                <div class="ta-cred"><b>admin</b> / admin123</div>
-              </div>
-              <div class="ta">
-                <div class="ta-role">Employé</div>
-                <div class="ta-cred"><b>employee</b> / emp123</div>
-              </div>
-            </div>
+          <button class="link-btn secondary" type="button" (click)="openProtectedSetup()">
+            Creer mot de passe developer/pdg
+          </button>
+        </form>
+
+        <form *ngIf="step === 'setup-protected'" [formGroup]="setupForm" class="form" (ngSubmit)="submitSetupProtectedPassword()">
+          <p class="help" *ngIf="maskedEmail">Compte detecte: {{ maskedEmail }}</p>
+
+          <label class="field">
+            <span>Email autorise</span>
+            <input class="input" type="email" formControlName="email" autocomplete="email" />
+          </label>
+
+          <label class="field">
+            <span>Nouveau mot de passe</span>
+            <input class="input" [type]="showSetupPassword ? 'text' : 'password'" formControlName="newPassword" />
+          </label>
+
+          <label class="field">
+            <span>Confirmation mot de passe</span>
+            <input class="input" [type]="showSetupPassword ? 'text' : 'password'" formControlName="confirmPassword" />
+          </label>
+
+          <div class="row">
+            <button class="btn primary" type="submit" [disabled]="loading">Enregistrer</button>
+            <button class="btn ghost" type="button" (click)="backToLogin()">Retour</button>
           </div>
 
-          <div class="footnote">
-            Accès employé : <b>Stock</b> uniquement • Accès admin : <b>tout</b>
-          </div>
+          <button class="link-btn secondary" type="button" (click)="toggleSetupPassword()">
+            {{ showSetupPassword ? 'Masquer mot de passe' : 'Afficher mot de passe' }}
+          </button>
         </form>
+
+        <div class="info" *ngIf="info">{{ info }}</div>
+        <div class="error" *ngIf="error">{{ error }}</div>
       </div>
     </section>
   </div>
 </div>
+

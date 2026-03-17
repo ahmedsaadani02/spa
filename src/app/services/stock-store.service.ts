@@ -1,8 +1,18 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { StockColor, StockItem } from '../models/stock-item';
+import { NewStockProductInput, ProductImageSelection, StockColor, StockItem } from '../models/stock-item';
 import { StockMovement, StockMovementType } from '../models/stock-movement';
-import { StockStorageService } from './stock-storage.service';
+import { STOCK_REPOSITORY, StockRepository } from '../repositories/stock.repository';
+import type {
+  SpaInventoryResponse,
+  SpaProductMetadataAddResult,
+  SpaPriceHistoryEntry,
+  SpaProductMetadata,
+  SpaProductPurgeResult,
+  SpaProductRestoreResult,
+  SpaProductRow,
+  SpaProductUpdateResult
+} from '../types/electron';
 
 interface MoveStockInput {
   itemId: string;
@@ -10,7 +20,6 @@ interface MoveStockInput {
   type: StockMovementType;
   delta: number;
   reason: string;
-  actor: string;
 }
 
 @Injectable({
@@ -23,32 +32,82 @@ export class StockStoreService {
   private readonly movementsSubject = new BehaviorSubject<StockMovement[]>([]);
   readonly movements$ = this.movementsSubject.asObservable();
 
-  private loaded = false;
+  private readonly archivedProductsSubject = new BehaviorSubject<SpaProductRow[]>([]);
+  readonly archivedProducts$ = this.archivedProductsSubject.asObservable();
 
-  constructor(private storage: StockStorageService) {}
+  private readonly productMetadataSubject = new BehaviorSubject<SpaProductMetadata>({
+    categories: ['profil', 'accessoire', 'joint'],
+    series: ['40', '67', 'porte-securite'],
+    colors: ['blanc', 'gris', 'noir']
+  });
+  readonly productMetadata$ = this.productMetadataSubject.asObservable();
+
+  private initialized = false;
+
+  private readonly repository = inject<StockRepository>(STOCK_REPOSITORY);
+  private readonly zone = inject(NgZone);
 
   async load(): Promise<void> {
-    if (this.loaded) return;
-    await this.storage.ensureSeed();
-    await this.storage.normalizeSeries67();
+    console.log('[stock-page] load requested');
+    console.log('[stock-archives-page] load requested');
+    console.log('[stock-history-page] load requested');
+    console.log('[inventaire-page] load requested');
+    if (!this.initialized) {
+      await this.repository.initialize();
+      this.initialized = true;
+    }
     await this.refreshItems();
     await this.refreshMovements();
-    this.loaded = true;
+    await this.refreshArchivedProducts();
+    await this.refreshProductMetadata();
+    if (this.itemsSubject.value.length === 0 && this.archivedProductsSubject.value.length === 0) {
+      await this.wait(180);
+      await this.refreshItems();
+      await this.refreshArchivedProducts();
+    }
+    this.logRenderState();
   }
 
   async refreshItems(): Promise<void> {
-    const all = await this.storage.getAllItems();
+    const all = await this.repository.getItems();
     const sorted = [...all].sort((a, b) => {
       const cat = a.category.localeCompare(b.category);
       if (cat !== 0) return cat;
       return a.reference.localeCompare(b.reference);
     });
-    this.itemsSubject.next(sorted);
+    this.emitInZone(this.itemsSubject, sorted);
+    console.log('[stock-page] api response received');
+    console.log(`[stock-page] rendered items count: ${sorted.length}`);
+    console.log('[stock-page] empty state condition:', sorted.length === 0);
   }
 
   async refreshMovements(): Promise<void> {
-    const all = await this.storage.getAllMovements();
-    this.movementsSubject.next(all);
+    const all = await this.repository.getMovements();
+    this.emitInZone(this.movementsSubject, all);
+    console.log('[stock-history-page] api response received');
+    console.log(`[stock-history-page] rendered items count: ${all.length}`);
+    console.log('[stock-history-page] empty state condition:', all.length === 0);
+  }
+
+  async refreshArchivedProducts(): Promise<void> {
+    const archived = await this.repository.listArchivedProducts();
+    this.emitInZone(this.archivedProductsSubject, archived);
+    console.log('[stock-archives-page] api response received');
+    console.log(`[stock-archives-page] rendered items count: ${archived.length}`);
+    console.log('[stock-archives-page] empty state condition:', archived.length === 0);
+  }
+
+  async refreshProductMetadata(): Promise<void> {
+    const metadata = await this.repository.getProductMetadata();
+    this.emitInZone(this.productMetadataSubject, metadata);
+  }
+
+  async addProductMetadata(kind: 'category' | 'serie' | 'color', value: string): Promise<SpaProductMetadataAddResult> {
+    const result = await this.repository.addProductMetadata(kind, value);
+    if (result?.ok) {
+      await this.refreshProductMetadata();
+    }
+    return result;
   }
 
   getSnapshotItems(): StockItem[] {
@@ -64,9 +123,8 @@ export class StockStoreService {
     const item = items.find((entry) => entry.id === input.itemId);
     if (!item) return;
 
-    const actor = input.actor.trim();
     const reason = input.reason.trim();
-    if (!actor || !reason) return;
+    if (!reason) return;
 
     const before = this.getQuantity(item, input.color);
     const rawDelta = Number.isFinite(input.delta) ? input.delta : 0;
@@ -109,11 +167,11 @@ export class StockStoreService {
       before,
       after,
       reason: reason,
-      actor: actor,
+      actor: 'session-user',
       at: new Date().toISOString()
     };
 
-    await this.storage.applyMovement(nextItem, movement);
+    await this.repository.applyMovement(nextItem, movement);
 
     await this.refreshItems();
     await this.refreshMovements();
@@ -143,5 +201,107 @@ export class StockStoreService {
   private createId(): string {
     return globalThis.crypto?.randomUUID?.() ??
       `move_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  }
+
+  get supportsInventory(): boolean {
+    return this.repository.supportsInventory;
+  }
+
+  async getInventory(): Promise<SpaInventoryResponse | null> {
+    const response = await this.repository.getInventory();
+    const count = Array.isArray(response?.items) ? response.items.length : 0;
+    console.log('[inventaire-page] api response received');
+    console.log(`[inventaire-page] rendered items count: ${count}`);
+    console.log('[inventaire-page] empty state condition:', count === 0);
+    return response;
+  }
+
+  async updateProductPrice(productId: string, color: StockColor, newPrice: number, changedBy = 'erp-user'): Promise<boolean> {
+    return this.repository.updateProductPrice(productId, color, newPrice, changedBy);
+  }
+
+  async updatePrice(productId: string, color: StockColor, newPrice: number, changedBy = 'erp-user'): Promise<boolean> {
+    return this.updateProductPrice(productId, color, newPrice, changedBy);
+  }
+
+  async getProductPriceHistory(productId: string, color: StockColor): Promise<SpaPriceHistoryEntry[]> {
+    return this.repository.getProductPriceHistory(productId, color);
+  }
+
+  async restoreProductPrice(productId: string, color: StockColor, targetPrice: number, changedBy = 'erp-user'): Promise<boolean> {
+    return this.repository.restoreProductPrice(productId, color, targetPrice, changedBy);
+  }
+
+  async createProduct(input: NewStockProductInput): Promise<boolean> {
+    const created = await this.repository.createProduct(input);
+    if (created) {
+      await this.refreshItems();
+      await this.refreshProductMetadata();
+      await this.refreshArchivedProducts();
+    }
+    return created;
+  }
+
+  async updateProduct(productId: string, input: NewStockProductInput): Promise<SpaProductUpdateResult> {
+    const result = await this.repository.updateProduct(productId, input);
+    if (result?.ok) {
+      await this.refreshItems();
+      await this.refreshProductMetadata();
+      await this.refreshArchivedProducts();
+    }
+    return result;
+  }
+
+  async archiveProduct(productId: string): Promise<boolean> {
+    const archived = await this.repository.archiveProduct(productId);
+    if (archived) {
+      await this.refreshItems();
+      await this.refreshArchivedProducts();
+      await this.refreshProductMetadata();
+    }
+    return archived;
+  }
+
+  async restoreProduct(productId: string): Promise<SpaProductRestoreResult> {
+    const result = await this.repository.restoreProduct(productId);
+    if (result?.ok) {
+      await this.refreshItems();
+      await this.refreshArchivedProducts();
+      await this.refreshProductMetadata();
+    }
+    return result;
+  }
+
+  async purgeProduct(productId: string): Promise<SpaProductPurgeResult> {
+    const result = await this.repository.purgeProduct(productId);
+    if (result?.ok) {
+      await this.refreshItems();
+      await this.refreshArchivedProducts();
+      await this.refreshProductMetadata();
+    }
+    return result;
+  }
+
+  async selectProductImage(): Promise<ProductImageSelection> {
+    return this.repository.selectProductImage();
+  }
+
+  private async wait(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private logRenderState(): void {
+    console.log(`[stock-page] rendered items count: ${this.itemsSubject.value.length}`);
+    console.log('[stock-page] empty state condition:', this.itemsSubject.value.length === 0);
+    console.log(`[stock-archives-page] rendered items count: ${this.archivedProductsSubject.value.length}`);
+    console.log('[stock-archives-page] empty state condition:', this.archivedProductsSubject.value.length === 0);
+    console.log(`[stock-history-page] rendered items count: ${this.movementsSubject.value.length}`);
+    console.log('[stock-history-page] empty state condition:', this.movementsSubject.value.length === 0);
+  }
+
+  private emitInZone<T>(subject: BehaviorSubject<T>, value: T): void {
+    this.zone.run(() => {
+      subject.next(value);
+    });
   }
 }

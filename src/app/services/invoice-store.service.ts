@@ -10,25 +10,36 @@ export class InvoiceStoreService {
   private readonly invoicesSubject = new BehaviorSubject<Invoice[]>([]);
   readonly invoices$ = this.invoicesSubject.asObservable();
 
-  private loaded = false;
+  // ✅ initialized = connexion/seed une seule fois
+  // load() rafraîchit toujours les données à chaque navigation
+  private initialized = false;
 
   constructor(private persistence: InvoicePersistenceService) {}
 
   async load(): Promise<void> {
-    if (this.loaded) return;
-
-    await this.persistence.ensureSeed();
+    console.log('[invoices-page] load requested');
+    if (!this.initialized) {
+      await this.persistence.ensureSeed();
+      this.initialized = true;
+    }
+    // ✅ toujours recharger les données
     await this.refresh();
-    this.loaded = true;
+    if (this.invoicesSubject.value.length === 0) {
+      await this.wait(180);
+      await this.refresh();
+    }
+    this.logRenderState();
   }
 
   async refresh(): Promise<void> {
     const all = await this.persistence.getAll();
     const sorted = [...all].sort((a, b) => b.date.localeCompare(a.date));
     this.invoicesSubject.next(sorted);
+    console.log('[invoices-page] api response received');
+    console.log(`[invoices-page] rendered items count: ${sorted.length}`);
+    console.log('[invoices-page] empty state condition:', sorted.length === 0);
   }
 
-  // ✅ même liste que la page liste
   getSnapshot(): Invoice[] {
     return this.invoicesSubject.value;
   }
@@ -71,5 +82,15 @@ export class InvoiceStoreService {
 
     const next = (Math.max(0, ...numbers) + 1).toString().padStart(4, '0');
     return `${prefix}${next}`;
+  }
+
+  private async wait(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private logRenderState(): void {
+    const count = this.invoicesSubject.value.length;
+    console.log(`[invoices-page] rendered items count: ${count}`);
+    console.log('[invoices-page] empty state condition:', count === 0);
   }
 }

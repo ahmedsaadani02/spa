@@ -15,6 +15,71 @@
   flex-wrap: wrap;
 }
 
+.quote-notice {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+}
+
+.quote-notice--success {
+  background: #ecfdf3;
+  border-color: rgba(22, 163, 74, 0.35);
+}
+
+.quote-notice--info {
+  background: #eff6ff;
+  border-color: rgba(29, 78, 216, 0.35);
+}
+
+.quote-notice--error {
+  background: #fff5f5;
+  border-color: rgba(180, 35, 24, 0.35);
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1400;
+}
+
+.confirm-modal {
+  width: min(520px, 100%);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.22);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confirm-header h3 {
+  margin: 0;
+}
+
+.confirm-text {
+  margin: 0;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 /* =========================
    PAGE (screen)
 ========================= */
@@ -26,13 +91,31 @@
   padding: 14mm 16mm;
   box-shadow: var(--shadow);
   border-radius: 0;
-  display: flex;
-  flex-direction: column;
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
+}
+
+.invoice-layout {
+  height: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.invoice-header {
+  flex: 0 0 auto;
+}
+
+.invoice-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* =========================
@@ -327,9 +410,24 @@
     height: 297mm !important;
     padding: 14mm 16mm !important;
     overflow: hidden !important;
+    box-sizing: border-box !important;
 
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  .invoice-layout {
+    height: 100% !important;
+    min-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoice-content {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .top-header {
@@ -361,6 +459,11 @@
     height: auto;
     min-height: 297mm;
     padding: 20px;
+  }
+
+  .invoice-layout {
+    height: 100%;
+    min-height: 100%;
   }
 
   .top-header {

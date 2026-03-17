@@ -15,6 +15,25 @@
   flex-wrap: wrap;
 }
 
+.quote-notice {
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px solid transparent;
+}
+
+.quote-notice--error {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #9f1239;
+}
+
+.quote-notice--info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e3a8a;
+}
+
 /* =========================
    PAGE (screen)
 ========================= */
@@ -26,13 +45,31 @@
   padding: 14mm 16mm;
   box-shadow: var(--shadow);
   border-radius: 0;
-  display: flex;
-  flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  box-sizing: border-box;
 
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
+}
+
+.invoice-layout {
+  height: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.invoice-header {
+  flex: 0 0 auto;
+}
+
+.invoice-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* =========================
@@ -325,10 +362,25 @@
     width: 210mm !important;
     height: 297mm !important;
     padding: 14mm 16mm !important;
-    overflow: hidden !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
 
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  .invoice-layout {
+    height: 100% !important;
+    min-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoice-content {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .top-header {
@@ -360,6 +412,11 @@
     height: auto;
     min-height: 297mm;
     padding: 20px;
+  }
+
+  .invoice-layout {
+    height: 100%;
+    min-height: 100%;
   }
 
   .top-header {

@@ -10,6 +10,10 @@
     </div>
   </div>
 
+  <div class="hint integration-hint" *ngIf="stockIntegrationMessage">
+    {{ stockIntegrationMessage }}
+  </div>
+
   <form class="estimation-grid" [formGroup]="form">
 
     <!-- =======================
@@ -24,26 +28,49 @@
       <div class="series" formArrayName="series">
         <div class="series-row series-head">
           <div>Série</div>
-          <div>Longueur barre (m)</div>
+          <div>Profil stock (auto prix)</div>
+          <div>Longueur barre (cm)</div>
           <div>Prix barre (DT)</div>
           <div></div>
         </div>
 
-        <div
-          class="series-row"
-          *ngFor="let s of series.controls; let i = index"
-          [formGroupName]="i"
-        >
-          <input class="input" formControlName="nom" placeholder="Série 40">
-          <input class="input" type="number" min="0.1" step="0.01" formControlName="longueurBarre">
-          <input class="input" type="number" min="0" step="0.01" formControlName="prixBarre">
-          <button class="btn danger" type="button" (click)="removeSerie(i)" [disabled]="series.length <= 1">
-            Supprimer
-          </button>
+        <div class="series-row-wrap" *ngFor="let s of series.controls; let i = index">
+          <div class="series-row" [formGroupName]="i">
+            <input
+              class="input"
+              formControlName="nom"
+              placeholder="Serie 40"
+              [attr.list]="seriesDatalistId"
+              (change)="onSerieNameChanged(i)"
+              (blur)="onSerieNameChanged(i)"
+            >
+
+            <select class="input" formControlName="sourceProductId" (change)="onSerieProductChanged(i)">
+              <option value="">Auto (serie)</option>
+              <option *ngFor="let product of getProfileProductsForSerie(i)" [value]="product.id">
+                {{ product.label }} - {{ product.reference }} - {{ product.unitPrice | number:'1.2-2' }} DT
+              </option>
+            </select>
+
+            <input class="input" type="number" min="650" step="1" formControlName="longueurBarre" readonly>
+            <input class="input" type="number" min="0" step="0.01" formControlName="prixBarre" [readonly]="!isSeriePriceManual(i)">
+            <div class="series-actions">
+              <button class="btn danger" type="button" (click)="removeSerie(i)" [disabled]="series.length <= 1">
+                Supprimer
+              </button>
+            </div>
+          </div>
+          <div class="series-warning" *ngIf="getSerieAutoPriceMessage(i) as serieMessage">
+            {{ serieMessage }}
+          </div>
         </div>
 
+        <datalist [id]="seriesDatalistId">
+          <option *ngFor="let serie of availableSeries" [value]="serie"></option>
+        </datalist>
+
         <div class="hint">
-          Astuce : mets <strong>6.30</strong> pour une barre de 6m30.
+          Longueur standard appliquee automatiquement : <strong>{{ standardBarLengthCm }}</strong> cm (6m50).
         </div>
       </div>
     </section>
@@ -71,18 +98,18 @@
         </label>
 
         <label class="field" *ngIf="productType !== 'custom'">
-          <span>Largeur (m)</span>
-          <input class="input" type="number" min="0" step="0.01" formControlName="largeur">
+          <span>Largeur (cm)</span>
+          <input class="input" type="number" min="0" step="1" formControlName="largeur">
         </label>
 
         <label class="field" *ngIf="productType !== 'custom'">
-          <span>Hauteur (m)</span>
-          <input class="input" type="number" min="0" step="0.01" formControlName="hauteur">
+          <span>Hauteur (cm)</span>
+          <input class="input" type="number" min="0" step="1" formControlName="hauteur">
         </label>
 
         <label class="field" *ngIf="productType === 'box'">
-          <span>Profondeur (m)</span>
-          <input class="input" type="number" min="0" step="0.01" formControlName="profondeur">
+          <span>Profondeur (cm)</span>
+          <input class="input" type="number" min="0" step="1" formControlName="profondeur">
         </label>
 
         <label class="field checkbox" *ngIf="productType === 'porte'">
@@ -107,11 +134,12 @@
 
       <div class="pieces" formArrayName="pieces">
         <div class="piece-row piece-head">
+          <div>Produit stock</div>
           <div>Désignation</div>
           <div>Série</div>
-          <div>Longueur (m)</div>
+          <div>Longueur (cm)</div>
           <div>Qté</div>
-          <div>Total (m)</div>
+          <div>Total (cm)</div>
           <div></div>
         </div>
 
@@ -120,16 +148,26 @@
           *ngFor="let p of pieces.controls; let i = index"
           [formGroupName]="i"
         >
+          <select class="input" formControlName="productId" (change)="onPieceProductChanged(i)">
+            <option value="">-- Profil stock --</option>
+            <option *ngIf="getProfileProductsForPiece(i).length === 0" value="" disabled>
+              Aucun profil pour cette serie
+            </option>
+            <option *ngFor="let product of getProfileProductsForPiece(i)" [value]="product.id">
+              {{ product.label }} - {{ product.reference }}
+            </option>
+          </select>
+
           <input class="input" formControlName="designation" placeholder="Montant, traverse...">
 
-          <select class="input" formControlName="serieId">
+          <select class="input" formControlName="serieId" (change)="onPieceSerieChanged(i)">
             <option *ngFor="let opt of seriesOptions" [value]="opt.id">{{ opt.nom }}</option>
           </select>
 
-          <input class="input" type="number" min="0" step="0.01" formControlName="longueur">
+          <input class="input" type="number" min="0" step="1" formControlName="longueur">
           <input class="input" type="number" min="1" step="1" formControlName="quantite">
 
-          <div class="amount">{{ pieceTotalMetres(i) | number:'1.2-2' }}</div>
+          <div class="amount">{{ pieceTotalCm(i) | number:'1.0-1' }}</div>
 
           <button class="btn danger" type="button" (click)="removePiece(i)">
             Supprimer
@@ -158,7 +196,7 @@
         </label>
       </div>
       <div class="hint">
-        Les pertes par coupe sont appliquées sur <strong>le nombre de pièces</strong> (qté totale).
+        Les pertes par coupe sont appliquées sur <strong>le nombre de pièces dans chaque barre</strong>.
       </div>
     </section>
 
@@ -176,10 +214,14 @@
           <span>Prix verre (DT/m²)</span>
           <input class="input" type="number" min="0" step="0.01" formControlName="prixVerreM2">
         </label>
+        <label class="field" *ngIf="productType === 'custom'">
+          <span>Surface verre (m²)</span>
+          <input class="input" type="number" min="0" step="0.01" formControlName="surfaceVerreM2Manuelle">
+        </label>
       </div>
 
-      <div class="hint" *ngIf="result.surfaceVerre > 0">
-        Surface verre estimée : <strong>{{ result.surfaceVerre | number:'1.2-2' }} m²</strong>
+      <div class="hint" *ngIf="result.surfaceVerreM2 > 0">
+        Surface verre estimée : <strong>{{ result.surfaceVerreM2 | number:'1.2-2' }} m²</strong>
       </div>
     </section>
 
@@ -194,21 +236,29 @@
 
       <div class="accessories" formArrayName="accessoires">
         <div class="accessory-row accessory-head">
+          <div>Produit stock</div>
           <div>Désignation</div>
           <div>Qté</div>
           <div>PU (DT)</div>
           <div></div>
         </div>
 
-        <div
-          class="accessory-row"
-          *ngFor="let acc of accessoires.controls; let i = index"
-          [formGroupName]="i"
-        >
-          <input class="input" formControlName="designation" placeholder="Poignée, visserie...">
-          <input class="input" type="number" min="0" step="1" formControlName="quantite">
-          <input class="input" type="number" min="0" step="0.01" formControlName="prixUnitaire">
-          <button class="btn danger" type="button" (click)="removeAccessory(i)">Supprimer</button>
+        <div class="accessory-row-wrap" *ngFor="let acc of accessoires.controls; let i = index" [formGroupName]="i">
+          <div class="accessory-row">
+            <select class="input" formControlName="productId" (change)="onAccessoryProductChanged(i)">
+              <option value="">-- Accessoire stock --</option>
+              <option *ngFor="let product of accessoryProducts" [value]="product.id">
+                {{ product.label }} - {{ product.reference }}
+              </option>
+            </select>
+            <input class="input" formControlName="designation" placeholder="Poignee, visserie...">
+            <input class="input" type="number" min="0" step="1" formControlName="quantite">
+            <input class="input" type="number" min="0" step="0.01" formControlName="prixUnitaire">
+            <button class="btn danger" type="button" (click)="removeAccessory(i)">Supprimer</button>
+          </div>
+          <div class="series-warning" *ngIf="getAccessoryPriceMessage(i) as accessoryMessage">
+            {{ accessoryMessage }}
+          </div>
         </div>
 
         <div class="empty" *ngIf="accessoires.length === 0">
@@ -226,19 +276,27 @@
       <div class="results-grid">
         <div>
           <span>Conso totale (toutes séries)</span>
-          <strong>{{ result.consommationTotaleMetres | number:'1.2-2' }} m</strong>
+          <strong>{{ result.consommationTotaleCm | number:'1.0-1' }} cm</strong>
         </div>
         <div>
           <span>Longueur achetée totale</span>
-          <strong>{{ result.longueurAcheteeTotale | number:'1.2-2' }} m</strong>
+          <strong>{{ result.longueurAcheteeTotaleCm | number:'1.0-1' }} cm</strong>
         </div>
         <div>
           <span>Chute totale</span>
-          <strong>{{ result.chuteTotale | number:'1.2-2' }} m</strong>
+          <strong>{{ result.chuteTotaleCm | number:'1.0-1' }} cm</strong>
         </div>
         <div>
-          <span>Coût barres</span>
-          <strong>{{ result.coutBarres | number:'1.2-2' }} DT</strong>
+          <span>Coût barres achetées</span>
+          <strong>{{ result.coutBarresAchete | number:'1.2-2' }} DT</strong>
+        </div>
+        <div>
+          <span>Coût barres consommées</span>
+          <strong>{{ result.coutBarresConsomme | number:'1.2-2' }} DT</strong>
+        </div>
+        <div>
+          <span>Coût chute barres</span>
+          <strong>{{ result.coutBarresChute | number:'1.2-2' }} DT</strong>
         </div>
         <div>
           <span>Coût verre</span>
@@ -255,32 +313,82 @@
       </div>
 
       <h3 class="sub-title">Détail par série</h3>
-      <table class="breakdown" *ngIf="result.series.length > 0">
-        <thead>
-          <tr>
-            <th>Série</th>
-            <th class="num">Pièces (m)</th>
-            <th class="num">Pertes (m)</th>
-            <th class="num">Conso (m)</th>
-            <th class="num">Nb barres</th>
-            <th class="num">Acheté (m)</th>
-            <th class="num">Chute (m)</th>
-            <th class="num">Coût (DT)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let s of result.series">
-            <td>{{ s.nom }}</td>
-            <td class="num">{{ s.longueurPieces | number:'1.2-2' }}</td>
-            <td class="num">{{ s.pertes | number:'1.2-2' }}</td>
-            <td class="num">{{ s.consommation | number:'1.2-2' }}</td>
-            <td class="num">{{ s.nbBarres }}</td>
-            <td class="num">{{ s.longueurAchetee | number:'1.2-2' }}</td>
-            <td class="num">{{ s.chute | number:'1.2-2' }}</td>
-            <td class="num">{{ s.cout | number:'1.2-2' }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div *ngIf="result.series.length === 0" class="empty">
+        Aucune série à afficher.
+      </div>
+
+      <div class="serie-detail" *ngFor="let s of result.series">
+        <table class="breakdown">
+          <thead>
+            <tr>
+              <th>Série</th>
+              <th class="num">Barre (cm)</th>
+              <th class="num">Pièces (cm)</th>
+              <th class="num">Pertes (cm)</th>
+              <th class="num">Conso (cm)</th>
+              <th class="num">Nb barres</th>
+              <th class="num">Acheté (cm)</th>
+              <th class="num">Chute (cm)</th>
+              <th class="num">Prix/cm (DT)</th>
+              <th class="num">Coût acheté (DT)</th>
+              <th class="num">Coût consommé (DT)</th>
+              <th class="num">Coût chute (DT)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ s.nom }}</td>
+              <td class="num">{{ s.longueurBarreCm | number:'1.0-1' }}</td>
+              <td class="num">{{ s.longueurPiecesCm | number:'1.0-1' }}</td>
+              <td class="num">{{ s.pertesCm | number:'1.0-1' }}</td>
+              <td class="num">{{ s.consommationReelleCm | number:'1.0-1' }}</td>
+              <td class="num">{{ s.nbBarres }}</td>
+              <td class="num">{{ s.longueurAcheteeCm | number:'1.0-1' }}</td>
+              <td class="num">{{ s.chuteTotaleCm | number:'1.0-1' }}</td>
+              <td class="num">{{ s.prixParCm | number:'1.4-4' }}</td>
+              <td class="num">{{ s.coutAchete | number:'1.2-2' }}</td>
+              <td class="num">{{ s.coutConsomme | number:'1.2-2' }}</td>
+              <td class="num">{{ s.coutChute | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="hint" *ngIf="s.hasImpossible">
+          Certaines pièces dépassent la longueur de barre : découpe impossible pour ces pièces.
+        </div>
+
+        <div class="sub-title">Détail des barres — {{ s.nom }}</div>
+        <table class="breakdown">
+          <thead>
+            <tr>
+              <th># Barre</th>
+              <th>Pièces (cm)</th>
+              <th class="num">Pertes (cm)</th>
+              <th class="num">Chute (cm)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let bar of s.bars">
+              <td>
+                #{{ bar.index }}
+                <span class="tag danger" *ngIf="bar.impossible">Impossible</span>
+              </td>
+              <td>
+                <div class="pieces-list">
+                  <span *ngFor="let piece of bar.pieces; let last = last">
+                    {{ piece.designation }} ({{ piece.longueurCm | number:'1.0-1' }} cm){{ !last ? ', ' : '' }}
+                  </span>
+                </div>
+              </td>
+              <td class="num">{{ bar.pertesCm | number:'1.0-1' }}</td>
+              <td class="num">{{ bar.chuteCm | number:'1.0-1' }}</td>
+            </tr>
+            <tr *ngIf="s.bars.length === 0">
+              <td colspan="4" class="empty">Aucune barre.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </form>
 </section>

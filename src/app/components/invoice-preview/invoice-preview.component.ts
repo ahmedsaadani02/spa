@@ -1,10 +1,11 @@
-import { Component, OnInit, isDevMode, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, isDevMode, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Invoice } from '../../models/invoice';
 import { InvoiceCalcService, InvoiceTotals } from '../../services/invoice-calc.service';
 import { InvoiceStoreService } from '../../services/invoice-store.service';
 import { ElectronService } from '../../services/electron.service';
+import { buildMasterDocumentHtml } from '../../utils/master-document-render';
 
 type TotalsFinal = {
   fodec: number;
@@ -22,7 +23,11 @@ type TotalsFinal = {
   styleUrls: ['./invoice-preview.component.css']
 })
 export class InvoicePreviewComponent implements OnInit {
+  @ViewChild('printRoot') private printRoot?: ElementRef<HTMLElement>;
+
   invoice: Invoice | null = null;
+  noticeMessage = '';
+  noticeType: 'info' | 'error' = 'info';
 
   totals: InvoiceTotals = {
     totalHT: 0,
@@ -140,52 +145,101 @@ export class InvoicePreviewComponent implements OnInit {
     this.router.navigate(['/invoices', this.invoice.id, 'edit']);
   }
 
-  print(): void {
-    this.isPdfExport = false;
-    this.cdr.detectChanges();
-    window.print();
+  duplicate(): void {
+    if (!this.invoice) return;
+    this.router.navigate(['/invoices/new'], { queryParams: { fromInvoiceId: this.invoice.id } });
   }
 
-  savePdfWeb(): void {
-    this.isPdfExport = true;
-    this.cdr.detectChanges();
-    window.print();
+  async print(): Promise<void> {
     this.isPdfExport = false;
-    this.cdr.detectChanges();
+    this.noticeMessage = '';
+
+    await this.flushView();
+    const title = this.invoice?.numero ? `Facture ${this.invoice.numero}` : 'Facture';
+    console.log('[invoice-preview] using master page layout', { mode: 'print', title });
+    const html = await this.buildPrintableHtml(title);
+    if (!html) {
+      this.noticeType = 'error';
+      this.noticeMessage = 'Document introuvable pour impression.';
+      return;
+    }
+
+    const result = await this.electron.printDocument('invoice', this.invoice?.numero, html, title);
+    if (!result) {
+      this.noticeType = 'error';
+      this.noticeMessage = 'Impression indisponible.';
+      return;
+    }
+    if (!result.ok && !result.canceled) {
+      this.noticeType = 'error';
+      this.noticeMessage = result.message || 'Impression impossible.';
+    } else if (result.ok) {
+      this.noticeType = 'info';
+      this.noticeMessage = 'Impression envoyee.';
+      this.cdr.detectChanges();
+    }
   }
 
   async exportPdf(): Promise<void> {
     if (!this.invoice) return;
 
     this.isPdfExport = true;
-    this.cdr.detectChanges();
+    this.noticeMessage = '';
 
     try {
-      if (!this.electron.isElectron) {
-        window.print();
+      await this.flushView();
+      const title = `Facture ${this.invoice.numero}`;
+      console.log('[invoice-preview] using master page layout', { mode: 'pdf', title });
+      const html = await this.buildPrintableHtml(title);
+      if (!html) {
+        this.noticeType = 'error';
+        this.noticeMessage = 'Document introuvable pour export PDF.';
         return;
       }
 
-      const anyElectron: any = this.electron as any;
-
-      if (typeof anyElectron.exportPdf === 'function') {
-        await anyElectron.exportPdf();
+      const result = await this.electron.exportDocumentPdf('invoice', this.invoice.numero, html, title);
+      if (!result) {
+        this.noticeType = 'error';
+        this.noticeMessage = 'Export PDF indisponible.';
         return;
       }
-
-      if (anyElectron.ipcRenderer?.invoke) {
-        await anyElectron.ipcRenderer.invoke('export-pdf');
+      if (result?.canceled) {
+        if (result?.message) {
+          this.noticeType = 'error';
+          this.noticeMessage = result.message;
+        }
         return;
       }
-
-      alert('Export PDF non configur\u00e9 dans ElectronService.');
+      if (!result?.filePath) {
+        this.noticeType = 'error';
+        this.noticeMessage = result?.message || 'Export PDF impossible.';
+        return;
+      }
+      this.noticeType = 'info';
+      this.noticeMessage = 'PDF enregistre avec succes.';
     } catch (e) {
       console.error(e);
-      alert('Erreur export PDF. Voir console.');
+      this.noticeType = 'error';
+      this.noticeMessage = 'Erreur export PDF.';
     } finally {
       this.isPdfExport = false;
       this.cdr.detectChanges();
     }
+  }
+
+  private async flushView(): Promise<void> {
+    this.cdr.detectChanges();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  }
+
+  private async buildPrintableHtml(title: string): Promise<string | null> {
+    const root = this.printRoot?.nativeElement;
+    if (!root) return null;
+    return buildMasterDocumentHtml({
+      root,
+      title,
+      logTag: 'invoice-render'
+    });
   }
 
   private computeFinalTotals(): void {

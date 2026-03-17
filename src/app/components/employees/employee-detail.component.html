@@ -1,0 +1,183 @@
+<section class="panel" *ngIf="!loading">
+  <div class="panel-header">
+    <div>
+      <h1>Detail salarie</h1>
+      <p *ngIf="employee">{{ employee.nom }} - {{ employee.poste || 'N/A' }}</p>
+    </div>
+    <div class="actions">
+      <a class="btn ghost" routerLink="/employees">Retour</a>
+      <button class="btn outline" type="button" *ngIf="employee && canManageEmployees" (click)="openEdit()">
+        Modifier
+      </button>
+    </div>
+  </div>
+
+  <div class="error" *ngIf="error">{{ error }}</div>
+
+  <section class="card" *ngIf="employee">
+    <div class="grid-3 identity">
+      <div><strong>Username:</strong> {{ employee.username || '-' }}</div>
+      <div><strong>Email:</strong> {{ employee.email || '-' }}</div>
+      <div><strong>Role:</strong> {{ employee.role }}</div>
+      <div><strong>Actif:</strong> {{ employee.actif ? 'Oui' : 'Non' }}</div>
+      <div><strong>Actif logiciel:</strong> {{ employee.isActive ? 'Oui' : 'Non' }}</div>
+      <div><strong>Compte protege:</strong> {{ employee.isProtectedAccount ? 'Oui' : 'Non' }}</div>
+      <div><strong>Salaire base:</strong> {{ employee.salaireBase | number:'1.2-2' }}</div>
+      <div><strong>Stock view:</strong> {{ employee.canViewStock ? 'Oui' : 'Non' }}</div>
+      <div><strong>Stock manage:</strong> {{ employee.canManageStock ? 'Oui' : 'Non' }}</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <form [formGroup]="periodForm" class="period">
+      <div class="period-header">
+        <h2>Periode salariale</h2>
+        <span class="period-hint">Selectionnez le mois et l'annee puis appliquez.</span>
+      </div>
+      <div class="period-controls">
+        <label class="field period-field">
+          <span>Mois</span>
+          <select class="input period-select" formControlName="month" (change)="onPeriodSelectionChanged()">
+            <option *ngFor="let option of monthOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </label>
+        <label class="field period-field">
+          <span>Annee</span>
+          <select class="input period-select" formControlName="year" (change)="onPeriodSelectionChanged()">
+            <option *ngFor="let yearOption of yearOptions" [value]="yearOption">{{ yearOption }}</option>
+          </select>
+        </label>
+        <button class="btn primary period-apply-btn" type="button" (click)="reloadPeriod()">Appliquer</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="cards-summary" *ngIf="summary">
+    <div class="card metric">
+      <span>Salaire base</span>
+      <strong>{{ summary.salaireBase | number:'1.2-2' }}</strong>
+    </div>
+    <div class="card metric">
+      <span>Total avances</span>
+      <strong>{{ summary.totalAdvances | number:'1.2-2' }}</strong>
+    </div>
+    <div class="card metric">
+      <span>Total primes</span>
+      <strong>{{ summary.totalBonuses | number:'1.2-2' }}</strong>
+    </div>
+    <div class="card metric">
+      <span>Heures normales du mois</span>
+      <strong>{{ summary.heuresNormalesMois | number:'1.0-2' }} h</strong>
+      <small class="metric-sub">{{ summary.joursSemaine }} j (lun-ven) • {{ summary.samedis }} samedis</small>
+    </div>
+    <div class="card metric">
+      <span>Taux horaire</span>
+      <strong>{{ summary.tauxHoraire | number:'1.2-2' }}</strong>
+    </div>
+    <div class="card metric">
+      <span>Total heures supplementaires</span>
+      <strong>{{ summary.totalOvertimeHours | number:'1.0-2' }} h</strong>
+    </div>
+    <div class="card metric">
+      <span>Montant heures supplementaires</span>
+      <strong>{{ summary.totalOvertimeAmount | number:'1.2-2' }}</strong>
+    </div>
+    <div class="card metric rest">
+      <span>Reste a payer</span>
+      <strong>{{ summary.resteAPayer | number:'1.2-2' }}</strong>
+    </div>
+  </section>
+
+  <div class="error" *ngIf="salaryActionError">{{ salaryActionError }}</div>
+  <div class="success" *ngIf="salaryActionSuccess">{{ salaryActionSuccess }}</div>
+
+  <section class="grid-2">
+    <div class="card">
+      <h2>Avances</h2>
+      <form [formGroup]="advanceForm" (ngSubmit)="addAdvance()" class="inline-form">
+        <input class="input" type="number" min="0.01" step="0.01" formControlName="montant" placeholder="Montant" />
+        <input class="input" type="date" formControlName="dateAvance" />
+        <input class="input" type="text" formControlName="note" placeholder="Note" />
+        <button class="btn primary" type="submit" [disabled]="addingAdvance">
+          {{ addingAdvance ? 'Ajout...' : 'Ajouter avance' }}
+        </button>
+      </form>
+
+      <div class="list">
+        <div class="list-row" *ngFor="let item of advances">
+          <span>{{ item.dateAvance | date:'dd/MM/yyyy' }}</span>
+          <span>{{ item.note || '-' }}</span>
+          <span class="mono">{{ item.montant | number:'1.2-2' }}</span>
+          <button class="btn danger" type="button" (click)="deleteAdvance(item)">Supprimer</button>
+        </div>
+        <div class="empty" *ngIf="advances.length === 0">Aucune avance pour cette periode.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Primes</h2>
+      <form [formGroup]="bonusForm" (ngSubmit)="addBonus()" class="inline-form">
+        <input class="input" type="number" min="0.01" step="0.01" formControlName="montant" placeholder="Montant" />
+        <input class="input" type="date" formControlName="datePrime" />
+        <input class="input" type="text" formControlName="motif" placeholder="Motif" />
+        <button class="btn primary" type="submit" [disabled]="addingBonus">
+          {{ addingBonus ? 'Ajout...' : 'Ajouter prime' }}
+        </button>
+      </form>
+
+      <div class="list">
+        <div class="list-row" *ngFor="let item of bonuses">
+          <span>{{ item.datePrime | date:'dd/MM/yyyy' }}</span>
+          <span>{{ item.motif || '-' }}</span>
+          <span class="mono">{{ item.montant | number:'1.2-2' }}</span>
+          <button class="btn danger" type="button" (click)="deleteBonus(item)">Supprimer</button>
+        </div>
+        <div class="empty" *ngIf="bonuses.length === 0">Aucune prime pour cette periode.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Heures supplementaires</h2>
+    <form [formGroup]="overtimeForm" (ngSubmit)="addOvertime()" class="inline-form overtime-form">
+      <input class="input" type="number" min="0.01" step="0.01" formControlName="heuresSupplementaires" placeholder="Nombre d'heures" />
+      <input class="input" type="date" formControlName="dateHeuresSup" />
+      <input class="input" type="text" formControlName="motif" placeholder="Motif / note" />
+      <button class="btn primary" type="submit" [disabled]="addingOvertime">
+        {{ addingOvertime ? 'Ajout...' : 'Ajouter heures supplementaires' }}
+      </button>
+    </form>
+
+    <div class="list">
+      <div class="list-row overtime-row list-head" *ngIf="overtimes.length > 0">
+        <span>Date</span>
+        <span>Motif</span>
+        <span>Heures</span>
+        <span>Taux horaire</span>
+        <span>Montant</span>
+        <span></span>
+      </div>
+      <div class="list-row overtime-row" *ngFor="let item of overtimes">
+        <span>{{ item.dateHeuresSup | date:'dd/MM/yyyy' }}</span>
+        <span>{{ item.motif || '-' }}</span>
+        <span class="mono">{{ item.heuresSupplementaires | number:'1.0-2' }} h</span>
+        <span class="mono">{{ item.tauxHoraire | number:'1.2-2' }}</span>
+        <span class="mono">{{ item.montant | number:'1.2-2' }}</span>
+        <button class="btn danger" type="button" (click)="deleteOvertime(item)">Supprimer</button>
+      </div>
+      <div class="empty" *ngIf="overtimes.length === 0">Aucune heure supplementaire pour cette periode.</div>
+    </div>
+  </section>
+
+  <section class="card" *ngIf="canManageEmployees">
+    <h2>Reinitialiser mot de passe</h2>
+    <form [formGroup]="resetPasswordForm" (ngSubmit)="resetPassword()" class="reset-row">
+      <input class="input" type="password" formControlName="newPassword" placeholder="Nouveau mot de passe (min 10)" />
+      <button class="btn outline" type="submit" [disabled]="resettingPassword">
+        {{ resettingPassword ? 'En cours...' : 'Reinitialiser' }}
+      </button>
+    </form>
+    <div class="error" *ngIf="resetPasswordError">{{ resetPasswordError }}</div>
+    <div class="success" *ngIf="resetPasswordSuccess">{{ resetPasswordSuccess }}</div>
+  </section>
+</section>

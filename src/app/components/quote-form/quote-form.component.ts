@@ -1,10 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormArray, FormBuilder, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subject, startWith, takeUntil } from 'rxjs';
-import { Quote, QuoteRemiseType } from '../../models/quote';
+import { Client } from '../../models/client';
 import { InvoiceLine } from '../../models/invoice-line';
+import { Quote, QuoteRemiseType } from '../../models/quote';
+import { ClientAutocompleteComponent } from '../client-autocomplete/client-autocomplete.component';
 import { QuoteCalcService, QuoteTotals } from '../../services/quote-calc.service';
 import { QuoteStoreService } from '../../services/quote-store.service';
 
@@ -13,22 +15,26 @@ const TVA_RATE = 19;
 @Component({
   selector: 'app-quote-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ClientAutocompleteComponent],
   templateUrl: './quote-form.component.html',
   styleUrls: ['./quote-form.component.css']
 })
 export class QuoteFormComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
+  private isApplyingClientSelection = false;
+  private selectedClient: Client | null = null;
+  private currentId: string | null = null;
 
   form = this.fb.group({
     numero: ['', Validators.required],
     date: ['', Validators.required],
+    clientId: ['' as string | null],
     client: this.fb.group({
       nom: ['', Validators.required],
       adresse: ['', Validators.required],
       tel: [''],
       mf: [''],
-      email: ['']
+      email: ['', Validators.email]
     }),
     lignes: this.fb.array([]),
     remiseType: ['montant' as QuoteRemiseType],
@@ -50,8 +56,6 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
   isEdit = false;
   numeroConflict = false;
 
-  private currentId: string | null = null;
-
   constructor(
     private fb: FormBuilder,
     private store: QuoteStoreService,
@@ -64,11 +68,15 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
     return this.form.get('lignes') as FormArray;
   }
 
+  get clientFormGroup(): FormGroup {
+    return this.form.get('client') as FormGroup;
+  }
+
   async ngOnInit(): Promise<void> {
     await this.store.load();
 
     const id = this.route.snapshot.paramMap.get('id');
-
+    const fromQuoteId = this.route.snapshot.queryParamMap.get('fromQuoteId');
     if (id) {
       this.isEdit = true;
       const quote = await this.store.getById(id);
@@ -78,17 +86,22 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
       }
 
       this.currentId = quote.id;
-
       this.form.patchValue({
         numero: quote.numero,
         date: quote.date,
-        client: quote.client,
+        clientId: quote.clientId ?? quote.client?.id ?? null,
+        client: {
+          nom: quote.client?.nom ?? '',
+          adresse: quote.client?.adresse ?? '',
+          tel: quote.client?.tel || quote.client?.telephone || '',
+          mf: quote.client?.mf ?? '',
+          email: quote.client?.email ?? ''
+        },
         remiseType: quote.remiseType ?? 'montant',
         remiseValue: quote.remiseValue ?? 0,
         notes: quote.notes ?? '',
         conditions: quote.conditions ?? ''
       });
-
       this.setLines(quote.lignes ?? []);
     } else {
       this.isEdit = false;
@@ -98,12 +111,28 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
       this.form.patchValue({
         numero,
         date: new Date().toISOString().slice(0, 10),
+        clientId: null,
         remiseType: 'montant',
         remiseValue: 0
       });
 
-      this.addLine();
+      if (fromQuoteId) {
+        const source = await this.store.getById(fromQuoteId);
+        if (source) {
+          this.prefillFromQuote(source);
+        } else {
+          this.addLine();
+        }
+      } else {
+        this.addLine();
+      }
     }
+
+    this.initializeSelectedClientFromForm();
+
+    this.form.get('client')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.syncClientLinkOnManualEdit());
 
     this.form.valueChanges
       .pipe(startWith(this.form.getRawValue()), takeUntil(this.destroy$))
@@ -115,6 +144,13 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  onClientSelected(client: Client | null): void {
+    this.isApplyingClientSelection = true;
+    this.selectedClient = client;
+    this.form.patchValue({ clientId: client?.id ?? null }, { emitEvent: false });
+    this.isApplyingClientSelection = false;
   }
 
   addLine(): void {
@@ -133,14 +169,12 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
 
   async save(goToPreview: boolean): Promise<void> {
     this.numeroConflict = false;
-
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
     const quote = this.buildQuote();
-
     const unique = await this.store.isNumeroUnique(quote.numero, quote.id);
     if (!unique) {
       this.numeroConflict = true;
@@ -151,9 +185,10 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
 
     if (goToPreview) {
       this.router.navigate(['/quotes', quote.id, 'preview']);
-    } else {
-      this.router.navigate(['/quotes']);
+      return;
     }
+
+    this.router.navigate(['/quotes']);
   }
 
   cancel(): void {
@@ -161,8 +196,7 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
   }
 
   private updateTotals(): void {
-    const quote = this.buildQuote();
-    this.totals = this.calc.totals(quote);
+    this.totals = this.calc.totals(this.buildQuote());
   }
 
   private setLines(lines: InvoiceLine[]): void {
@@ -182,21 +216,50 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
     });
   }
 
+  private prefillFromQuote(source: Quote): void {
+    this.form.patchValue({
+      clientId: source.clientId ?? source.client?.id ?? null,
+      client: {
+        nom: source.client?.nom ?? '',
+        adresse: source.client?.adresse ?? '',
+        tel: source.client?.tel || source.client?.telephone || '',
+        mf: source.client?.mf ?? '',
+        email: source.client?.email ?? ''
+      },
+      remiseType: source.remiseType ?? 'montant',
+      remiseValue: source.remiseValue ?? 0,
+      notes: source.notes ?? '',
+      conditions: source.conditions ?? ''
+    });
+    this.setLines(this.cloneLines(source.lignes ?? []));
+  }
+
+  private cloneLines(lines: InvoiceLine[]): InvoiceLine[] {
+    return lines.map((line) => ({
+      ...line,
+      id: this.createId()
+    }));
+  }
+
   private buildQuote(): Quote {
     const raw = this.form.getRawValue();
+    const clientId = this.normalizeText(raw.clientId) || null;
 
     return {
       id: this.ensureCurrentId(),
-      numero: (raw.numero ?? '').trim(),
-      date: (raw.date ?? new Date().toISOString().slice(0, 10)).trim(),
+      numero: this.normalizeText(raw.numero),
+      date: this.normalizeText(raw.date || new Date().toISOString().slice(0, 10)),
+      clientId,
       client: {
-        nom: raw.client?.nom ?? '',
-        adresse: raw.client?.adresse ?? '',
-        tel: raw.client?.tel ?? '',
-        mf: raw.client?.mf ?? '',
-        email: raw.client?.email ?? ''
+        id: clientId,
+        nom: this.normalizeText(raw.client?.nom),
+        adresse: this.normalizeText(raw.client?.adresse),
+        tel: this.normalizeText(raw.client?.tel),
+        telephone: this.normalizeText(raw.client?.tel),
+        mf: this.normalizeText(raw.client?.mf),
+        email: this.normalizeText(raw.client?.email).toLowerCase()
       },
-      lignes: ((raw.lignes ?? []) as InvoiceLine[]).map((l) => this.normalizeLine(l)),
+      lignes: ((raw.lignes ?? []) as InvoiceLine[]).map((line) => this.normalizeLine(line)),
       remiseType: raw.remiseType ?? 'montant',
       remiseValue: Number(raw.remiseValue) || 0,
       notes: raw.notes ?? '',
@@ -217,8 +280,61 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
     if (!this.currentId) {
       this.currentId = this.createId();
     }
-
     return this.currentId;
+  }
+
+  private initializeSelectedClientFromForm(): void {
+    const raw = this.form.getRawValue();
+    const currentId = this.normalizeText(raw.clientId) || null;
+    if (!currentId && !this.normalizeText(raw.client?.nom)) {
+      this.selectedClient = null;
+      return;
+    }
+
+    this.selectedClient = {
+      id: currentId,
+      nom: this.normalizeText(raw.client?.nom),
+      adresse: this.normalizeText(raw.client?.adresse),
+      tel: this.normalizeText(raw.client?.tel),
+      telephone: this.normalizeText(raw.client?.tel),
+      mf: this.normalizeText(raw.client?.mf),
+      email: this.normalizeText(raw.client?.email).toLowerCase()
+    };
+  }
+
+  private syncClientLinkOnManualEdit(): void {
+    if (this.isApplyingClientSelection || !this.selectedClient) return;
+
+    const rawClient = this.form.getRawValue().client;
+    if (this.matchesSelectedClient(rawClient, this.selectedClient)) return;
+
+    this.selectedClient = null;
+    this.form.patchValue({ clientId: null }, { emitEvent: false });
+  }
+
+  private matchesSelectedClient(
+    rawClient: { nom?: string | null; adresse?: string | null; tel?: string | null; mf?: string | null; email?: string | null } | null | undefined,
+    selected: Client
+  ): boolean {
+    return (
+      this.toKey(rawClient?.nom) === this.toKey(selected.nom) &&
+      this.toKey(rawClient?.adresse) === this.toKey(selected.adresse) &&
+      this.toKey(rawClient?.tel) === this.toKey(selected.tel || selected.telephone) &&
+      this.toKey(rawClient?.mf) === this.toKey(selected.mf) &&
+      this.toKey(rawClient?.email) === this.toKey(selected.email)
+    );
+  }
+
+  private normalizeText(value: unknown): string {
+    if (typeof value !== 'string') return '';
+    return value.trim().replace(/\s+/g, ' ');
+  }
+
+  private toKey(value: unknown): string {
+    return this.normalizeText(value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 
   private createId(): string {

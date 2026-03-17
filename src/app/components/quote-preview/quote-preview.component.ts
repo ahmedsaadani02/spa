@@ -1,10 +1,13 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Quote } from '../../models/quote';
 import { QuoteCalcService, QuoteTotals } from '../../services/quote-calc.service';
+import { InvoiceStoreService } from '../../services/invoice-store.service';
 import { QuoteStoreService } from '../../services/quote-store.service';
+import { AuthService } from '../../services/auth.service';
 import { ElectronService } from '../../services/electron.service';
+import { buildMasterDocumentHtml } from '../../utils/master-document-render';
 
 @Component({
   selector: 'app-quote-preview',
@@ -14,7 +17,16 @@ import { ElectronService } from '../../services/electron.service';
   styleUrls: ['./quote-preview.component.css']
 })
 export class QuotePreviewComponent implements OnInit {
+  @ViewChild('printRoot') private printRoot?: ElementRef<HTMLElement>;
+
   quote: Quote | null = null;
+  notice: { open: boolean; type: 'success' | 'info' | 'error'; message: string; invoiceId?: string } = {
+    open: false,
+    type: 'info',
+    message: ''
+  };
+  convertConfirmOpen = false;
+  convertSubmitting = false;
 
   totals: QuoteTotals = {
     totalHT: 0,
@@ -39,13 +51,23 @@ export class QuotePreviewComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private store: QuoteStoreService,
+    private invoices: InvoiceStoreService,
+    private auth: AuthService,
     public calc: QuoteCalcService,
     public electron: ElectronService,
     private cdr: ChangeDetectorRef
   ) {}
 
+  get canConvertToInvoice(): boolean {
+    return this.auth.hasPermission('manageQuotes') && this.auth.hasPermission('manageInvoices');
+  }
+
+  isQuoteConverted(): boolean {
+    return !!this.getLinkedInvoiceId();
+  }
+
   async ngOnInit(): Promise<void> {
-    await this.store.load();
+    await Promise.all([this.store.load(), this.invoices.load()]);
 
     let id =
       this.route.snapshot.queryParamMap.get('id') ??
@@ -87,18 +109,125 @@ export class QuotePreviewComponent implements OnInit {
     this.router.navigate(['/quotes', this.quote.id, 'edit']);
   }
 
-  print(): void {
-    this.isPdfExport = false;
-    this.cdr.detectChanges();
-    window.print();
+  duplicate(): void {
+    if (!this.quote) return;
+    this.router.navigate(['/quotes/new'], { queryParams: { fromQuoteId: this.quote.id } });
   }
 
-  savePdfWeb(): void {
-    this.isPdfExport = true;
-    this.cdr.detectChanges();
-    window.print();
+  async print(): Promise<void> {
     this.isPdfExport = false;
-    this.cdr.detectChanges();
+    await this.flushView();
+    const title = this.quote?.numero ? `Devis ${this.quote.numero}` : 'Devis';
+    console.log('[quote-preview] using master render', { mode: 'print', title });
+    const html = await this.buildPrintableHtml(title);
+    if (!html) {
+      this.showNotice('error', 'Document introuvable pour impression.');
+      return;
+    }
+
+    const result = await this.electron.printDocument('quote', this.quote?.numero, html, title);
+    if (!result) {
+      this.showNotice('error', 'Impression indisponible.');
+      return;
+    }
+    if (!result.ok && !result.canceled) {
+      this.showNotice('error', result.message || 'Impression impossible.');
+    } else if (result.ok) {
+      this.showNotice('info', 'Impression envoyee.');
+    }
+  }
+
+  async convertToInvoice(): Promise<void> {
+    if (!this.quote) return;
+    if (!this.canConvertToInvoice) {
+      this.showNotice('error', 'Acces refuse.');
+      return;
+    }
+    const linkedInvoiceId = this.getLinkedInvoiceId();
+    if (linkedInvoiceId) {
+      this.showNotice('info', 'Ce devis a deja ete converti en facture.', linkedInvoiceId);
+      return;
+    }
+
+    this.convertConfirmOpen = true;
+    this.convertSubmitting = false;
+    console.log('[quote-convert] confirmation opened', { quoteId: this.quote.id, numero: this.quote.numero });
+  }
+
+  cancelConvertToInvoice(): void {
+    if (this.convertSubmitting) return;
+    this.convertConfirmOpen = false;
+    console.log('[quote-convert] confirmation cancelled');
+  }
+
+  async confirmConvertToInvoice(): Promise<void> {
+    if (!this.quote || this.convertSubmitting) {
+      return;
+    }
+    this.convertSubmitting = true;
+    console.log('[quote-convert] confirmation accepted', { quoteId: this.quote.id, numero: this.quote.numero });
+
+    const result = await this.store.convertToInvoice(this.quote.id);
+    if (!result.ok && !result.alreadyConverted) {
+      this.showNotice('error', result.message || 'Conversion impossible.');
+      this.convertSubmitting = false;
+      this.convertConfirmOpen = false;
+      return;
+    }
+
+    await this.invoices.load();
+    await this.store.refresh();
+    this.quote = await this.store.getById(this.quote.id);
+    if (result.alreadyConverted && !result.invoiceId) {
+      this.showNotice('info', 'Ce devis a deja ete converti en facture.');
+      this.convertSubmitting = false;
+      this.convertConfirmOpen = false;
+      return;
+    }
+    if (result.invoiceId) {
+      this.showNotice(
+        result.alreadyConverted ? 'info' : 'success',
+        result.alreadyConverted ? 'Ce devis a deja ete converti en facture.' : 'Facture creee avec succes.',
+        result.invoiceId
+      );
+      this.convertSubmitting = false;
+      this.convertConfirmOpen = false;
+      await this.router.navigate(['/invoices', result.invoiceId, 'preview']);
+      return;
+    }
+
+    this.showNotice('success', 'Facture creee avec succes.');
+    this.convertSubmitting = false;
+    this.convertConfirmOpen = false;
+  }
+
+  async openConvertedInvoice(): Promise<void> {
+    const targetInvoiceId = this.notice.invoiceId || this.getLinkedInvoiceId();
+    if (!targetInvoiceId) return;
+    await this.router.navigate(['/invoices', targetInvoiceId, 'preview']);
+  }
+
+  closeNotice(): void {
+    this.notice = { ...this.notice, open: false };
+  }
+
+  private showNotice(type: 'success' | 'info' | 'error', message: string, invoiceId?: string): void {
+    this.notice = {
+      open: true,
+      type,
+      message,
+      invoiceId
+    };
+  }
+
+  private getLinkedInvoiceId(): string | null {
+    if (!this.quote) return null;
+    const invoices = this.invoices.getSnapshot();
+    if (this.quote.convertedInvoiceId && invoices.some((invoice) => invoice.id === this.quote?.convertedInvoiceId)) {
+      return this.quote.convertedInvoiceId;
+    }
+    const linkedByQuote = invoices.find((invoice) => invoice.quoteId === this.quote?.id);
+    return linkedByQuote?.id ?? null;
   }
 
   async exportPdf(): Promise<void> {
@@ -106,33 +235,53 @@ export class QuotePreviewComponent implements OnInit {
 
     try {
       this.isPdfExport = true;
-      this.cdr.detectChanges();
-
-      if (!this.electron.isElectron) {
-        window.print();
+      await this.flushView();
+      const title = `Devis ${this.quote.numero}`;
+      console.log('[quote-preview] using master render', { mode: 'pdf', title });
+      const html = await this.buildPrintableHtml(title);
+      if (!html) {
+        this.showNotice('error', 'Document introuvable pour export PDF.');
         return;
       }
 
-      const anyElectron: any = this.electron as any;
-
-      if (typeof anyElectron.exportPdf === 'function') {
-        await anyElectron.exportPdf();
+      const result = await this.electron.exportDocumentPdf('quote', this.quote.numero, html, title);
+      if (!result) {
+        this.showNotice('error', 'Export PDF indisponible.');
         return;
       }
-
-      if (anyElectron.ipcRenderer?.invoke) {
-        await anyElectron.ipcRenderer.invoke('export-pdf');
+      if (result?.canceled) {
+        if (result?.message) {
+          this.showNotice('error', result.message);
+        }
         return;
       }
-
-      alert('Export PDF non configur\u00e9 dans ElectronService.');
+      if (!result?.filePath) {
+        this.showNotice('error', result?.message || 'Export PDF impossible.');
+        return;
+      }
+      this.showNotice('success', 'PDF enregistre avec succes.');
     } catch (e) {
       console.error(e);
-      alert('Erreur export PDF. Voir console.');
+      this.showNotice('error', 'Erreur export PDF.');
     } finally {
       this.isPdfExport = false;
       this.cdr.detectChanges();
     }
+  }
+
+  private async flushView(): Promise<void> {
+    this.cdr.detectChanges();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  }
+
+  private async buildPrintableHtml(title: string): Promise<string | null> {
+    const root = this.printRoot?.nativeElement;
+    if (!root) return null;
+    return buildMasterDocumentHtml({
+      root,
+      title,
+      logTag: 'quote-render'
+    });
   }
 
   // ---------- NOMBRE EN LETTRES ----------

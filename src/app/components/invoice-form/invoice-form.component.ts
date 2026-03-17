@@ -1,28 +1,36 @@
-﻿import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormArray, FormBuilder, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subject, startWith, takeUntil } from 'rxjs';
+import { Client } from '../../models/client';
 import { Invoice, RemiseType } from '../../models/invoice';
 import { InvoiceLine } from '../../models/invoice-line';
+import { Quote } from '../../models/quote';
+import { ClientAutocompleteComponent } from '../client-autocomplete/client-autocomplete.component';
 import { InvoiceCalcService, InvoiceTotals } from '../../services/invoice-calc.service';
 import { InvoiceStoreService } from '../../services/invoice-store.service';
+import { QuoteStoreService } from '../../services/quote-store.service';
 
 const TVA_RATE = 19;
 
 @Component({
   selector: 'app-invoice-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ClientAutocompleteComponent],
   templateUrl: './invoice-form.component.html',
   styleUrls: ['./invoice-form.component.css']
 })
 export class InvoiceFormComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
+  private isApplyingClientSelection = false;
+  private selectedClient: Client | null = null;
+  private currentId: string | null = null;
 
   form = this.fb.group({
     numero: ['', Validators.required],
     date: ['', Validators.required],
+    clientId: ['' as string | null],
     client: this.fb.group({
       nom: ['', Validators.required],
       adresse: ['', Validators.required],
@@ -50,12 +58,10 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   isEdit = false;
   numeroConflict = false;
 
-  // ✅ IMPORTANT: id stable pendant toute la création/édition
-  private currentId: string | null = null;
-
   constructor(
     private fb: FormBuilder,
     private store: InvoiceStoreService,
+    private quoteStore: QuoteStoreService,
     public calc: InvoiceCalcService,
     private route: ActivatedRoute,
     private router: Router
@@ -65,13 +71,17 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     return this.form.get('lignes') as FormArray;
   }
 
+  get clientFormGroup(): FormGroup {
+    return this.form.get('client') as FormGroup;
+  }
+
   async ngOnInit(): Promise<void> {
     await this.store.load();
 
     const id = this.route.snapshot.paramMap.get('id');
-
+    const fromInvoiceId = this.route.snapshot.queryParamMap.get('fromInvoiceId');
+    const fromQuoteId = this.route.snapshot.queryParamMap.get('fromQuoteId');
     if (id) {
-      // EDIT
       this.isEdit = true;
       const invoice = await this.store.getById(id);
       if (!invoice) {
@@ -80,49 +90,81 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       }
 
       this.currentId = invoice.id;
-
       this.form.patchValue({
         numero: invoice.numero,
         date: invoice.date,
-        client: invoice.client,
+        clientId: invoice.clientId ?? invoice.client?.id ?? null,
+        client: {
+          nom: invoice.client?.nom ?? '',
+          adresse: invoice.client?.adresse ?? '',
+          tel: invoice.client?.tel || invoice.client?.telephone || '',
+          mf: invoice.client?.mf ?? '',
+          email: invoice.client?.email ?? ''
+        },
         remiseType: invoice.remiseType ?? 'montant',
         remiseValue: invoice.remiseValue ?? 0,
         remiseAvantTVA: invoice.remiseAvantTVA ?? true,
         notes: invoice.notes ?? '',
         conditions: invoice.conditions ?? ''
       });
-
       this.setLines(invoice.lignes ?? []);
     } else {
-      // NEW
       this.isEdit = false;
-
-      // ✅ FIX: on crée l'id UNE SEULE FOIS
       this.currentId = this.ensureCurrentId();
 
       const numero = await this.store.getNextInvoiceNumber();
       this.form.patchValue({
         numero,
         date: new Date().toISOString().slice(0, 10),
+        clientId: null,
         remiseType: 'montant',
         remiseValue: 0,
         remiseAvantTVA: true
       });
 
-      this.addLine();
+      if (fromInvoiceId) {
+        const sourceInvoice = await this.store.getById(fromInvoiceId);
+        if (sourceInvoice) {
+          this.prefillFromInvoice(sourceInvoice);
+        } else {
+          this.addLine();
+        }
+      } else if (fromQuoteId) {
+        await this.quoteStore.load();
+        const sourceQuote = await this.quoteStore.getById(fromQuoteId);
+        if (sourceQuote) {
+          this.prefillFromQuote(sourceQuote);
+        } else {
+          this.addLine();
+        }
+      } else {
+        this.addLine();
+      }
     }
+
+    this.initializeSelectedClientFromForm();
+
+    this.form.get('client')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.syncClientLinkOnManualEdit());
 
     this.form.valueChanges
       .pipe(startWith(this.form.getRawValue()), takeUntil(this.destroy$))
       .subscribe(() => this.updateTotals());
 
-    // premier calcul
     this.updateTotals();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  onClientSelected(client: Client | null): void {
+    this.isApplyingClientSelection = true;
+    this.selectedClient = client;
+    this.form.patchValue({ clientId: client?.id ?? null }, { emitEvent: false });
+    this.isApplyingClientSelection = false;
   }
 
   addLine(): void {
@@ -146,14 +188,12 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
 
   async save(goToPreview: boolean): Promise<void> {
     this.numeroConflict = false;
-
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
     const invoice = this.buildInvoice();
-
     const unique = await this.store.isNumeroUnique(invoice.numero, invoice.id);
     if (!unique) {
       this.numeroConflict = true;
@@ -163,13 +203,11 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     await this.store.save(invoice);
 
     if (goToPreview) {
-      this.router.navigate(['/invoices', invoice.id, 'preview'], {
-  queryParams: { id: invoice.id }
-});
-
-    } else {
-      this.router.navigate(['/invoices']);
+      this.router.navigate(['/invoices', invoice.id, 'preview'], { queryParams: { id: invoice.id } });
+      return;
     }
+
+    this.router.navigate(['/invoices']);
   }
 
   cancel(): void {
@@ -177,8 +215,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   }
 
   private updateTotals(): void {
-    const invoice = this.buildInvoice();
-    this.totals = this.calc.totals(invoice);
+    this.totals = this.calc.totals(this.buildInvoice());
   }
 
   private setLines(lines: InvoiceLine[]): void {
@@ -189,35 +226,79 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
 
   private createLine(line?: InvoiceLine): ReturnType<FormBuilder['group']> {
     return this.fb.group({
-      // ✅ id stable pour chaque ligne
       id: [line?.id ?? this.createId()],
       designation: [line?.designation ?? '', Validators.required],
       unite: [line?.unite ?? '', Validators.required],
       quantite: [line?.quantite ?? 0, [Validators.required, Validators.min(0)]],
       prixUnitaire: [line?.prixUnitaire ?? 0, [Validators.required, Validators.min(0)]],
-
-      // TVA fixée à 19 (même si ton HTML affiche un input, on force côté TS aussi)
       tvaRate: [TVA_RATE]
     });
   }
 
+  private prefillFromInvoice(source: Invoice): void {
+    this.form.patchValue({
+      clientId: source.clientId ?? source.client?.id ?? null,
+      client: {
+        nom: source.client?.nom ?? '',
+        adresse: source.client?.adresse ?? '',
+        tel: source.client?.tel || source.client?.telephone || '',
+        mf: source.client?.mf ?? '',
+        email: source.client?.email ?? ''
+      },
+      remiseType: source.remiseType ?? 'montant',
+      remiseValue: source.remiseValue ?? 0,
+      remiseAvantTVA: source.remiseAvantTVA ?? true,
+      notes: source.notes ?? '',
+      conditions: source.conditions ?? ''
+    });
+    this.setLines(this.cloneLines(source.lignes ?? []));
+  }
+
+  private prefillFromQuote(source: Quote): void {
+    this.form.patchValue({
+      clientId: source.clientId ?? source.client?.id ?? null,
+      client: {
+        nom: source.client?.nom ?? '',
+        adresse: source.client?.adresse ?? '',
+        tel: source.client?.tel || source.client?.telephone || '',
+        mf: source.client?.mf ?? '',
+        email: source.client?.email ?? ''
+      },
+      remiseType: source.remiseType ?? 'montant',
+      remiseValue: source.remiseValue ?? 0,
+      remiseAvantTVA: true,
+      notes: source.notes ?? '',
+      conditions: source.conditions ?? ''
+    });
+    this.setLines(this.cloneLines(source.lignes ?? []));
+  }
+
+  private cloneLines(lines: InvoiceLine[]): InvoiceLine[] {
+    return lines.map((line) => ({
+      ...line,
+      id: this.createId()
+    }));
+  }
+
   private buildInvoice(): Invoice {
     const raw = this.form.getRawValue();
+    const clientId = this.normalizeText(raw.clientId) || null;
 
     return {
-      // ✅ utilise TOUJOURS currentId, ne jamais regénérer ici
       id: this.ensureCurrentId(),
-
-      numero: (raw.numero ?? '').trim(),
-      date: (raw.date ?? new Date().toISOString().slice(0, 10)).trim(),
+      numero: this.normalizeText(raw.numero),
+      date: this.normalizeText(raw.date || new Date().toISOString().slice(0, 10)),
+      clientId,
       client: {
-        nom: raw.client?.nom ?? '',
-        adresse: raw.client?.adresse ?? '',
-        tel: raw.client?.tel ?? '',
-        mf: raw.client?.mf ?? '',
-        email: raw.client?.email ?? ''
+        id: clientId,
+        nom: this.normalizeText(raw.client?.nom),
+        adresse: this.normalizeText(raw.client?.adresse),
+        tel: this.normalizeText(raw.client?.tel),
+        telephone: this.normalizeText(raw.client?.tel),
+        mf: this.normalizeText(raw.client?.mf),
+        email: this.normalizeText(raw.client?.email).toLowerCase()
       },
-      lignes: ((raw.lignes ?? []) as InvoiceLine[]).map((l) => this.normalizeLine(l)),
+      lignes: ((raw.lignes ?? []) as InvoiceLine[]).map((line) => this.normalizeLine(line)),
       remiseType: raw.remiseType ?? 'montant',
       remiseValue: Number(raw.remiseValue) || 0,
       remiseAvantTVA: raw.remiseAvantTVA ?? true,
@@ -239,8 +320,61 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     if (!this.currentId) {
       this.currentId = this.createId();
     }
-
     return this.currentId;
+  }
+
+  private initializeSelectedClientFromForm(): void {
+    const raw = this.form.getRawValue();
+    const currentId = this.normalizeText(raw.clientId) || null;
+    if (!currentId && !this.normalizeText(raw.client?.nom)) {
+      this.selectedClient = null;
+      return;
+    }
+
+    this.selectedClient = {
+      id: currentId,
+      nom: this.normalizeText(raw.client?.nom),
+      adresse: this.normalizeText(raw.client?.adresse),
+      tel: this.normalizeText(raw.client?.tel),
+      telephone: this.normalizeText(raw.client?.tel),
+      mf: this.normalizeText(raw.client?.mf),
+      email: this.normalizeText(raw.client?.email).toLowerCase()
+    };
+  }
+
+  private syncClientLinkOnManualEdit(): void {
+    if (this.isApplyingClientSelection || !this.selectedClient) return;
+
+    const rawClient = this.form.getRawValue().client;
+    if (this.matchesSelectedClient(rawClient, this.selectedClient)) return;
+
+    this.selectedClient = null;
+    this.form.patchValue({ clientId: null }, { emitEvent: false });
+  }
+
+  private matchesSelectedClient(
+    rawClient: { nom?: string | null; adresse?: string | null; tel?: string | null; mf?: string | null; email?: string | null } | null | undefined,
+    selected: Client
+  ): boolean {
+    return (
+      this.toKey(rawClient?.nom) === this.toKey(selected.nom) &&
+      this.toKey(rawClient?.adresse) === this.toKey(selected.adresse) &&
+      this.toKey(rawClient?.tel) === this.toKey(selected.tel || selected.telephone) &&
+      this.toKey(rawClient?.mf) === this.toKey(selected.mf) &&
+      this.toKey(rawClient?.email) === this.toKey(selected.email)
+    );
+  }
+
+  private normalizeText(value: unknown): string {
+    if (typeof value !== 'string') return '';
+    return value.trim().replace(/\s+/g, ' ');
+  }
+
+  private toKey(value: unknown): string {
+    return this.normalizeText(value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 
   private createId(): string {

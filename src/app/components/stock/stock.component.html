@@ -1,53 +1,63 @@
-<section class="panel">
+<section class="panel" [dir]="isAr ? 'rtl' : 'ltr'">
   <div class="panel-header">
     <div>
-      <h1>Gestion Stock</h1>
-      <p>Suivi des niveaux par couleur avec historique complet.</p>
+      <h1>{{ t.title }}</h1>
+      <p>{{ t.subtitle }}</p>
+    </div>
+
+    <div class="panel-actions">
+      <button
+        *ngIf="canManageCatalog"
+        class="btn primary"
+        type="button"
+        (click)="openCreateProductModal()"
+      >
+        + {{ t.nouveauProduit }}
+      </button>
+
+      <div class="lang-switch">
+        <button class="lang-btn" [class.active]="lang === 'fr'" type="button" (click)="switchLang('fr')">FR</button>
+        <button class="lang-btn" [class.active]="lang === 'ar'" type="button" (click)="switchLang('ar')">AR</button>
+      </div>
     </div>
   </div>
 
   <section class="card">
     <div class="filters" [formGroup]="filters">
       <label class="field">
-        <span>Recherche</span>
-        <input class="input" type="search" formControlName="search" placeholder="Reference ou nom">
+        <span>{{ t.search }}</span>
+        <input class="input" type="search" formControlName="search" [placeholder]="t.searchPlaceholder" />
       </label>
       <label class="field">
-        <span>Serie</span>
+        <span>{{ t.serie }}</span>
         <select class="input" formControlName="serie">
-          <option value="all">Toutes</option>
-          <option value="40">40</option>
-          <option value="67">67</option>
-          <option value="porte-securite">Porte securite</option>
+          <option value="all">{{ t.allSeries }}</option>
+          <option *ngFor="let serie of filterSeriesOptions" [value]="serie">{{ getSerieLabel(serie) }}</option>
         </select>
       </label>
       <label class="field">
-        <span>Categorie</span>
+        <span>{{ t.category }}</span>
         <select class="input" formControlName="category">
-          <option value="all">Toutes</option>
-          <option value="profil">Profils</option>
-          <option value="accessoire">Accessoires</option>
-          <option value="joint">Joints</option>
+          <option value="all">{{ t.allCategories }}</option>
+          <option *ngFor="let category of filterCategoryOptions" [value]="category">{{ getCategoryLabel(category) }}</option>
         </select>
       </label>
       <label class="field">
-        <span>Couleur</span>
+        <span>{{ t.color }}</span>
         <select class="input" formControlName="color">
-          <option value="all">Toutes</option>
-          <option value="blanc">Blanc</option>
-          <option value="gris">Gris</option>
-          <option value="noir">Noir</option>
+          <option value="all">{{ t.allColors }}</option>
+          <option *ngFor="let color of filterColorOptions" [value]="color">{{ getColorLabel(color) }}</option>
         </select>
       </label>
     </div>
 
     <div class="summary">
       <div>
-        <span>Total articles</span>
+        <span>{{ t.totalArticles }}</span>
         <strong>{{ totalItems }}</strong>
       </div>
       <div class="alert">
-        <span>Articles en alerte</span>
+        <span>{{ t.articlesAlerte }}</span>
         <strong>{{ alertItems }}</strong>
       </div>
     </div>
@@ -56,39 +66,81 @@
   <section class="stock-groups">
     <div class="stock-group" *ngFor="let group of groupedItems">
       <div class="group-header">
-        <h2>Serie {{ group.serie | titlecase }} - {{ group.category | titlecase }}</h2>
-        <span class="tag">{{ group.items.length }} articles</span>
+        <h2>{{ t.serieLabel }} {{ getSerieLabel(group.serie) }} - {{ getCategoryLabel(group.category) }}</h2>
+        <span class="tag">{{ group.items.length }} {{ t.articles }}</span>
       </div>
 
       <div class="stock-grid">
-        <article
-          class="stock-card"
-          *ngFor="let item of group.items; trackBy: trackById"
-          [class.low-stock]="isItemFullyOut(item)"
-        >
-          <div class="stock-image">
-            <img [src]="item.imageUrl" alt="Stock item">
-            <span class="badge" *ngIf="isItemFullyOut(item)">Rupture</span>
+        <article class="stock-card" *ngFor="let item of group.items; trackBy: trackById" [class.low-stock]="isItemFullyOut(item)">
+          <div class="stock-image" [class.is-missing]="isImageMissing(item)">
+            <img
+              [src]="getImageSrc(item)"
+              [attr.alt]="item.label"
+              loading="lazy"
+              decoding="async"
+              (error)="onImageError($event, item)"
+            />
+            <div class="image-placeholder" *ngIf="isImageMissing(item)">
+              <span>{{ t.imageIndisponible }}</span>
+            </div>
+            <span class="badge" *ngIf="isItemFullyOut(item)">{{ t.rupture }}</span>
           </div>
+
           <div class="stock-info">
             <div class="stock-ref">{{ item.reference }}</div>
             <div class="stock-label">{{ item.label }}</div>
+            <div class="stock-desc" *ngIf="item.description">{{ item.description }}</div>
           </div>
 
           <div class="stock-colors">
             <div class="color-row" *ngFor="let color of getAvailableColors(item)" [ngClass]="getColorStatus(item, color)">
-              <span class="color-name">{{ color }}</span>
+              <span class="color-name">{{ getColorLabel(color) }}</span>
               <span class="color-qty">{{ getQuantity(item, color) }}</span>
-              <span class="color-alert">
-                {{ getColorStatusLabel(item, color) }}
-              </span>
+              <span class="color-alert">{{ getColorStatusLabel(item, color) }}</span>
             </div>
           </div>
 
           <div class="stock-actions">
-            <button class="btn outline" type="button" (click)="openMove(item, 'IN')">Ajouter</button>
-            <button class="btn ghost" type="button" (click)="openMove(item, 'OUT')">Retirer</button>
-            <button class="btn danger" type="button" (click)="openMove(item, 'ADJUST')">Ajuster</button>
+            <button
+              class="btn stock-action-btn stock-action-btn--add"
+              type="button"
+              (click)="openMove(item, 'IN')"
+              [disabled]="!canManageStock"
+            >
+              {{ t.ajouter }}
+            </button>
+            <button
+              class="btn stock-action-btn stock-action-btn--remove"
+              type="button"
+              (click)="openMove(item, 'OUT')"
+              [disabled]="!canManageStock"
+            >
+              {{ t.retirer }}
+            </button>
+            <button
+              class="btn stock-action-btn stock-action-btn--adjust"
+              type="button"
+              (click)="openMove(item, 'ADJUST')"
+              [disabled]="!canManageStock"
+            >
+              {{ t.ajuster }}
+            </button>
+            <button
+              *ngIf="canManageCatalog"
+              class="btn stock-action-btn stock-action-btn--edit"
+              type="button"
+              (click)="openEditProductModal(item)"
+            >
+              Modifier
+            </button>
+            <button
+              *ngIf="canDeleteProduct"
+              class="btn stock-action-btn stock-action-btn--archive"
+              type="button"
+              (click)="archiveProduct(item)"
+            >
+              Archiver
+            </button>
           </div>
         </article>
       </div>
@@ -97,13 +149,13 @@
 </section>
 
 <div class="modal-backdrop" *ngIf="modal.open">
-  <div class="modal-card" role="dialog" aria-modal="true">
+  <div class="modal-card modal-card--compact" role="dialog" aria-modal="true" [dir]="isAr ? 'rtl' : 'ltr'">
     <div class="modal-header">
-      <h2>Mouvement {{ modal.type === 'IN' ? 'Ajouter' : modal.type === 'OUT' ? 'Retirer' : 'Ajuster' }}</h2>
-      <button class="btn ghost" type="button" (click)="closeModal()">Fermer</button>
+      <h2>{{ modal.type === 'IN' ? t.modalAjouter : modal.type === 'OUT' ? t.modalRetirer : t.modalAjuster }}</h2>
+      <button class="btn ghost" type="button" (click)="closeModal()">{{ t.fermer }}</button>
     </div>
 
-    <div class="modal-body" *ngIf="modal.item as item">
+    <div class="modal-content-scroll modal-body" *ngIf="modal.item as item">
       <div class="modal-item">
         <strong>{{ item.reference }}</strong>
         <span>{{ item.label }}</span>
@@ -111,74 +163,180 @@
 
       <form class="modal-form" [formGroup]="movementForm">
         <label class="field" *ngIf="modal.availableColors.length > 1">
-          <span>Couleur</span>
+          <span>{{ t.couleur }}</span>
           <select class="input" formControlName="color">
-            <option *ngFor="let color of modal.availableColors" [value]="color">{{ color }}</option>
+            <option *ngFor="let color of modal.availableColors" [value]="color">{{ getColorLabel(color) }}</option>
           </select>
         </label>
 
         <label class="field" *ngIf="modal.availableColors.length === 1">
-          <span>Couleur</span>
-          <div class="tag">{{ modal.availableColors[0] }}</div>
+          <span>{{ t.couleur }}</span>
+          <div class="tag">{{ getColorLabel(modal.availableColors[0]) }}</div>
         </label>
 
         <label class="field">
-          <span>Quantite</span>
-          <input
-            class="input"
-            type="number"
-            [attr.min]="modal.type === 'ADJUST' ? null : 1"
-            step="1"
-            formControlName="delta"
-          >
+          <span>{{ t.quantite }}</span>
+          <input class="input" type="number" step="1" formControlName="delta" />
         </label>
 
         <div class="field" *ngIf="modal.type === 'ADJUST'">
-          <span>Signe</span>
+          <span>{{ t.signe }}</span>
           <div class="radio-row">
-            <label class="radio">
-              <input type="radio" formControlName="adjustSign" value="+">
-              <span>+</span>
-            </label>
-            <label class="radio">
-              <input type="radio" formControlName="adjustSign" value="-">
-              <span>-</span>
-            </label>
+            <label class="radio"><input type="radio" formControlName="adjustSign" value="+" /><span>+</span></label>
+            <label class="radio"><input type="radio" formControlName="adjustSign" value="-" /><span>-</span></label>
           </div>
         </div>
 
         <label class="field">
-          <span>Raison</span>
-          <input class="input" type="text" formControlName="reason" placeholder="Inventaire, commande, casse...">
-        </label>
-
-        <label class="field">
-          <span>Employé</span>
-          <select class="input" formControlName="employeeName">
-            <option *ngFor="let employee of employees" [value]="employee.name">{{ employee.name }}</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span>Code employé</span>
-          <input class="input" type="password" formControlName="employeeCode" placeholder="Code">
+          <span>{{ t.raison }}</span>
+          <input class="input" type="text" formControlName="reason" [placeholder]="t.raisonPlaceholder" />
         </label>
       </form>
     </div>
 
     <div class="modal-actions">
-      <button class="btn ghost" type="button" (click)="closeModal()">Annuler</button>
-      <button class="btn primary" type="button" (click)="submitMovement()">Valider</button>
+      <button class="btn ghost" type="button" (click)="closeModal()">{{ t.annuler }}</button>
+      <button class="btn primary" type="button" (click)="submitMovement()">{{ t.valider }}</button>
     </div>
   </div>
 </div>
 
-<div class="toast" *ngIf="toast.open" [ngClass]="toast.type">
-  <div class="toast-header">
-    <span class="toast-icon">{{ toastIcons[toast.type] }}</span>
-    <div class="toast-title">{{ toast.title }}</div>
-    <button class="toast-close" type="button" (click)="closeToast()">×</button>
+<div class="modal-backdrop modal-backdrop--product" *ngIf="productModalOpen">
+  <div class="modal-card modal-card--product" role="dialog" aria-modal="true" [dir]="isAr ? 'rtl' : 'ltr'">
+    <div class="modal-header">
+      <h2>{{ productModalTitle }}</h2>
+      <button class="btn ghost" type="button" (click)="closeCreateProductModal()">{{ t.fermer }}</button>
+    </div>
+
+    <div class="modal-content-scroll">
+      <form class="modal-form" [formGroup]="productForm">
+        <label class="field">
+          <span>{{ t.reference }}</span>
+          <input class="input" type="text" formControlName="reference" />
+        </label>
+
+        <label class="field">
+          <span>{{ t.nomProduit }}</span>
+          <input class="input" type="text" formControlName="label" />
+        </label>
+
+        <label class="field">
+          <span>{{ t.description }}</span>
+          <input class="input" type="text" formControlName="description" [placeholder]="t.descriptionPlaceholder" />
+        </label>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>{{ t.category }}</span>
+            <select class="input" formControlName="category">
+              <option *ngFor="let category of categoryOptions" [value]="category">{{ getCategoryLabel(category) }}</option>
+            </select>
+            <div class="inline-add">
+              <input class="input" type="text" [value]="customCategoryInput" (input)="customCategoryInput = $any($event.target).value" placeholder="Nouvelle categorie" />
+              <button class="btn ghost" type="button" (click)="addCustomCategory()">Ajouter</button>
+            </div>
+          </label>
+
+          <label class="field">
+            <span>{{ t.serie }}</span>
+            <select class="input" formControlName="serie">
+              <option *ngFor="let serie of seriesOptions" [value]="serie">{{ getSerieLabel(serie) }}</option>
+            </select>
+            <div class="inline-add">
+              <input class="input" type="text" [value]="customSeriesInput" (input)="customSeriesInput = $any($event.target).value" placeholder="Nouvelle serie" />
+              <button class="btn ghost" type="button" (click)="addCustomSeries()">Ajouter</button>
+            </div>
+          </label>
+
+          <label class="field">
+            <span>{{ t.unite }}</span>
+            <input class="input" type="text" formControlName="unit" />
+          </label>
+
+          <label class="field">
+            <span>{{ t.seuilAlerte }}</span>
+            <input class="input" type="number" min="0" formControlName="lowStockThreshold" />
+          </label>
+        </div>
+
+        <div class="field">
+          <span>{{ t.couleursDisponibles }}</span>
+          <div class="check-row">
+            <label class="check-item" *ngFor="let color of colorOptions">
+              <input type="checkbox" [checked]="isColorSelected(color)" (change)="onColorSelectionChange(color, $event)" />
+              {{ getColorLabel(color) }}
+            </label>
+          </div>
+          <div class="inline-add">
+            <input class="input" type="text" [value]="customColorInput" (input)="customColorInput = $any($event.target).value" placeholder="Nouvelle couleur" />
+            <button class="btn ghost" type="button" (click)="addCustomColor()">Ajouter</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span>{{ t.imageSelectionnee }}</span>
+          <div class="image-picker-row">
+            <img
+              [src]="selectedImagePreview"
+              alt="product-preview"
+              class="image-preview"
+              (error)="onProductPreviewError()"
+            />
+            <div class="image-picker-actions">
+              <button class="btn outline" type="button" (click)="pickProductImage()">{{ t.choisirImage }}</button>
+              <small *ngIf="selectedImageName">{{ selectedImageName }}</small>
+              <small>Formats: png, jpg, jpeg, webp</small>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn ghost" type="button" (click)="closeCreateProductModal()">{{ t.annuler }}</button>
+      <button class="btn primary" type="button" [disabled]="creatingProduct" (click)="submitProduct()">
+        {{ creatingProduct ? 'Enregistrement...' : (productModalMode === 'edit' ? 'Mettre a jour' : t.creerProduit) }}
+      </button>
+    </div>
   </div>
-  <div class="toast-message">{{ toast.message }}</div>
-  <div class="toast-progress"></div>
+</div>
+
+<div class="modal-backdrop" *ngIf="archiveModal.open">
+  <div class="modal-card modal-card--compact" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2>Archiver le produit</h2>
+      <button class="btn ghost" type="button" (click)="closeArchiveModal()" [disabled]="archivingProduct">Fermer</button>
+    </div>
+
+    <div class="modal-content-scroll modal-body" *ngIf="archiveModal.item as item">
+      <div class="modal-item">
+        <strong>{{ item.reference }}</strong>
+        <span>{{ item.label }}</span>
+      </div>
+      <p>
+        Voulez-vous vraiment archiver ce produit ? Il disparaitra du stock actif, mais l'historique sera conserve.
+      </p>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn ghost" type="button" (click)="closeArchiveModal()" [disabled]="archivingProduct">Annuler</button>
+      <button class="btn danger-outline" type="button" (click)="confirmArchiveProduct()" [disabled]="archivingProduct">
+        {{ archivingProduct ? 'Archivage...' : 'Archiver' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrapper" *ngIf="toast.open" [ngClass]="'toast-' + toast.type">
+  <div class="toast-icon-wrap">
+    <span class="toast-icon">{{ toast.icon }}</span>
+  </div>
+  <div class="toast-body">
+    <div class="toast-title">{{ toast.title }}</div>
+    <div class="toast-message">{{ toast.message }}</div>
+  </div>
+  <button class="toast-close" type="button" (click)="closeToast()">x</button>
+  <div class="toast-progress-bar">
+    <div class="toast-progress-fill" [style.width.%]="toast.progress"></div>
+  </div>
 </div>

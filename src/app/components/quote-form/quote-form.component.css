@@ -44,6 +44,10 @@
   gap: 12px;
 }
 
+app-client-autocomplete {
+  display: block;
+}
+
 .totals {
   background: linear-gradient(135deg, #f7f6f2, #fff);
 }

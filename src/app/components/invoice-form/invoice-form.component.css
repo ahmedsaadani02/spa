@@ -44,6 +44,10 @@
   gap: 12px;
 }
 
+app-client-autocomplete {
+  display: block;
+}
+
 .field.checkbox {
   flex-direction: row;
   align-items: center;
