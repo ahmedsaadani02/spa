@@ -76,16 +76,16 @@
       </div>
 
       <div class="table-row" *ngFor="let row of movements">
-        <div>{{ row.movement.at | date:'dd/MM/yyyy HH:mm' }}</div>
-        <div class="mono">{{ row.movement.reference }}</div>
-        <div>{{ row.category }}</div>
-        <div>{{ row.movement.color }}</div>
-        <div>{{ formatType(row.movement.type) }}</div>
-        <div class="mono">{{ formatDelta(row.movement.delta) }}</div>
-        <div class="mono">{{ row.movement.before }}</div>
-        <div class="mono">{{ row.movement.after }}</div>
-        <div>{{ row.movement.reason }}</div>
-        <div>{{ actorLabel(row.movement) }}</div>
+        <div data-label="Date">{{ row.movement.at | date:'dd/MM/yyyy HH:mm' }}</div>
+        <div class="mono" data-label="Reference">{{ row.movement.reference }}</div>
+        <div data-label="Categorie">{{ row.category }}</div>
+        <div data-label="Couleur">{{ row.movement.color }}</div>
+        <div data-label="Type">{{ formatType(row.movement.type) }}</div>
+        <div class="mono" data-label="Delta">{{ formatDelta(row.movement.delta) }}</div>
+        <div class="mono" data-label="Avant">{{ row.movement.before }}</div>
+        <div class="mono" data-label="Apres">{{ row.movement.after }}</div>
+        <div data-label="Raison">{{ row.movement.reason }}</div>
+        <div data-label="Employe">{{ actorLabel(row.movement) }}</div>
       </div>
     </div>
 

@@ -15,6 +15,8 @@ const EMPTY_PERMISSIONS: PermissionSet = {
   removeStock: false,
   adjustStock: false,
   manageStock: false,
+  editStockProduct: false,
+  archiveStockProduct: false,
   manageEmployees: false,
   manageInvoices: false,
   manageQuotes: false,
@@ -26,14 +28,6 @@ const EMPTY_PERMISSIONS: PermissionSet = {
   manageSalary: false,
   manageAll: false
 };
-
-const EMPLOYEE_ALLOWED_PERMISSIONS = new Set<keyof PermissionSet>([
-  'viewStock',
-  'addStock',
-  'removeStock',
-  'adjustStock',
-  'manageStock'
-]);
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -121,25 +115,18 @@ export class AuthService {
     const user = this.currentUserSubject.value;
     if (!user) return false;
     if (user.role === 'admin' || user.role === 'developer' || user.role === 'owner') return true;
-    if (user.role === 'employee' && !EMPLOYEE_ALLOWED_PERMISSIONS.has(permission)) {
-      return false;
-    }
     return !!user.permissions[permission];
   }
 
   getDefaultRoute(): string {
     if (!this.isLoggedIn()) return '/login';
-    if (this.role() === 'employee') {
-      return this.hasPermission('viewStock') ? '/stock' : '/access-denied';
-    }
-
     if (this.hasPermission('manageInvoices')) return '/invoices';
     if (this.hasPermission('manageQuotes')) return '/quotes';
     if (this.hasPermission('manageEstimations')) return '/estimation';
     if (this.hasPermission('manageClients')) return '/clients';
     if (this.hasPermission('manageArchives')) return '/stock/archives';
     if (this.hasPermission('manageInventory')) return '/inventaire';
-    if (this.hasPermission('viewHistory')) return '/stock/history';
+    if (this.hasPermission('viewHistory')) return '/stock-history';
     if (this.hasPermission('viewStock')) return '/stock';
     if (this.hasPermission('manageEmployees')) return '/employees';
     if (this.hasPermission('manageSalary')) return '/employees';

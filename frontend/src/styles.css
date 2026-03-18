@@ -25,6 +25,7 @@ body {
   color: var(--ink);
   background: radial-gradient(circle at top left, #fbfaf7 0%, #f5f3ee 45%, #efeae2 100%);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 a {
@@ -175,6 +176,30 @@ p {
   .grid-3,
   .grid-2 {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .card {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .input,
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .btn {
+    min-height: 44px;
   }
 }
 

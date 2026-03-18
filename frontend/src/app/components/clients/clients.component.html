@@ -26,14 +26,14 @@
       </div>
 
       <div class="table-row" *ngFor="let client of filteredClients; trackBy: trackByClientId">
-        <div class="name">
+        <div class="name" data-label="Nom">
           <strong>{{ client.nom }}</strong>
           <span class="muted" *ngIf="client.adresse">{{ client.adresse }}</span>
         </div>
-        <div>{{ client.tel || client.telephone || '-' }}</div>
-        <div>{{ client.email || '-' }}</div>
-        <div>{{ client.mf || '-' }}</div>
-        <div class="actions">
+        <div data-label="Telephone">{{ client.tel || client.telephone || '-' }}</div>
+        <div data-label="Email">{{ client.email || '-' }}</div>
+        <div data-label="MF">{{ client.mf || '-' }}</div>
+        <div class="actions" data-label="Actions">
           <button class="btn ghost" type="button" (click)="editClient(client)">Modifier</button>
           <button class="btn danger" type="button" (click)="deleteClient(client)">Supprimer</button>
         </div>

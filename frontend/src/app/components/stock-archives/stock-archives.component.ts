@@ -101,8 +101,7 @@ export class StockArchivesComponent implements OnInit, OnDestroy {
   }
 
   get canManageCatalog(): boolean {
-    const role = this.auth.role();
-    return role === 'admin' || role === 'developer' || role === 'owner';
+    return this.auth.hasPermission('manageStock');
   }
 
   get filteredArchivedProducts(): ArchivedProductCard[] {

@@ -6,6 +6,8 @@ export interface PermissionSet {
   removeStock: boolean;
   adjustStock: boolean;
   manageStock: boolean;
+  editStockProduct: boolean;
+  archiveStockProduct: boolean;
   manageEmployees: boolean;
   manageInvoices: boolean;
   manageQuotes: boolean;

@@ -221,6 +221,8 @@ export interface PermissionSet {
   removeStock: boolean;
   adjustStock: boolean;
   manageStock: boolean;
+  editStockProduct: boolean;
+  archiveStockProduct: boolean;
   manageEmployees: boolean;
   manageInvoices: boolean;
   manageQuotes: boolean;
@@ -287,6 +289,8 @@ export interface EmployeeRecord {
   canRemoveStock: boolean;
   canAdjustStock: boolean;
   canManageStock: boolean;
+  canEditStockProduct: boolean;
+  canArchiveStockProduct: boolean;
   canManageEmployees: boolean;
   canManageInvoices: boolean;
   canManageQuotes: boolean;
@@ -324,6 +328,8 @@ export interface EmployeeUpsertInput {
   canRemoveStock?: boolean;
   canAdjustStock?: boolean;
   canManageStock?: boolean;
+  canEditStockProduct?: boolean;
+  canArchiveStockProduct?: boolean;
   canManageEmployees?: boolean;
   canManageInvoices?: boolean;
   canManageQuotes?: boolean;

@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .panel-header {
@@ -52,6 +53,7 @@
   display: flex;
   gap: 16px;
   margin-top: 16px;
+  flex-wrap: wrap;
 }
 
 .summary div {
@@ -98,6 +100,7 @@
   flex-direction: column;
   gap: 12px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  min-width: 0;
 }
 
 .stock-card.low-stock {
@@ -109,7 +112,7 @@
   border-radius: 12px;
   overflow: hidden;
   background: #fff;
-  height: 200px;
+  height: clamp(180px, 22vw, 200px);
   position: relative;
   display: flex;
   align-items: center;
@@ -148,20 +151,24 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .stock-ref {
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .stock-label {
   color: #334155;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .stock-desc {
   color: #64748b;
   font-size: 0.85rem;
+  overflow-wrap: anywhere;
 }
 
 .stock-colors {
@@ -411,6 +418,7 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .inline-add .input {
@@ -421,6 +429,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .image-preview {
@@ -537,7 +546,7 @@
 
 @media (max-width: 1024px) {
   .stock-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .filters {
@@ -547,7 +556,7 @@
 
 @media (max-width: 720px) {
   .stock-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .panel-header {
@@ -587,5 +596,46 @@
 
   .modal-backdrop--product .modal-card--product {
     max-height: calc(100vh - 82px);
+  }
+}
+
+@media (max-width: 640px) {
+  .panel-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lang-switch {
+    align-self: flex-start;
+  }
+
+  .summary div {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .color-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .color-alert {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .inline-add,
+  .image-picker-row,
+  .modal-header,
+  .modal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toast-wrapper {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    min-width: 0;
+    max-width: none;
   }
 }

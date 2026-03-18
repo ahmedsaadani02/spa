@@ -21,6 +21,8 @@ export interface Employee {
   canRemoveStock: boolean;
   canAdjustStock: boolean;
   canManageStock: boolean;
+  canEditStockProduct: boolean;
+  canArchiveStockProduct: boolean;
   canManageEmployees: boolean;
   canManageInvoices: boolean;
   canManageQuotes: boolean;
@@ -57,6 +59,8 @@ export interface EmployeeUpsertInput {
   canRemoveStock?: boolean;
   canAdjustStock?: boolean;
   canManageStock?: boolean;
+  canEditStockProduct?: boolean;
+  canArchiveStockProduct?: boolean;
   canManageEmployees?: boolean;
   canManageInvoices?: boolean;
   canManageQuotes?: boolean;

@@ -12,7 +12,9 @@ const {
   purgeProduct,
   updateVariantPriceWithHistory,
   getPriceHistory,
-  assertProductCatalogPermission
+  assertProductCatalogPermission,
+  assertCanEditStockProduct,
+  assertCanArchiveStockProduct
 } = require('../legacy-ipc/products.handlers');
 const { normalizeStoredProductImageRef } = require('../utils/product-images');
 
@@ -74,7 +76,7 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
 
     async update(token, id, payload) {
       return withAuthorizedUser(token, () => {
-        assertProductCatalogPermission();
+        assertCanEditStockProduct();
         return updateProduct(getDb(), id, payload);
       });
     },
@@ -88,14 +90,14 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
 
     async delete(token, id) {
       return withAuthorizedUser(token, () => {
-        assertProductCatalogPermission();
+        assertCanArchiveStockProduct();
         return archiveProduct(getDb(), id).ok;
       });
     },
 
     async archive(token, id) {
       return withAuthorizedUser(token, () => {
-        assertProductCatalogPermission();
+        assertCanArchiveStockProduct();
         return archiveProduct(getDb(), id);
       });
     },

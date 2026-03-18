@@ -37,24 +37,24 @@
       </div>
 
       <div class="row" *ngFor="let employee of employees; trackBy: trackByEmployee">
-        <div>{{ employee.nom }}</div>
-        <div>{{ employee.email || '-' }}</div>
-        <div>{{ employee.telephone || '-' }}</div>
-        <div>{{ employee.poste || '-' }}</div>
-        <div class="mono">{{ employee.salaireBase | number:'1.2-2' }}</div>
-        <div class="mono">{{ employee.username || '-' }}</div>
-        <div><span class="tag">{{ employee.role }}</span></div>
-        <div>
+        <div data-label="Nom">{{ employee.nom }}</div>
+        <div data-label="Email">{{ employee.email || '-' }}</div>
+        <div data-label="Telephone">{{ employee.telephone || '-' }}</div>
+        <div data-label="Poste">{{ employee.poste || '-' }}</div>
+        <div class="mono" data-label="Salaire">{{ employee.salaireBase | number:'1.2-2' }}</div>
+        <div class="mono" data-label="Username">{{ employee.username || '-' }}</div>
+        <div data-label="Role"><span class="tag">{{ employee.role }}</span></div>
+        <div data-label="Actif">
           <button class="chip" type="button" [class.chip-off]="!employee.actif" (click)="toggleActive(employee)" [disabled]="!canManageEmployees">
             {{ employee.actif ? 'Actif' : 'Inactif' }}
           </button>
         </div>
-        <div>
+        <div data-label="Stock">
           <span class="stock-perm" [class.ok]="employee.canViewStock">Voir</span>
           <span class="stock-perm" [class.ok]="employee.canManageStock">Modifier</span>
           <span class="stock-perm" [class.ok]="employee.isProtectedAccount">Protege</span>
         </div>
-        <div class="row-actions">
+        <div class="row-actions" data-label="Actions">
           <button class="btn ghost" type="button" (click)="openEmployee(employee)" [disabled]="isNavigating(employee, 'view')">
             {{ isNavigating(employee, 'view') ? 'Ouverture...' : 'Voir' }}
           </button>

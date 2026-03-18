@@ -32,6 +32,8 @@ const normalizeEmployeePayload = (payload = {}) => {
     canRemoveStock: !!payload.canRemoveStock,
     canAdjustStock: !!payload.canAdjustStock,
     canManageStock: !!payload.canManageStock,
+    canEditStockProduct: !!payload.canEditStockProduct,
+    canArchiveStockProduct: !!payload.canArchiveStockProduct,
     canManageEmployees: !!payload.canManageEmployees,
     canManageInvoices: !!payload.canManageInvoices,
     canManageQuotes: !!payload.canManageQuotes,
@@ -55,6 +57,8 @@ const normalizeEmployeePayload = (payload = {}) => {
     normalized.canRemoveStock = true;
     normalized.canAdjustStock = true;
     normalized.canManageStock = true;
+    normalized.canEditStockProduct = true;
+    normalized.canArchiveStockProduct = true;
     normalized.canManageEmployees = true;
     normalized.canManageInvoices = true;
     normalized.canManageQuotes = true;
@@ -70,6 +74,8 @@ const normalizeEmployeePayload = (payload = {}) => {
     normalized.canAddStock = true;
     normalized.canRemoveStock = true;
     normalized.canAdjustStock = true;
+    normalized.canEditStockProduct = true;
+    normalized.canArchiveStockProduct = true;
   }
 
   if (typeof payload.initialPassword === 'string' && payload.initialPassword.trim().length > 0) {

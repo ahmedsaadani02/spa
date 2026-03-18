@@ -28,6 +28,7 @@ export const routes: Routes = [
   { path: 'stock', pathMatch: 'full', loadComponent: () => import('./components/stock/stock.component').then((m) => m.StockComponent), canActivate: [authGuard, permissionGuard], data: { permissions: ['viewStock'] } },
   { path: 'stock/archives', loadComponent: () => import('./components/stock-archives/stock-archives.component').then((m) => m.StockArchivesComponent), canActivate: [authGuard, permissionGuard], data: { permissions: ['manageArchives'] } },
   { path: 'stock/history', loadComponent: () => import('./components/stock-history/stock-history.component').then((m) => m.StockHistoryComponent), canActivate: [authGuard, permissionGuard], data: { permissions: ['viewHistory'] } },
+  { path: 'stock-history', loadComponent: () => import('./components/stock-history/stock-history.component').then((m) => m.StockHistoryComponent), canActivate: [authGuard, permissionGuard], data: { permissions: ['viewHistory'] } },
   { path: 'inventaire', loadComponent: () => import('./components/inventaire/inventaire.component').then((m) => m.InventaireComponent), canActivate: [authGuard, permissionGuard], data: { permissions: ['manageInventory'] } },
 
   { path: 'employees', loadComponent: () => import('./components/employees/employee-list.component').then((m) => m.EmployeeListComponent), canActivate: [authGuard, permissionGuard], data: { permissions: ['manageEmployees', 'manageSalary'], permissionMode: 'any' } },

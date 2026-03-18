@@ -13,16 +13,15 @@
     "web:setup": "npm run backend:install",
     "web:serve": "concurrently -k \"npm run backend:start\" \"npm run frontend:start\"",
     "build": "npm run frontend:build",
-    "typecheck": "npm run frontend:typecheck",
-    "icons:generate": "node scripts/generate-app-icons.js"
+    "typecheck": "npm run frontend:typecheck"
   },
   "dependencies": {
-    "@angular/common": "^21.0.0",
-    "@angular/compiler": "^21.0.0",
-    "@angular/core": "^21.0.0",
-    "@angular/forms": "^21.0.0",
-    "@angular/platform-browser": "^21.0.0",
-    "@angular/router": "^21.0.0",
+    "@angular/common": "21.2.4",
+    "@angular/compiler": "21.2.4",
+    "@angular/core": "21.2.4",
+    "@angular/forms": "21.2.4",
+    "@angular/platform-browser": "21.2.4",
+    "@angular/router": "21.2.4",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "11.10.0",
     "cors": "^2.8.6",
@@ -35,9 +34,9 @@
     "zone.js": "^0.15.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^21.0.0",
-    "@angular/cli": "^21.2.2",
-    "@angular/compiler-cli": "^21.0.0",
+    "@angular-devkit/build-angular": "21.2.2",
+    "@angular/cli": "21.2.2",
+    "@angular/compiler-cli": "21.2.4",
     "@types/node": "^22.0.0",
     "concurrently": "^9.1.0",
     "typescript": "~5.9.0",

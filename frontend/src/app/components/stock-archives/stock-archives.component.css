@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .panel-header {
@@ -16,6 +17,7 @@
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .archives-nav-btn {
@@ -51,6 +53,7 @@
   flex-direction: column;
   gap: 12px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  min-width: 0;
 }
 
 .archived-card {
@@ -109,11 +112,13 @@
 .stock-label {
   color: #334155;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .stock-desc {
   color: #64748b;
   font-size: 0.85rem;
+  overflow-wrap: anywhere;
 }
 
 .archived-at {
@@ -370,7 +375,7 @@
 
 @media (max-width: 1024px) {
   .stock-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -384,7 +389,7 @@
   }
 
   .stock-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .stock-actions {
@@ -395,5 +400,22 @@
     width: 100%;
     max-height: 92vh;
     border-radius: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .panel-actions,
+  .modal-header,
+  .modal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toast-wrapper {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    min-width: 0;
+    max-width: none;
   }
 }

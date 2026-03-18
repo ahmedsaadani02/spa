@@ -20,7 +20,12 @@
       <a *ngIf="canManageClients" routerLink="/clients" routerLinkActive="active">
         <span class="nav-icon">CL</span> Clients
       </a>
-      <a *ngIf="canViewStock" routerLink="/stock" routerLinkActive="active">
+      <a
+        *ngIf="canViewStock"
+        routerLink="/stock"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
         <span class="nav-icon">ST</span> Stock
       </a>
       <a *ngIf="canOpenStockArchives" routerLink="/stock/archives" routerLinkActive="active">
@@ -29,7 +34,7 @@
       <a *ngIf="canManageInventory" routerLink="/inventaire" routerLinkActive="active">
         <span class="nav-icon">IN</span> Inventaire
       </a>
-      <a *ngIf="canViewHistory" routerLink="/stock/history" routerLinkActive="active">
+      <a *ngIf="canViewHistory" routerLink="/stock-history" routerLinkActive="active">
         <span class="nav-icon">HS</span> Historique
       </a>
       <a *ngIf="canManageEstimations" routerLink="/estimation" routerLinkActive="active">

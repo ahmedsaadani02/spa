@@ -17,8 +17,6 @@ const hasRequiredPermissions = (
   return permissions.some((permission) => auth.hasPermission(permission));
 };
 
-const isEmployeeAllowedRoute = (routePath: string): boolean => routePath === 'stock';
-
 export const permissionGuard: CanActivateFn = async (route) => {
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -26,11 +24,6 @@ export const permissionGuard: CanActivateFn = async (route) => {
 
   if (!auth.isLoggedIn()) {
     return router.createUrlTree(['/login']);
-  }
-
-  const routePath = String(route.routeConfig?.path ?? '').toLowerCase();
-  if (auth.role() === 'employee' && !isEmployeeAllowedRoute(routePath)) {
-    return router.createUrlTree(['/stock']);
   }
 
   const permissions = (route.data?.['permissions'] as GuardPermission[] | undefined) ?? [];

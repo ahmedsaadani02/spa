@@ -122,7 +122,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   get canOpenInventoryModules(): boolean {
-    return (this.canManageInventory || this.canViewHistory) && !this.isEmployee;
+    return this.canManageInventory || this.canViewHistory;
   }
 
   get canOpenStockArchives(): boolean {
@@ -174,7 +174,7 @@ export class AppComponent implements OnInit, OnDestroy {
     if (url.startsWith('/quotes')) return 'quotes-page';
     if (url.startsWith('/clients')) return 'clients-page';
     if (url.startsWith('/stock/archives')) return 'stock-archives-page';
-    if (url.startsWith('/stock/history')) return 'stock-history-page';
+    if (url.startsWith('/stock/history') || url.startsWith('/stock-history')) return 'stock-history-page';
     if (url.startsWith('/stock')) return 'stock-page';
     if (url.startsWith('/inventaire')) return 'inventaire-page';
     if (url.startsWith('/estimation')) return 'estimation-page';

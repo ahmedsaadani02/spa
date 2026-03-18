@@ -174,17 +174,28 @@ export class StockComponent implements OnInit, OnDestroy {
     return this.auth.hasPermission('manageStock');
   }
 
+  get canAddStock(): boolean {
+    return this.auth.hasPermission('addStock');
+  }
+
+  get canRemoveStock(): boolean {
+    return this.auth.hasPermission('removeStock');
+  }
+
+  get canAdjustStock(): boolean {
+    return this.auth.hasPermission('adjustStock');
+  }
+
   get canCreateProduct(): boolean {
-    const role = this.auth.role();
-    return role === 'admin' || role === 'developer' || role === 'owner';
+    return this.canManageStock;
   }
 
-  get canManageCatalog(): boolean {
-    return this.canCreateProduct;
+  get canEditProduct(): boolean {
+    return this.auth.hasPermission('editStockProduct');
   }
 
-  get canDeleteProduct(): boolean {
-    return this.canCreateProduct;
+  get canArchiveProduct(): boolean {
+    return this.auth.hasPermission('archiveStockProduct');
   }
 
   get productModalTitle(): string {
@@ -197,6 +208,8 @@ export class StockComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     console.log('[stock-page] load requested');
+    await this.auth.refreshCurrentUser();
+
     this.store.items$
       .pipe(takeUntil(this.destroy$))
       .subscribe((items) => {
@@ -210,39 +223,45 @@ export class StockComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(([items]) => {
         try {
-          console.log('[stock-list] reload requested');
-          const previousFilters = this.getFilterSnapshot();
-          const activeFilters = this.syncFilterOptions(items, previousFilters);
-          const search = this.toSafeLower(activeFilters.search);
-          const serie = activeFilters.serie;
-          const category = activeFilters.category;
-          const color = activeFilters.color;
-          console.log(`[stock-list] response count: ${Array.isArray(items) ? items.length : 0}`);
+          this.zone.run(() => {
+            console.log('[stock-list] reload requested');
+            const previousFilters = this.getFilterSnapshot();
+            const activeFilters = this.syncFilterOptions(items, previousFilters);
+            const search = this.toSafeLower(activeFilters.search);
+            const serie = activeFilters.serie;
+            const category = activeFilters.category;
+            const color = activeFilters.color;
+            console.log(`[stock-list] response count: ${Array.isArray(items) ? items.length : 0}`);
 
-          const filtered = (Array.isArray(items) ? items : []).filter((item) => {
-            if (!item) return false;
-            const reference = this.toSafeLower(item.reference);
-            const label = this.toSafeLower(item.label);
-            const matchesSearch = !search || reference.includes(search) || label.includes(search);
-            const matchesSerie = serie === 'all' || item.serie === serie;
-            const matchesCategory = category === 'all' || item.category === category;
-            const matchesColor = color === 'all' || this.hasColor(item, color as StockColor);
-            return matchesSearch && matchesSerie && matchesCategory && matchesColor;
+            const filtered = (Array.isArray(items) ? items : []).filter((item) => {
+              if (!item) return false;
+              const reference = this.toSafeLower(item.reference);
+              const label = this.toSafeLower(item.label);
+              const matchesSearch = !search || reference.includes(search) || label.includes(search);
+              const matchesSerie = serie === 'all' || item.serie === serie;
+              const matchesCategory = category === 'all' || item.category === category;
+              const matchesColor = color === 'all' || this.hasColor(item, color as StockColor);
+              return matchesSearch && matchesSerie && matchesCategory && matchesColor;
+            });
+
+            this.totalItems = filtered.length;
+            this.alertItems = filtered.filter((item) => this.isLowStock(item)).length;
+            this.groupedItems = this.groupByCategory(filtered);
+            this.cdr.detectChanges();
+            console.log(`[stock-list] rendered count: ${this.totalItems}`);
+            console.log(`[stock-page] rendered items count: ${this.totalItems}`);
+            console.log('[stock-page] empty state condition:', this.totalItems === 0);
           });
-
-          this.totalItems = filtered.length;
-          this.alertItems = filtered.filter((item) => this.isLowStock(item)).length;
-          this.groupedItems = this.groupByCategory(filtered);
-          console.log(`[stock-list] rendered count: ${this.totalItems}`);
-          console.log(`[stock-page] rendered items count: ${this.totalItems}`);
-          console.log('[stock-page] empty state condition:', this.totalItems === 0);
         } catch (error) {
           console.error('[stock] render guard caught error in filters pipeline', error);
-          this.totalItems = 0;
-          this.alertItems = 0;
-          this.groupedItems = [];
-          console.log('[stock-page] rendered items count: 0');
-          console.log('[stock-page] empty state condition:', true);
+          this.zone.run(() => {
+            this.totalItems = 0;
+            this.alertItems = 0;
+            this.groupedItems = [];
+            this.cdr.detectChanges();
+            console.log('[stock-page] rendered items count: 0');
+            console.log('[stock-page] empty state condition:', true);
+          });
         }
       });
 
@@ -270,7 +289,7 @@ export class StockComponent implements OnInit, OnDestroy {
     const action = this.getMovementActionKey(type);
     console.log(`[stock:${action}] click received`, { itemId: item?.id ?? null });
     console.log('[archives-ui] click received', { action: `stock:${action}`, itemId: item?.id ?? null });
-    if (!this.canManageStock) {
+    if (!this.canOpenMovement(type)) {
       return;
     }
 
@@ -294,6 +313,9 @@ export class StockComponent implements OnInit, OnDestroy {
   async submitMovement(): Promise<void> {
     if (!this.modal.item) return;
     const action = this.getMovementActionKey(this.modal.type);
+    if (!this.canOpenMovement(this.modal.type)) {
+      return;
+    }
     if (this.movementForm.invalid) {
       this.movementForm.markAllAsTouched();
       return;
@@ -344,7 +366,7 @@ export class StockComponent implements OnInit, OnDestroy {
   }
 
   openCreateProductModal(): void {
-    if (!this.canManageCatalog) {
+    if (!this.canCreateProduct) {
       this.showToast('error', this.t.droitsCreationManquants);
       return;
     }
@@ -373,7 +395,7 @@ export class StockComponent implements OnInit, OnDestroy {
   openEditProductModal(item: StockItem): void {
     console.log('[stock:edit] click received', { itemId: item?.id ?? null });
     console.log('[archives-ui] click received', { action: 'stock:edit', itemId: item?.id ?? null });
-    if (!this.canManageCatalog) {
+    if (!this.canEditProduct) {
       this.runStockUiUpdate('stock:edit', () => {
         this.showToast('error', this.t.droitsCreationManquants);
       });
@@ -460,7 +482,7 @@ export class StockComponent implements OnInit, OnDestroy {
   }
 
   async addCustomCategory(): Promise<void> {
-    if (!this.canManageCatalog) {
+    if (!this.canCreateProduct) {
       this.showToast('error', this.t.droitsCreationManquants);
       return;
     }
@@ -481,7 +503,7 @@ export class StockComponent implements OnInit, OnDestroy {
   }
 
   async addCustomSeries(): Promise<void> {
-    if (!this.canManageCatalog) {
+    if (!this.canCreateProduct) {
       this.showToast('error', this.t.droitsCreationManquants);
       return;
     }
@@ -502,7 +524,7 @@ export class StockComponent implements OnInit, OnDestroy {
   }
 
   async addCustomColor(): Promise<void> {
-    if (!this.canManageCatalog) {
+    if (!this.canCreateProduct) {
       this.showToast('error', this.t.droitsCreationManquants);
       return;
     }
@@ -527,7 +549,7 @@ export class StockComponent implements OnInit, OnDestroy {
   async submitProduct(): Promise<void> {
     console.log('[product-create] click received');
     console.log('[product-create] submit started');
-    if (!this.canManageCatalog) {
+    if (!this.canCreateProduct) {
       this.showToast('error', this.t.droitsCreationManquants);
       return;
     }
@@ -627,7 +649,7 @@ export class StockComponent implements OnInit, OnDestroy {
   }
 
   openArchiveModal(item: StockItem): void {
-    if (!this.canDeleteProduct) {
+    if (!this.canArchiveProduct) {
       this.runStockUiUpdate('stock:archive', () => {
         this.showToast('error', this.t.droitsCreationManquants);
       });
@@ -1274,6 +1296,12 @@ export class StockComponent implements OnInit, OnDestroy {
     if (type === 'IN') return 'add';
     if (type === 'OUT') return 'remove';
     return 'adjust';
+  }
+
+  private canOpenMovement(type: StockMovementType): boolean {
+    if (type === 'IN') return this.canAddStock;
+    if (type === 'OUT') return this.canRemoveStock;
+    return this.canAdjustStock;
   }
 }
 

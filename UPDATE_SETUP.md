@@ -1,39 +1,45 @@
-﻿# UPDATE_SETUP
+# UPDATE_SETUP
 
-## 1) Build une nouvelle version
-1. Mettre a jour `version` dans `package.json` (ex: `1.0.1`).
-2. Lancer:
-```bash
-npm run electron:build
+Pense-bete de deploiement pour la version web-only.
+
+## 1. Preparer le build frontend
+
+```powershell
+npm.cmd install
+npm.cmd run web:setup
+npm.cmd run build
 ```
-3. Les artefacts sont generes dans `dist/`.
 
-## 2) Fichiers a publier sur le serveur HTTP updates
-Deposer dans le dossier serveur `http://192.168.10.13:8080/updates/`:
-- `SPA Facturation Setup <version>.exe`
-- `latest.yml`
-- `SPA Facturation Setup <version>.exe.blockmap`
+Le build Angular est genere dans `dist/`.
 
-Le fichier `latest.yml` reference le setup et permet a `electron-updater` de detecter la nouvelle version.
+## 2. Preparer le backend
 
-## 3) Test de l'auto-update cote client
-1. Installer une version plus ancienne de l'application sur le PC admin.
-2. Publier les artefacts de la nouvelle version dans `/updates/`.
-3. Ouvrir l'application admin:
-- au demarrage, l'app verifie les mises a jour
-- si update disponible: message + telechargement auto
-- quand telechargement termine: proposition `Installer maintenant` / `Plus tard`
+```powershell
+npm.cmd run backend:install
+```
 
-## 4) Verification rapide
-- Ouvrir DevTools/console Electron et verifier les logs `[auto-update]`.
-- Aller dans la page `Parametres` et cliquer `Verifier les mises a jour`.
-- Verifier le statut:
-  - `a jour`
-  - `recherche...`
-  - `telechargement...`
-  - `pret a installer`
-  - `erreur`
+Configurer ensuite les variables d'environnement du backend :
 
-## 5) Notes importantes
-- Les mises a jour automatiques ne sont actives qu'en mode package (`app.isPackaged = true`).
-- Le serveur local Node + SQLite continue de demarrer via `electron/main.js`.
+```env
+RESEND_API_KEY=...
+RESEND_FROM_EMAIL=no-reply@votredomaine.com
+RESEND_FROM_NAME=SPA Facturation
+```
+
+## 3. Lancer l'API en production
+
+```powershell
+$env:NODE_ENV="production"
+npm.cmd run start --prefix backend
+```
+
+## 4. Publier le frontend
+
+Servir le contenu de `dist/` depuis votre hebergement statique, puis configurer un reverse proxy pour router `/api/*` vers l'API Express.
+
+## 5. Verification rapide
+
+- ouvrir l'application web
+- tester login
+- tester quelques modules metier
+- verifier que `/api/ping` repond

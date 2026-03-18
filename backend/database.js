@@ -2,7 +2,6 @@ const path = require('path');
 
 let Database;
 const localBackendBetterSqlitePath = path.join(__dirname, 'node_modules', 'better-sqlite3');
-const legacyServerBetterSqlitePath = path.join(__dirname, '..', 'server', 'node_modules', 'better-sqlite3');
 const rootBetterSqlitePath = path.join(__dirname, '..', 'node_modules', 'better-sqlite3');
 const installHint = '\n[backend] Missing Node-compatible better-sqlite3. Run: npm.cmd install --prefix backend';
 
@@ -10,14 +9,10 @@ try {
   Database = require(localBackendBetterSqlitePath);
 } catch (error) {
   try {
-    Database = require(legacyServerBetterSqlitePath);
-  } catch {
-    try {
-      Database = require(rootBetterSqlitePath);
-    } catch (rootError) {
-      const baseMessage = rootError instanceof Error ? rootError.message : 'Unable to load better-sqlite3';
-      throw new Error(`${baseMessage}${installHint}`);
-    }
+    Database = require(rootBetterSqlitePath);
+  } catch (rootError) {
+    const baseMessage = rootError instanceof Error ? rootError.message : 'Unable to load better-sqlite3';
+    throw new Error(`${baseMessage}${installHint}`);
   }
 }
 
@@ -60,6 +55,8 @@ addColumnIfMissing('products', 'deleted_at TEXT', 'deleted_at');
 addColumnIfMissing('employees', 'can_add_stock INTEGER NOT NULL DEFAULT 0', 'can_add_stock');
 addColumnIfMissing('employees', 'can_remove_stock INTEGER NOT NULL DEFAULT 0', 'can_remove_stock');
 addColumnIfMissing('employees', 'can_adjust_stock INTEGER NOT NULL DEFAULT 0', 'can_adjust_stock');
+addColumnIfMissing('employees', 'can_edit_stock_product INTEGER NOT NULL DEFAULT 0', 'can_edit_stock_product');
+addColumnIfMissing('employees', 'can_archive_stock_product INTEGER NOT NULL DEFAULT 0', 'can_archive_stock_product');
 addColumnIfMissing('employees', 'can_manage_estimations INTEGER NOT NULL DEFAULT 0', 'can_manage_estimations');
 addColumnIfMissing('employees', 'can_manage_archives INTEGER NOT NULL DEFAULT 0', 'can_manage_archives');
 addColumnIfMissing('employees', 'can_manage_inventory INTEGER NOT NULL DEFAULT 0', 'can_manage_inventory');
@@ -73,10 +70,10 @@ if (hasTable('employees')) {
       can_add_stock = CASE WHEN COALESCE(can_manage_stock, 0) = 1 THEN 1 ELSE COALESCE(can_add_stock, 0) END,
       can_remove_stock = CASE WHEN COALESCE(can_manage_stock, 0) = 1 THEN 1 ELSE COALESCE(can_remove_stock, 0) END,
       can_adjust_stock = CASE WHEN COALESCE(can_manage_stock, 0) = 1 THEN 1 ELSE COALESCE(can_adjust_stock, 0) END,
+      can_edit_stock_product = CASE WHEN COALESCE(can_manage_stock, 0) = 1 THEN 1 ELSE COALESCE(can_edit_stock_product, 0) END,
+      can_archive_stock_product = CASE WHEN COALESCE(can_manage_stock, 0) = 1 THEN 1 ELSE COALESCE(can_archive_stock_product, 0) END,
       can_manage_estimations = CASE WHEN COALESCE(can_manage_quotes, 0) = 1 THEN 1 ELSE COALESCE(can_manage_estimations, 0) END,
       can_manage_archives = CASE WHEN COALESCE(can_manage_stock, 0) = 1 THEN 1 ELSE COALESCE(can_manage_archives, 0) END,
-      can_manage_inventory = CASE WHEN COALESCE(can_view_stock, 0) = 1 THEN 1 ELSE COALESCE(can_manage_inventory, 0) END,
-      can_view_history = CASE WHEN COALESCE(can_view_stock, 0) = 1 THEN 1 ELSE COALESCE(can_view_history, 0) END,
       can_manage_all = CASE WHEN role IN ('admin', 'developer', 'owner') THEN 1 ELSE COALESCE(can_manage_all, 0) END
   `).run();
 }

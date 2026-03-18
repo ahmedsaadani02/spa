@@ -7,7 +7,7 @@
 
     <div class="panel-actions">
       <button
-        *ngIf="canManageCatalog"
+        *ngIf="canCreateProduct"
         class="btn primary"
         type="button"
         (click)="openCreateProductModal()"
@@ -102,31 +102,31 @@
 
           <div class="stock-actions">
             <button
+              *ngIf="canAddStock"
               class="btn stock-action-btn stock-action-btn--add"
               type="button"
               (click)="openMove(item, 'IN')"
-              [disabled]="!canManageStock"
             >
               {{ t.ajouter }}
             </button>
             <button
+              *ngIf="canRemoveStock"
               class="btn stock-action-btn stock-action-btn--remove"
               type="button"
               (click)="openMove(item, 'OUT')"
-              [disabled]="!canManageStock"
             >
               {{ t.retirer }}
             </button>
             <button
+              *ngIf="canAdjustStock"
               class="btn stock-action-btn stock-action-btn--adjust"
               type="button"
               (click)="openMove(item, 'ADJUST')"
-              [disabled]="!canManageStock"
             >
               {{ t.ajuster }}
             </button>
             <button
-              *ngIf="canManageCatalog"
+              *ngIf="canEditProduct"
               class="btn stock-action-btn stock-action-btn--edit"
               type="button"
               (click)="openEditProductModal(item)"
@@ -134,7 +134,7 @@
               Modifier
             </button>
             <button
-              *ngIf="canDeleteProduct"
+              *ngIf="canArchiveProduct"
               class="btn stock-action-btn stock-action-btn--archive"
               type="button"
               (click)="archiveProduct(item)"
@@ -196,7 +196,14 @@
 
     <div class="modal-actions">
       <button class="btn ghost" type="button" (click)="closeModal()">{{ t.annuler }}</button>
-      <button class="btn primary" type="button" (click)="submitMovement()">{{ t.valider }}</button>
+      <button
+        class="btn primary"
+        type="button"
+        (click)="submitMovement()"
+        [disabled]="!modal.item || (modal.type === 'IN' && !canAddStock) || (modal.type === 'OUT' && !canRemoveStock) || (modal.type === 'ADJUST' && !canAdjustStock)"
+      >
+        {{ t.valider }}
+      </button>
     </div>
   </div>
 </div>

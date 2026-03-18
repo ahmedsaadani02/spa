@@ -4,6 +4,8 @@ const PERMISSION_KEYS = Object.freeze({
   removeStock: 'can_remove_stock',
   adjustStock: 'can_adjust_stock',
   manageStock: 'can_manage_stock',
+  editStockProduct: 'can_edit_stock_product',
+  archiveStockProduct: 'can_archive_stock_product',
   manageEmployees: 'can_manage_employees',
   manageInvoices: 'can_manage_invoices',
   manageQuotes: 'can_manage_quotes',
@@ -17,13 +19,6 @@ const PERMISSION_KEYS = Object.freeze({
 });
 
 let currentUser = null;
-const EMPLOYEE_ALLOWED_PERMISSIONS = new Set([
-  'viewStock',
-  'addStock',
-  'removeStock',
-  'adjustStock',
-  'manageStock'
-]);
 
 const toBool = (value) => Number(value) === 1;
 const isPrivilegedRole = (role) => role === 'admin' || role === 'developer' || role === 'owner';
@@ -34,14 +29,16 @@ const buildPermissionSet = (row) => ({
   removeStock: toBool(row.can_remove_stock) || toBool(row.can_manage_stock),
   adjustStock: toBool(row.can_adjust_stock) || toBool(row.can_manage_stock),
   manageStock: toBool(row.can_manage_stock),
+  editStockProduct: toBool(row.can_edit_stock_product) || toBool(row.can_manage_stock),
+  archiveStockProduct: toBool(row.can_archive_stock_product) || toBool(row.can_manage_stock),
   manageEmployees: toBool(row.can_manage_employees),
   manageInvoices: toBool(row.can_manage_invoices),
   manageQuotes: toBool(row.can_manage_quotes),
   manageClients: toBool(row.can_manage_clients),
   manageEstimations: toBool(row.can_manage_estimations) || toBool(row.can_manage_quotes),
   manageArchives: toBool(row.can_manage_archives) || toBool(row.can_manage_stock),
-  manageInventory: toBool(row.can_manage_inventory) || toBool(row.can_view_stock),
-  viewHistory: toBool(row.can_view_history) || toBool(row.can_view_stock),
+  manageInventory: toBool(row.can_manage_inventory),
+  viewHistory: toBool(row.can_view_history),
   manageSalary: toBool(row.can_manage_salary),
   manageAll: toBool(row.can_manage_all)
 });
@@ -75,6 +72,8 @@ const toAppUser = (row) => {
         removeStock: true,
         adjustStock: true,
         manageStock: true,
+        editStockProduct: true,
+        archiveStockProduct: true,
         manageEmployees: true,
         manageInvoices: true,
         manageQuotes: true,
@@ -117,9 +116,6 @@ const hasPermission = (permissionKey) => {
   if (!currentUser) return false;
   if (isPrivilegedRole(currentUser.role)) return true;
   if (currentUser.permissions?.manageAll) return true;
-  if (currentUser.role === 'employee' && !EMPLOYEE_ALLOWED_PERMISSIONS.has(permissionKey)) {
-    return false;
-  }
   return !!currentUser.permissions?.[permissionKey];
 };
 

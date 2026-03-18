@@ -1,13 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-let electronApp = null;
-
-try {
-  ({ app: electronApp } = require('electron'));
-} catch {
-  electronApp = null;
-}
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']);
 const PLACEHOLDER_IMAGE = 'assets/placeholder.png';
@@ -29,12 +22,7 @@ const getFallbackUserDataDirectory = () => {
   return path.join(process.cwd(), '.spa-invoice-desktop');
 };
 
-const getProductsImagesDirectory = () => {
-  if (electronApp?.getPath) {
-    return path.join(electronApp.getPath('userData'), 'products-images');
-  }
-  return path.join(getFallbackUserDataDirectory(), 'products-images');
-};
+const getProductsImagesDirectory = () => path.join(getFallbackUserDataDirectory(), 'products-images');
 
 const ensureProductsImagesDirectory = () => {
   const directory = getProductsImagesDirectory();

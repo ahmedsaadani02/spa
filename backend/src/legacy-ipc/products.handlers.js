@@ -2,7 +2,7 @@ const { randomUUID } = require('crypto');
 const path = require('path');
 const BrowserWindow = null;
 const dialog = null;
-const { assertPermission, getCurrentUser } = require('../services/auth-session.service');
+const { assertPermission, getCurrentUser, hasPermission } = require('../services/auth-session.service');
 const {
   PLACEHOLDER_IMAGE,
   normalizeStoredProductImageRef,
@@ -43,7 +43,29 @@ const assertProductCatalogPermission = () => {
   if (!currentUser) {
     throw new Error('NOT_AUTHENTICATED');
   }
-  if (!PRIVILEGED_ROLES.has(currentUser.role)) {
+  if (!PRIVILEGED_ROLES.has(currentUser.role) && !hasPermission('manageStock')) {
+    throw new Error('FORBIDDEN');
+  }
+  return currentUser;
+};
+
+const assertCanEditStockProduct = () => {
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    throw new Error('NOT_AUTHENTICATED');
+  }
+  if (!PRIVILEGED_ROLES.has(currentUser.role) && !hasPermission('editStockProduct')) {
+    throw new Error('FORBIDDEN');
+  }
+  return currentUser;
+};
+
+const assertCanArchiveStockProduct = () => {
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    throw new Error('NOT_AUTHENTICATED');
+  }
+  if (!PRIVILEGED_ROLES.has(currentUser.role) && !hasPermission('archiveStockProduct')) {
     throw new Error('FORBIDDEN');
   }
   return currentUser;
@@ -878,7 +900,7 @@ const registerProductsHandlers = (ipcMain, getDb) => {
 
   registerHandle(ipcMain, 'products:update', (event, productId, payload) => {
     try {
-      assertProductCatalogPermission();
+      assertCanEditStockProduct();
       return updateProduct(getDb(), productId, payload);
     } catch (error) {
       console.error('[products:update] error', error);
@@ -898,7 +920,7 @@ const registerProductsHandlers = (ipcMain, getDb) => {
 
   registerHandle(ipcMain, 'products:delete', (event, id) => {
     try {
-      assertProductCatalogPermission();
+      assertCanArchiveStockProduct();
       return archiveProduct(getDb(), id).ok;
     } catch (error) {
       console.error('[products:delete] error', error);
@@ -908,7 +930,7 @@ const registerProductsHandlers = (ipcMain, getDb) => {
 
   registerHandle(ipcMain, 'products:archive', (event, productId) => {
     try {
-      assertProductCatalogPermission();
+      assertCanArchiveStockProduct();
       console.log('[ipc] products:archive invoked', { productId });
       return archiveProduct(getDb(), productId);
     } catch (error) {
@@ -993,4 +1015,6 @@ module.exports = {
   updateVariantPriceWithHistory,
   getPriceHistory,
   assertProductCatalogPermission
+  ,assertCanEditStockProduct
+  ,assertCanArchiveStockProduct
 };

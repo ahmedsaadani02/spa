@@ -12,6 +12,8 @@ type PermissionControlKey =
   | 'canRemoveStock'
   | 'canAdjustStock'
   | 'canManageStock'
+  | 'canEditStockProduct'
+  | 'canArchiveStockProduct'
   | 'canManageInvoices'
   | 'canManageQuotes'
   | 'canManageClients'
@@ -53,6 +55,8 @@ export class EmployeeFormComponent implements OnInit {
         { key: 'canAddStock' as PermissionControlKey, label: 'Ajouter stock' },
         { key: 'canRemoveStock' as PermissionControlKey, label: 'Retirer stock' },
         { key: 'canAdjustStock' as PermissionControlKey, label: 'Ajuster stock' },
+        { key: 'canEditStockProduct' as PermissionControlKey, label: 'Modifier produit' },
+        { key: 'canArchiveStockProduct' as PermissionControlKey, label: 'Archiver produit' },
         { key: 'canManageStock' as PermissionControlKey, label: 'G\u00e9rer stock' }
       ]
     },
@@ -93,6 +97,8 @@ export class EmployeeFormComponent implements OnInit {
     'canRemoveStock',
     'canAdjustStock',
     'canManageStock',
+    'canEditStockProduct',
+    'canArchiveStockProduct',
     'canManageInvoices',
     'canManageQuotes',
     'canManageClients',
@@ -124,6 +130,8 @@ export class EmployeeFormComponent implements OnInit {
     canRemoveStock: [false],
     canAdjustStock: [false],
     canManageStock: [false],
+    canEditStockProduct: [false],
+    canArchiveStockProduct: [false],
     canManageEmployees: [false],
     canManageInvoices: [false],
     canManageQuotes: [false],
@@ -182,6 +190,8 @@ export class EmployeeFormComponent implements OnInit {
           canRemoveStock: true,
           canAdjustStock: true,
           canManageStock: true,
+          canEditStockProduct: true,
+          canArchiveStockProduct: true,
           canManageEmployees: true,
           canManageInvoices: true,
           canManageQuotes: true,
@@ -241,6 +251,8 @@ export class EmployeeFormComponent implements OnInit {
       canRemoveStock: !!raw.canRemoveStock,
       canAdjustStock: !!raw.canAdjustStock,
       canManageStock: !!raw.canManageStock,
+      canEditStockProduct: !!raw.canEditStockProduct,
+      canArchiveStockProduct: !!raw.canArchiveStockProduct,
       canManageEmployees: !!raw.canManageEmployees,
       canManageInvoices: !!raw.canManageInvoices,
       canManageQuotes: !!raw.canManageQuotes,
@@ -266,6 +278,10 @@ export class EmployeeFormComponent implements OnInit {
       if (!saved) {
         this.error = 'Enregistrement impossible.';
         return;
+      }
+
+      if (saved.id === this.auth.currentUser()?.id) {
+        await this.auth.refreshCurrentUser();
       }
 
       await this.router.navigate(['/employees']);
@@ -320,6 +336,8 @@ export class EmployeeFormComponent implements OnInit {
       canRemoveStock: employee.canRemoveStock,
       canAdjustStock: employee.canAdjustStock,
       canManageStock: employee.canManageStock,
+      canEditStockProduct: employee.canEditStockProduct,
+      canArchiveStockProduct: employee.canArchiveStockProduct,
       canManageEmployees: employee.canManageEmployees,
       canManageInvoices: employee.canManageInvoices,
       canManageQuotes: employee.canManageQuotes,
@@ -361,7 +379,13 @@ export class EmployeeFormComponent implements OnInit {
       });
       updates.canManageAll = true;
     } else {
-      const stockChildren = [values.canAddStock, values.canRemoveStock, values.canAdjustStock];
+      const stockChildren = [
+        values.canAddStock,
+        values.canRemoveStock,
+        values.canAdjustStock,
+        values.canEditStockProduct,
+        values.canArchiveStockProduct
+      ];
       const allStockChildren = stockChildren.every((flag) => !!flag);
       const hasAnyStockChild = stockChildren.some((flag) => !!flag);
 
@@ -369,14 +393,24 @@ export class EmployeeFormComponent implements OnInit {
         updates.canAddStock = true;
         updates.canRemoveStock = true;
         updates.canAdjustStock = true;
+        updates.canEditStockProduct = true;
+        updates.canArchiveStockProduct = true;
       }
 
-      if (changed === 'canAddStock' || changed === 'canRemoveStock' || changed === 'canAdjustStock') {
+      if (
+        changed === 'canAddStock' ||
+        changed === 'canRemoveStock' ||
+        changed === 'canAdjustStock' ||
+        changed === 'canEditStockProduct' ||
+        changed === 'canArchiveStockProduct'
+      ) {
         updates.canManageStock = allStockChildren;
       } else if (values.canManageStock && !allStockChildren) {
         updates.canAddStock = true;
         updates.canRemoveStock = true;
         updates.canAdjustStock = true;
+        updates.canEditStockProduct = true;
+        updates.canArchiveStockProduct = true;
       }
 
       if (!hasAnyStockChild && values.canManageStock) {
