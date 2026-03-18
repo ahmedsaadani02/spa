@@ -421,7 +421,7 @@ function createApp() {
   return app;
 }
 
-function startServer(port = 3000, host = '127.0.0.1') {
+function startServer(port = Number(process.env.PORT) || 3000, host = process.env.HOST || '0.0.0.0') {
   if (httpServer) {
     return httpServer;
   }
