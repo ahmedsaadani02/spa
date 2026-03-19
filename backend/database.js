@@ -21,8 +21,21 @@ if (!appData) {
   throw new Error('APPDATA is not defined. Unable to locate spa.db.');
 }
 
-const dbPath = path.join(appData, 'spa-invoice-desktop', 'spa.db');
-const db = new Database(dbPath);
+const fs = require('fs');
+const path = require('path');
+const Database = require('better-sqlite3');
+
+const dbPath =
+  process.env.DATABASE_PATH ||
+  (process.env.APPDATA
+    ? path.join(process.env.APPDATA, 'SPA', 'spa.db')
+    : path.join(process.cwd(), 'data', 'spa.db'));
+
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+
+module.exports = new Database(dbPath);
+
+module.exports = db;
 
 const hasTable = (tableName) => !!db.prepare(`
   SELECT 1
