@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Invoice } from '../models/invoice';
 import { Quote } from '../models/quote';
-import { getSpaApi } from '../bridge/spa-bridge';
-import type { SpaApi, SpaDocumentPdfResult, SpaDocumentRequest, SpaPrintResult } from '../types/electron';
+import { getAppApi } from '../bridge/app-api-bridge';
+import type { SpaApi, SpaDocumentPdfResult, SpaDocumentRequest, SpaPrintResult } from '../types/app-api.types';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ElectronService {
   private get spa(): SpaApi | null {
-    return getSpaApi();
+    return getAppApi();
   }
 
   get isElectron(): boolean {
@@ -32,28 +32,30 @@ export class ElectronService {
   }
 
   async printDocument(
-    docType: 'invoice' | 'quote',
+    docType: 'invoice' | 'quote' | 'inventory',
     documentNumber?: string,
     html?: string,
-    title?: string
+    title?: string,
+    pageOrientation?: 'portrait' | 'landscape'
   ): Promise<SpaPrintResult | null> {
     if (!this.spa?.documents?.print) {
       return null;
     }
-    const request: SpaDocumentRequest = { docType, documentNumber, html, title };
+    const request: SpaDocumentRequest = { docType, documentNumber, html, title, pageOrientation };
     return this.spa.documents.print(request);
   }
 
   async exportDocumentPdf(
-    docType: 'invoice' | 'quote',
+    docType: 'invoice' | 'quote' | 'inventory',
     documentNumber?: string,
     html?: string,
-    title?: string
+    title?: string,
+    pageOrientation?: 'portrait' | 'landscape'
   ): Promise<SpaDocumentPdfResult | null> {
     if (!this.spa?.documents?.exportPdf) {
       return null;
     }
-    const request: SpaDocumentRequest = { docType, documentNumber, html, title };
+    const request: SpaDocumentRequest = { docType, documentNumber, html, title, pageOrientation };
     return this.spa.documents.exportPdf(request);
   }
 

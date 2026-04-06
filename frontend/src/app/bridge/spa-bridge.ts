@@ -1,24 +1,22 @@
-import type { SpaApi } from '../types/electron';
-import { getWebSpaApi } from './web-spa-api';
+import type { SpaApi } from '../types/app-api.types';
+import { getWebAppApi } from './web-app-api';
 
-export const getSpaApi = (): SpaApi | null => {
+export const getAppApi = (): SpaApi | null => {
   if (typeof window === 'undefined') {
     return null;
   }
-  return getWebSpaApi();
+  return getWebAppApi();
 };
 
-export const hasSpaApi = (): boolean => !!getSpaApi();
+export const hasAppApi = (): boolean => !!getAppApi();
 
-export const isElectronRuntime = (): boolean => false;
-
-export const waitForSpaApiReady = async (
+export const waitForAppApiReady = async (
   timeout = 5000,
   interval = 25
 ): Promise<boolean> => {
   void timeout;
   void interval;
-  return hasSpaApi();
+  return hasAppApi();
 };
 
-export const shouldUseIpcRepositories = (): boolean => hasSpaApi();
+export const shouldUseBackendRepositories = (): boolean => hasAppApi();

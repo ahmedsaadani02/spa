@@ -1,0 +1,186 @@
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h1>{{ ui.mine.title }}</h1>
+      <p>{{ ui.mine.subtitle }}</p>
+    </div>
+    <div class="welcome-chip" *ngIf="username">{{ username }}</div>
+  </div>
+
+  <section class="card">
+    <div class="filters">
+      <label class="field">
+        <span>{{ ui.admin.status }}</span>
+        <select class="input" [formControl]="statusControl">
+          <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>{{ ui.admin.priority }}</span>
+        <select class="input" [formControl]="priorityControl">
+          <option *ngFor="let option of priorityOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <section class="tasks-grid">
+    <div class="error card" *ngIf="error">{{ error }}</div>
+    <div class="loading-state card" *ngIf="loading">
+      <span class="loading-dot"></span>
+      <div>
+        <strong>{{ ui.mine.loadingStrong }}</strong>
+        <p>{{ ui.mine.loadingText }}</p>
+      </div>
+    </div>
+    <div class="empty card" *ngIf="!loading && tasks.length === 0">{{ ui.mine.noTask }}</div>
+
+    <article class="task-card" *ngFor="let task of tasks; trackBy: trackByTask">
+      <header class="task-card-header">
+        <div>
+          <h2>{{ taskTitle(task) }}</h2>
+          <p *ngIf="taskDescription(task)">{{ taskDescription(task) }}</p>
+        </div>
+        <span class="status-badge" [class]="'status-badge status-' + task.status">{{ statusLabel(task.status) }}</span>
+      </header>
+
+      <div class="task-meta">
+        <span class="priority-tag" [class]="'priority-tag priority-' + task.priority">{{ priorityLabel(task.priority) }}</span>
+        <span class="task-date">{{ ui.mine.dueDate }} : {{ task.dueDate ? (task.dueDate | date:'dd/MM/yyyy') : '-' }}</span>
+        <span class="task-date" *ngIf="proofRequirementText(task)">{{ proofRequirementText(task) }}</span>
+      </div>
+
+      <div class="task-update-meta">
+        {{ ui.mine.createdAt }} : {{ task.createdAt ? (task.createdAt | date:'dd/MM/yyyy HH:mm') : '-' }}
+      </div>
+      <div class="task-update-meta">
+        {{ ui.mine.createdBy }} : {{ taskCreatedBy(task) }}
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-bar">
+          <span class="progress-fill" [style.width.%]="task.progress"></span>
+        </div>
+        <span class="progress-value">{{ task.progress }}%</span>
+      </div>
+
+      <div class="task-note" *ngIf="task.employeeNote">
+        <strong>{{ ui.mine.note }} :</strong> {{ task.employeeNote }}
+      </div>
+
+      <div class="task-note" *ngIf="task.subtasks.length">
+        <strong>{{ updateSubtasksLabel }} :</strong>
+        {{ completedSubtasksCount(task) }}/{{ task.subtasks.length }}
+      </div>
+
+      <div class="task-update-meta" *ngIf="task.updatedByEmployeeAt">
+        {{ ui.mine.updatedAt }} : {{ task.updatedByEmployeeAt | date:'dd/MM/yyyy HH:mm' }}
+      </div>
+
+      <div class="task-actions">
+        <button class="btn primary" type="button" (click)="openUpdate(task)">{{ ui.mine.update }}</button>
+      </div>
+    </article>
+  </section>
+</section>
+
+<div class="confirm-backdrop" *ngIf="updateModal.open">
+  <div class="confirm-modal update-modal" role="dialog" aria-modal="true" aria-labelledby="my-task-update-title">
+    <div class="confirm-header">
+      <h3 id="my-task-update-title">{{ ui.mine.updateTitle }}</h3>
+    </div>
+
+    <form class="form update-form" [formGroup]="updateForm" (ngSubmit)="submitUpdate()">
+      <div class="modal-body">
+        <section class="modal-card-block" *ngIf="updateModal.task">
+          <div class="modal-card-header">
+            <strong>{{ taskTitle(updateModal.task) }}</strong>
+            <span>{{ priorityLabel(updateModal.task.priority) }}</span>
+          </div>
+          <div class="task-update-meta">{{ ui.mine.dueDate }} : {{ updateModal.task.dueDate ? (updateModal.task.dueDate | date:'dd/MM/yyyy') : '-' }}</div>
+          <div class="task-update-meta" *ngIf="proofRequirementText(updateModal.task)">{{ proofRequirementText(updateModal.task) }}</div>
+        </section>
+
+        <label class="field">
+          <span>{{ ui.admin.status }}</span>
+          <select class="input" formControlName="status">
+            <option *ngFor="let option of statusOptions.slice(1)" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>{{ ui.mine.progress }}</span>
+          <input class="input" type="number" min="0" max="100" formControlName="progress" [readonly]="!!updateModal.task?.subtasks?.length" />
+        </label>
+
+        <label class="field">
+          <span>{{ updateCommentLabel }}</span>
+          <textarea class="textarea" rows="4" formControlName="employeeNote" [attr.placeholder]="updateCommentPlaceholder"></textarea>
+        </label>
+
+        <section class="modal-card-block" *ngIf="updateModal.task?.subtasks?.length">
+          <div class="modal-card-header">
+            <strong>{{ updateSubtasksLabel }}</strong>
+            <span>{{ updateModal.task ? completedSubtasksCount(updateModal.task) : 0 }}/{{ updateModal.task?.subtasks?.length }}</span>
+          </div>
+          <div class="subtask-checklist">
+            <label class="subtask-item" *ngFor="let subtask of updateModal.task?.subtasks; let i = index">
+              <input type="checkbox" [formControl]="subtaskControlAt(i)" (change)="onSubtaskToggle()" />
+              <span>{{ subtask.title }}</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="modal-card-block">
+          <div class="modal-card-header">
+            <strong>{{ updatePhotoLabel }}</strong>
+            <span>{{ updatePhotoHint }}</span>
+          </div>
+          <input class="input" type="file" accept="image/*" multiple (change)="onProofFilesSelected($event)" />
+          <div class="proof-preview-list" *ngIf="selectedProofPhotos.length > 0">
+            <div class="proof-preview-item" *ngFor="let photo of selectedProofPhotos; let i = index">
+              <img [src]="photo.dataUrl" [alt]="photo.fileName" />
+              <div>
+                <strong>{{ photo.fileName }}</strong>
+                <button class="btn ghost" type="button" (click)="removeSelectedProof(i)">Retirer</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="modal-card-block" *ngIf="updateModal.task?.photoProofs?.length">
+          <div class="modal-card-header">
+            <strong>{{ updateProofsLabel }}</strong>
+          </div>
+          <div class="proof-gallery">
+            <a class="proof-link" *ngFor="let photo of updateModal.task?.photoProofs" [href]="photo.imageUrl || photo.imageRef" target="_blank" rel="noreferrer">
+              <img [src]="photo.imageUrl || photo.imageRef" [alt]="photo.fileName || 'preuve-photo'" />
+              <span>{{ photo.createdAt ? (photo.createdAt | date:'dd/MM/yyyy HH:mm') : '-' }}</span>
+            </a>
+          </div>
+        </section>
+
+        <section class="modal-card-block" *ngIf="updateModal.task?.updateHistory?.length">
+          <div class="modal-card-header">
+            <strong>{{ updateHistoryLabel }}</strong>
+          </div>
+          <div class="history-list">
+            <div class="history-item" *ngFor="let entry of updateModal.task?.updateHistory">
+              <strong>{{ historyLabel(entry) }}</strong>
+              <span>{{ entry.createdAt ? (entry.createdAt | date:'dd/MM/yyyy HH:mm') : '-' }}</span>
+              <span *ngIf="entry.comment">{{ entry.comment }}</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="confirm-actions modal-footer">
+        <button class="btn ghost" type="button" (click)="closeUpdate()" [disabled]="saving">{{ ui.admin.cancel }}</button>
+        <button class="btn primary" type="submit" [disabled]="saving">
+          {{ saving ? ui.mine.saving : ui.mine.save }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

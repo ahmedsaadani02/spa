@@ -1,0 +1,147 @@
+{
+  "startedAt": "2026-03-24T07:53:05.058Z",
+  "finishedAt": "2026-03-24T07:53:12.138Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:49678",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "stockWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write"
+    ]
+  },
+  "writeCartography": [
+    "`movements:add` ajoute uniquement une ligne dans `movements`.",
+    "`movements:add` ne modifie pas `stock`, ne modifie pas `product_variants` et ne met pas a jour `products.last_updated`.",
+    "Cette sous-etape ecrit l historique seul; la mutation combinee `stock:applyMovement` reste hors scope."
+  ],
+  "validated": [
+    "`movements:add` est compatible PostgreSQL pour l insertion d une ligne d historique `movements`, avec parite validee contre une execution de reference SQLite.",
+    "`movements:add` ne modifie ni `stock`, ni `product_variants`, ni `products.last_updated`, conformement au comportement SQLite actuel.",
+    "Cette sous-etape reste audit-only et exige `DB_DRIVER=postgres`, `DB_ENABLE_POSTGRES_CATALOG_READ=1`, `DB_ENABLE_POSTGRES_PRODUCT_WRITES=1` et `DB_ENABLE_POSTGRES_STOCK_WRITES=1`."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "POST /api/products",
+      "ok": true,
+      "detail": "id=66aa9fee-43dd-4365-8509-dd4462ab5458"
+    },
+    {
+      "name": "POST /api/movements",
+      "ok": true,
+      "detail": "id=68787c63-76e9-4f96-bbb2-9574232c4b22"
+    },
+    {
+      "name": "GET /api/movements after add",
+      "ok": true,
+      "detail": "id=68787c63-76e9-4f96-bbb2-9574232c4b22"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "movements parity",
+      "ok": true,
+      "detail": "id=68787c63-76e9-4f96-bbb2-9574232c4b22"
+    },
+    {
+      "name": "stock unchanged parity",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "product_variants unchanged parity",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "product semantic parity",
+      "ok": true,
+      "detail": "priceTtc=12.5"
+    }
+  ],
+  "sideEffects": [
+    {
+      "name": "stock untouched",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "product_variants untouched",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "products.last_updated untouched",
+      "ok": true,
+      "detail": "unchanged"
+    },
+    {
+      "name": "movements inserted",
+      "ok": true,
+      "detail": "id=68787c63-76e9-4f96-bbb2-9574232c4b22"
+    }
+  ],
+  "sqliteIsolationChecks": [
+    {
+      "name": "products unchanged in SQLite",
+      "ok": true,
+      "detail": "reference=PG-MOVE-MN4BI0PS"
+    },
+    {
+      "name": "metadata unchanged in SQLite",
+      "ok": true,
+      "detail": "values=4"
+    }
+  ],
+  "remainingRisks": [
+    "`stock:applyMovement` reste sur SQLite; la mutation combinee stock + historique n est donc pas encore coherente sur PostgreSQL.",
+    "Le domaine catalogue/stock ne doit toujours pas etre active en PostgreSQL en usage normal tant que `stock:applyMovement` n est pas valide."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-write.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-write.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-write.2026-03-24T07-53-12-666Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-write.2026-03-24T07-53-12-666Z.md"
+  }
+}

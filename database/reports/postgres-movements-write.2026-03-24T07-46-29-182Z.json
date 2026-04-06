@@ -1,0 +1,121 @@
+{
+  "startedAt": "2026-03-24T07:46:18.583Z",
+  "finishedAt": "2026-03-24T07:46:28.628Z",
+  "status": "failed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:57794",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "stockWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write"
+    ]
+  },
+  "writeCartography": [
+    "`movements:add` ajoute uniquement une ligne dans `movements`.",
+    "`movements:add` ne modifie pas `stock`, ne modifie pas `product_variants` et ne met pas a jour `products.last_updated`.",
+    "Cette sous-etape ecrit l historique seul; la mutation combinee `stock:applyMovement` reste hors scope."
+  ],
+  "validated": [],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "POST /api/products",
+      "ok": true,
+      "detail": "id=c627cbd6-84d3-4cf8-a648-638b17ca83ef"
+    },
+    {
+      "name": "POST /api/movements",
+      "ok": true,
+      "detail": "id=2a6430e8-8122-4506-a4b9-3e6498d1f2e7"
+    },
+    {
+      "name": "GET /api/movements after add",
+      "ok": true,
+      "detail": "id=2a6430e8-8122-4506-a4b9-3e6498d1f2e7"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "movements parity",
+      "ok": true,
+      "detail": "id=2a6430e8-8122-4506-a4b9-3e6498d1f2e7"
+    },
+    {
+      "name": "stock unchanged parity",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "product_variants unchanged parity",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "product semantic parity",
+      "ok": true,
+      "detail": "priceTtc=12.5"
+    }
+  ],
+  "sideEffects": [
+    {
+      "name": "stock untouched",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "product_variants untouched",
+      "ok": true,
+      "detail": "rows=2"
+    }
+  ],
+  "sqliteIsolationChecks": [],
+  "remainingRisks": [
+    "movements:add should not update products.last_updated."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-write.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-write.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-write.2026-03-24T07-46-29-182Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-write.2026-03-24T07-46-29-182Z.md"
+  }
+}

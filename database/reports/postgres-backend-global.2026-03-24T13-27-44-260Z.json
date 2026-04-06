@@ -1,0 +1,53 @@
+{
+  "startedAt": "2026-03-24T13:26:27.398Z",
+  "finishedAt": "2026-03-24T13:27:44.259Z",
+  "status": "failed",
+  "activationDecision": "not-activable",
+  "baseUrl": null,
+  "routing": null,
+  "childAudits": [
+    {
+      "name": "Tranche 1 clients/employees/salary",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche1-validation.latest.json"
+    },
+    {
+      "name": "Tranche 2 auth/session",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche2-auth-session.latest.json"
+    },
+    {
+      "name": "Domaine catalogue/stock",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.latest.json"
+    },
+    {
+      "name": "Quotes read",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-read.latest.json"
+    },
+    {
+      "name": "Quotes write",
+      "ok": false,
+      "detail": "exit=1; rd libpq semantics, which have weaker security guarantees.\n\nTo prepare for this change:\n- If you want the current behavior, explicitly use 'sslmode=verify-full'\n- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'\n\nSee https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.\n(Use `node --trace-warnings ...` to show where the warning was created)\n[quotes-write-audit] Validation failed: Clients count parity mismatch after quotes put/delete.",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-write.latest.json"
+    }
+  ],
+  "integrationChecks": [],
+  "validated": [],
+  "activationPlan": [],
+  "remainingRisks": [
+    "Quotes write failed: exit=1; rd libpq semantics, which have weaker security guarantees.\n\nTo prepare for this change:\n- If you want the current behavior, explicitly use 'sslmode=verify-full'\n- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'\n\nSee https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.\n(Use `node --trace-warnings ...` to show where the warning was created)\n[quotes-write-audit] Validation failed: Clients count parity mismatch after quotes put/delete."
+  ],
+  "cleanupRecommendations": [],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-backend-global.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-backend-global.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-backend-global.2026-03-24T13-27-44-260Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-backend-global.2026-03-24T13-27-44-260Z.md"
+  }
+}

@@ -31,7 +31,7 @@ const createAuthService = ({ getDb, sessions, createToken, nowIso, resolveSessio
   },
 
   async getCurrentUser(token) {
-    return resolveSessionUser(token || '');
+    return await resolveSessionUser(token || '');
   },
 
   async logout(token) {
@@ -43,7 +43,7 @@ const createAuthService = ({ getDb, sessions, createToken, nowIso, resolveSessio
   },
 
   async hasPermission(token, permissionKey) {
-    const user = resolveSessionUser(token || '');
+    const user = await resolveSessionUser(token || '');
     if (!user) {
       throw new Error('UNAUTHORIZED');
     }
@@ -57,14 +57,14 @@ const createAuthService = ({ getDb, sessions, createToken, nowIso, resolveSessio
   },
 
   async resetPassword(token, employeeId, newPassword) {
-    const user = resolveSessionUser(token || '');
+    const user = await resolveSessionUser(token || '');
     if (!user) {
       throw new Error('UNAUTHORIZED');
     }
 
     setCurrentUser(user);
     try {
-      return resetEmployeePassword(getDb(), employeeId, newPassword);
+      return await resetEmployeePassword(getDb(), employeeId, newPassword);
     } finally {
       clearCurrentUser();
     }

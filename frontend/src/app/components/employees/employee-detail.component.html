@@ -172,7 +172,7 @@
   <section class="card" *ngIf="canManageEmployees">
     <h2>Reinitialiser mot de passe</h2>
     <form [formGroup]="resetPasswordForm" (ngSubmit)="resetPassword()" class="reset-row">
-      <input class="input" type="password" formControlName="newPassword" placeholder="Nouveau mot de passe (min 10)" />
+      <input class="input" type="password" formControlName="newPassword" placeholder="Nouveau mot de passe" />
       <button class="btn outline" type="submit" [disabled]="resettingPassword">
         {{ resettingPassword ? 'En cours...' : 'Reinitialiser' }}
       </button>

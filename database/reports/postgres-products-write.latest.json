@@ -1,0 +1,192 @@
+{
+  "startedAt": "2026-03-23T14:16:16.473Z",
+  "finishedAt": "2026-03-23T14:16:26.823Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:57800",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write"
+    ]
+  },
+  "mutationsRoutedToPostgres": [
+    {
+      "name": "products:addMetadata",
+      "detail": "Ecriture `product_catalog_metadata` uniquement, audit-only via `DB_ENABLE_POSTGRES_PRODUCT_WRITES=1` et `DB_ENABLE_POSTGRES_CATALOG_READ=1`."
+    },
+    {
+      "name": "products:upsert",
+      "detail": "Ecriture `products` uniquement, sans `stock`, `product_variants` ni `price_history`."
+    },
+    {
+      "name": "products:delete",
+      "detail": "Alias archive, route vers PostgreSQL uniquement en audit."
+    },
+    {
+      "name": "products:archive",
+      "detail": "Bascule `products.is_archived` et `archived_at` sur PostgreSQL uniquement en audit."
+    },
+    {
+      "name": "products:restore",
+      "detail": "Restauration `products.is_archived` sur PostgreSQL uniquement en audit."
+    }
+  ],
+  "mutationsRemainingOnSqlite": [
+    {
+      "name": "products:create",
+      "detail": "Reste sur SQLite car cree aussi `stock` et `product_variants`."
+    },
+    {
+      "name": "products:update",
+      "detail": "Reste sur SQLite car peut ajouter/supprimer des couleurs et toucher `stock`/`product_variants`."
+    },
+    {
+      "name": "products:purge",
+      "detail": "Reste sur SQLite car supprime `stock`, `product_variants` et `price_history`."
+    },
+    {
+      "name": "products:updatePrice",
+      "detail": "Reste sur SQLite car ecrit `product_variants` et `price_history`."
+    },
+    {
+      "name": "products:restorePrice",
+      "detail": "Reste sur SQLite car ecrit `product_variants` et `price_history`."
+    }
+  ],
+  "validated": [
+    "Les mutations `products:addMetadata`, `products:upsert`, `products:archive`, `products:restore` et `products:delete` sont compatibles PostgreSQL avec routes REST et handlers inchanges.",
+    "Le routage PostgreSQL de ces mutations reste audit-only: il exige `DB_DRIVER=postgres`, `DB_ENABLE_POSTGRES_CATALOG_READ=1` et `DB_ENABLE_POSTGRES_PRODUCT_WRITES=1`.",
+    "Les lectures catalogue PostgreSQL permettent de verifier visuellement les effets des mutations pendant l audit sans changer le mode normal de l application."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "POST /api/products/metadata",
+      "ok": true,
+      "detail": "value=pg-audit-category-mn39qyc9"
+    },
+    {
+      "name": "POST /api/products/metadata duplicate",
+      "ok": true,
+      "detail": "alreadyExists=true"
+    },
+    {
+      "name": "GET /api/products/metadata",
+      "ok": true,
+      "detail": "new category visible through PostgreSQL read path"
+    },
+    {
+      "name": "POST /api/products/upsert insert",
+      "ok": true,
+      "detail": "id=pg-products-write-audit-mn39qyc9"
+    },
+    {
+      "name": "POST /api/products/upsert update",
+      "ok": true,
+      "detail": "same id updated in PostgreSQL"
+    },
+    {
+      "name": "GET /api/products",
+      "ok": true,
+      "detail": "upserted PostgreSQL product visible through audit read path"
+    },
+    {
+      "name": "POST /api/products/:id/archive",
+      "ok": true,
+      "detail": "id=pg-products-write-audit-mn39qyc9"
+    },
+    {
+      "name": "GET /api/products/archived after archive",
+      "ok": true,
+      "detail": "archived PostgreSQL product visible"
+    },
+    {
+      "name": "POST /api/products/:id/restore",
+      "ok": true,
+      "detail": "id=pg-products-write-audit-mn39qyc9"
+    },
+    {
+      "name": "DELETE /api/products/:id",
+      "ok": true,
+      "detail": "archive alias routed to PostgreSQL"
+    }
+  ],
+  "postgresChecks": [
+    {
+      "name": "product_catalog_metadata insert",
+      "ok": true,
+      "detail": "value=pg-audit-category-mn39qyc9"
+    },
+    {
+      "name": "products upsert persisted",
+      "ok": true,
+      "detail": "reference=PG-AUDIT-MN39QYC9"
+    },
+    {
+      "name": "products archive persisted",
+      "ok": true,
+      "detail": "id=pg-products-write-audit-mn39qyc9"
+    },
+    {
+      "name": "products restore persisted",
+      "ok": true,
+      "detail": "id=pg-products-write-audit-mn39qyc9"
+    },
+    {
+      "name": "products delete alias persisted",
+      "ok": true,
+      "detail": "id=pg-products-write-audit-mn39qyc9"
+    }
+  ],
+  "sqliteIsolationChecks": [
+    {
+      "name": "metadata unchanged in SQLite",
+      "ok": true,
+      "detail": "row absent"
+    },
+    {
+      "name": "product absent in SQLite",
+      "ok": true,
+      "detail": "id=pg-products-write-audit-mn39qyc9"
+    }
+  ],
+  "remainingRisks": [
+    "Les mutations `products:create`, `products:update`, `products:purge`, `products:updatePrice` et `products:restorePrice` restent sur SQLite car elles sont couplees a `stock`, `product_variants` ou `price_history`.",
+    "Le domaine catalogue/stock ne doit pas etre active en mode PostgreSQL normal tant que les ecritures `stock / movements` n ont pas ete migrees et validees.",
+    "Un produit cree via `products:upsert` n alimente pas `stock` ni `product_variants`; ce comportement est conserve et doit rester reserve aux usages deja existants de cette mutation."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-write.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-write.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-write.2026-03-23T14-16-27-224Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-write.2026-03-23T14-16-27-224Z.md"
+  }
+}

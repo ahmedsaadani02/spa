@@ -141,7 +141,7 @@ export class StockArchivesComponent implements OnInit, OnDestroy {
       });
 
     console.log('[archives-ui] request sent', { action: 'archives:view' });
-    await this.store.load();
+    await this.store.warmArchives();
     console.log('[archives-ui] response received', { action: 'archives:view' });
   }
 

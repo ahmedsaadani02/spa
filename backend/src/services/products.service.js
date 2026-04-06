@@ -3,15 +3,19 @@ const {
   listProducts,
   listArchivedProducts,
   getProductMetadata,
+} = require('../repositories/catalog-read.runtime.repository');
+const { getPriceHistory } = require('../repositories/price-history-read.runtime.repository');
+const {
   upsertProductMetadata,
   createProduct,
   updateProduct,
+  updateVariantPriceWithHistory,
+  purgeProduct,
   upsertProduct,
   archiveProduct,
-  restoreProduct,
-  purgeProduct,
-  updateVariantPriceWithHistory,
-  getPriceHistory,
+  restoreProduct
+} = require('../repositories/product-write.runtime.repository');
+const {
   assertProductCatalogPermission,
   assertCanEditStockProduct,
   assertCanArchiveStockProduct
@@ -24,15 +28,15 @@ const normalizeProductRow = (row) => ({
 });
 
 const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clearCurrentUser }) => {
-  const withAuthorizedUser = (token, operation) => {
-    const user = resolveSessionUser(token || '');
+  const withAuthorizedUser = async (token, operation) => {
+    const user = await resolveSessionUser(token || '');
     if (!user) {
       throw new Error('UNAUTHORIZED');
     }
 
     setCurrentUser(user);
     try {
-      return operation(user);
+      return await operation(user);
     } finally {
       clearCurrentUser();
     }
@@ -40,100 +44,100 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
 
   return {
     async list(token) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertPermission('viewStock');
-        return listProducts(getDb()).map(normalizeProductRow);
+        return (await listProducts(getDb())).map(normalizeProductRow);
       });
     },
 
     async listArchived(token) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertProductCatalogPermission();
-        return listArchivedProducts(getDb()).map(normalizeProductRow);
+        return (await listArchivedProducts(getDb())).map(normalizeProductRow);
       });
     },
 
     async metadata(token) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertPermission('viewStock');
-        return getProductMetadata(getDb());
+        return await getProductMetadata(getDb());
       });
     },
 
     async addMetadata(token, kind, value) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertProductCatalogPermission();
-        return upsertProductMetadata(getDb(), kind, value);
+        return await upsertProductMetadata(getDb(), kind, value);
       });
     },
 
     async create(token, payload) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertProductCatalogPermission();
-        return createProduct(getDb(), payload);
+        return await createProduct(getDb(), payload);
       });
     },
 
     async update(token, id, payload) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertCanEditStockProduct();
-        return updateProduct(getDb(), id, payload);
+        return await updateProduct(getDb(), id, payload);
       });
     },
 
     async upsert(token, product) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertProductCatalogPermission();
-        return upsertProduct(getDb(), product);
+        return await upsertProduct(getDb(), product);
       });
     },
 
     async delete(token, id) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertCanArchiveStockProduct();
-        return archiveProduct(getDb(), id).ok;
+        return (await archiveProduct(getDb(), id)).ok;
       });
     },
 
     async archive(token, id) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertCanArchiveStockProduct();
-        return archiveProduct(getDb(), id);
+        return await archiveProduct(getDb(), id);
       });
     },
 
     async restore(token, id) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertProductCatalogPermission();
-        return restoreProduct(getDb(), id);
+        return await restoreProduct(getDb(), id);
       });
     },
 
     async purge(token, id) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertProductCatalogPermission();
-        return purgeProduct(getDb(), id);
+        return await purgeProduct(getDb(), id);
       });
     },
 
     async updatePrice(token, productId, color, newPrice, changedBy) {
-      return withAuthorizedUser(token, (user) => {
+      return withAuthorizedUser(token, async (user) => {
         assertProductCatalogPermission();
-        return updateVariantPriceWithHistory(getDb(), productId, color, newPrice, user?.username ?? changedBy);
+        return await updateVariantPriceWithHistory(getDb(), productId, color, newPrice, user?.username ?? changedBy);
       });
     },
 
     async priceHistory(token, productId, color) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertPermission('viewStock');
-        return getPriceHistory(getDb(), productId, color);
+        return await getPriceHistory(getDb(), productId, color);
       });
     },
 
     async restorePrice(token, productId, color, targetPrice, changedBy) {
-      return withAuthorizedUser(token, (user) => {
+      return withAuthorizedUser(token, async (user) => {
         assertProductCatalogPermission();
-        return updateVariantPriceWithHistory(getDb(), productId, color, targetPrice, user?.username ?? changedBy, { allowZero: true });
+        return await updateVariantPriceWithHistory(getDb(), productId, color, targetPrice, user?.username ?? changedBy, { allowZero: true });
       });
     }
   };

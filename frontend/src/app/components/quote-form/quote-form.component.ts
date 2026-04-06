@@ -9,6 +9,7 @@ import { Quote, QuoteRemiseType } from '../../models/quote';
 import { ClientAutocompleteComponent } from '../client-autocomplete/client-autocomplete.component';
 import { QuoteCalcService, QuoteTotals } from '../../services/quote-calc.service';
 import { QuoteStoreService } from '../../services/quote-store.service';
+import { PurchaseOrderNumberService } from '../../services/purchase-order-number.service';
 
 const TVA_RATE = 19;
 
@@ -28,6 +29,7 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
   form = this.fb.group({
     numero: ['', Validators.required],
     date: ['', Validators.required],
+    purchaseOrderNumber: [''],
     clientId: ['' as string | null],
     client: this.fb.group({
       nom: ['', Validators.required],
@@ -59,6 +61,7 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private store: QuoteStoreService,
+    private purchaseOrders: PurchaseOrderNumberService,
     public calc: QuoteCalcService,
     private route: ActivatedRoute,
     private router: Router
@@ -89,6 +92,7 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
       this.form.patchValue({
         numero: quote.numero,
         date: quote.date,
+        purchaseOrderNumber: quote.purchaseOrderNumber ?? '',
         clientId: quote.clientId ?? quote.client?.id ?? null,
         client: {
           nom: quote.client?.nom ?? '',
@@ -107,10 +111,15 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
       this.isEdit = false;
       this.currentId = this.ensureCurrentId();
 
-      const numero = await this.store.getNextQuoteNumber();
+      const date = new Date().toISOString().slice(0, 10);
+      const [numero, purchaseOrderNumber] = await Promise.all([
+        this.store.getNextQuoteNumber(),
+        this.purchaseOrders.getNextForQuotes()
+      ]);
       this.form.patchValue({
         numero,
-        date: new Date().toISOString().slice(0, 10),
+        date,
+        purchaseOrderNumber,
         clientId: null,
         remiseType: 'montant',
         remiseValue: 0
@@ -249,6 +258,7 @@ export class QuoteFormComponent implements OnInit, OnDestroy {
       id: this.ensureCurrentId(),
       numero: this.normalizeText(raw.numero),
       date: this.normalizeText(raw.date || new Date().toISOString().slice(0, 10)),
+      purchaseOrderNumber: this.normalizeText(raw.purchaseOrderNumber) || null,
       clientId,
       client: {
         id: clientId,

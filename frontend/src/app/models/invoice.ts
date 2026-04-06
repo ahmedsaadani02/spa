@@ -2,6 +2,7 @@
 import { InvoiceLine } from './invoice-line';
 
 export type RemiseType = 'montant' | 'pourcentage';
+export type InvoicePaymentStatus = 'unpaid' | 'paid' | 'partial';
 
 export interface Invoice {
   id: string;
@@ -17,4 +18,9 @@ export interface Invoice {
   conditions?: string;
   quoteId?: string | null;
   sourceQuoteNumber?: string;
+  paymentStatus?: InvoicePaymentStatus;
+  paidAt?: string | null;
+  paymentMethod?: string | null;
+  purchaseOrderNumber?: string | null;
+  customInvoiceNumber?: string | null;
 }

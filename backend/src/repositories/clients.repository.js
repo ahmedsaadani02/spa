@@ -106,7 +106,7 @@ const upsertClient = (db, input) => {
   if (!normalized.nom) return null;
 
   const now = new Date().toISOString();
-  const requestedId = clean(input?.id);
+  const requestedId = clean(input?.id) || null;
   const existing = requestedId ? getClientRowById(db, requestedId) : null;
   const id = existing?.id ?? requestedId ?? createClientId();
 

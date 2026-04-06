@@ -9,6 +9,9 @@ const { createMovementsRouter } = require('./routes/movements.routes');
 const { createEmployeesRouter } = require('./routes/employees.routes');
 const { createSalaryRouter } = require('./routes/salary.routes');
 const { createInventoryRouter } = require('./routes/inventory.routes');
+const { createTasksRouter } = require('./routes/tasks.routes');
+const { createMyTasksRouter } = require('./routes/my-tasks.routes');
+const { createTaskNotificationsRouter } = require('./routes/task-notifications.routes');
 
 const registerBackendRoutes = (app, deps) => {
   const router = express.Router();
@@ -22,6 +25,9 @@ const registerBackendRoutes = (app, deps) => {
   router.use('/employees', createEmployeesRouter(deps));
   router.use('/salary', createSalaryRouter(deps));
   router.use('/inventory', createInventoryRouter(deps));
+  router.use('/tasks', createTasksRouter(deps));
+  router.use('/my-tasks', createMyTasksRouter(deps));
+  router.use('/task-notifications', createTaskNotificationsRouter(deps));
   app.use('/api', router);
 };
 

@@ -11,6 +11,8 @@ import { ClientAutocompleteComponent } from '../client-autocomplete/client-autoc
 import { InvoiceCalcService, InvoiceTotals } from '../../services/invoice-calc.service';
 import { InvoiceStoreService } from '../../services/invoice-store.service';
 import { QuoteStoreService } from '../../services/quote-store.service';
+import { normalizeInvoice, normalizeInvoicePaymentStatus } from '../../utils/invoice-payload';
+import { PurchaseOrderNumberService } from '../../services/purchase-order-number.service';
 
 const TVA_RATE = 19;
 
@@ -43,7 +45,12 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     remiseValue: [0],
     remiseAvantTVA: [true],
     notes: [''],
-    conditions: ['']
+    conditions: [''],
+    paymentStatus: ['unpaid'],
+    paidAt: [''],
+    paymentMethod: [''],
+    purchaseOrderNumber: [''],
+    customInvoiceNumber: ['']
   });
 
   totals: InvoiceTotals = {
@@ -62,6 +69,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private store: InvoiceStoreService,
     private quoteStore: QuoteStoreService,
+    private purchaseOrders: PurchaseOrderNumberService,
     public calc: InvoiceCalcService,
     private route: ActivatedRoute,
     private router: Router
@@ -105,21 +113,32 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
         remiseValue: invoice.remiseValue ?? 0,
         remiseAvantTVA: invoice.remiseAvantTVA ?? true,
         notes: invoice.notes ?? '',
-        conditions: invoice.conditions ?? ''
+        conditions: invoice.conditions ?? '',
+        paymentStatus: normalizeInvoicePaymentStatus(invoice.paymentStatus),
+        paidAt: invoice.paidAt ?? '',
+        paymentMethod: invoice.paymentMethod ?? '',
+        purchaseOrderNumber: invoice.purchaseOrderNumber ?? '',
+        customInvoiceNumber: invoice.customInvoiceNumber ?? ''
       });
       this.setLines(invoice.lignes ?? []);
     } else {
       this.isEdit = false;
       this.currentId = this.ensureCurrentId();
 
-      const numero = await this.store.getNextInvoiceNumber();
+      const date = new Date().toISOString().slice(0, 10);
+      const [numero, purchaseOrderNumber] = await Promise.all([
+        this.store.getNextInvoiceNumber(),
+        this.purchaseOrders.getNextForInvoices()
+      ]);
       this.form.patchValue({
         numero,
-        date: new Date().toISOString().slice(0, 10),
+        date,
         clientId: null,
         remiseType: 'montant',
         remiseValue: 0,
-        remiseAvantTVA: true
+        remiseAvantTVA: true,
+        paymentStatus: 'unpaid',
+        purchaseOrderNumber
       });
 
       if (fromInvoiceId) {
@@ -249,7 +268,11 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       remiseValue: source.remiseValue ?? 0,
       remiseAvantTVA: source.remiseAvantTVA ?? true,
       notes: source.notes ?? '',
-      conditions: source.conditions ?? ''
+      conditions: source.conditions ?? '',
+      paymentStatus: 'unpaid',
+      paidAt: '',
+      paymentMethod: '',
+      customInvoiceNumber: ''
     });
     this.setLines(this.cloneLines(source.lignes ?? []));
   }
@@ -268,7 +291,11 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       remiseValue: source.remiseValue ?? 0,
       remiseAvantTVA: true,
       notes: source.notes ?? '',
-      conditions: source.conditions ?? ''
+      conditions: source.conditions ?? '',
+      paymentStatus: 'unpaid',
+      paidAt: '',
+      paymentMethod: '',
+      customInvoiceNumber: ''
     });
     this.setLines(this.cloneLines(source.lignes ?? []));
   }
@@ -284,7 +311,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     const raw = this.form.getRawValue();
     const clientId = this.normalizeText(raw.clientId) || null;
 
-    return {
+    return normalizeInvoice({
       id: this.ensureCurrentId(),
       numero: this.normalizeText(raw.numero),
       date: this.normalizeText(raw.date || new Date().toISOString().slice(0, 10)),
@@ -303,8 +330,13 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       remiseValue: Number(raw.remiseValue) || 0,
       remiseAvantTVA: raw.remiseAvantTVA ?? true,
       notes: raw.notes ?? '',
-      conditions: raw.conditions ?? ''
-    };
+      conditions: raw.conditions ?? '',
+      paymentStatus: normalizeInvoicePaymentStatus(raw.paymentStatus),
+      paidAt: this.normalizeText(raw.paidAt) || null,
+      paymentMethod: this.normalizeText(raw.paymentMethod) || null,
+      purchaseOrderNumber: this.normalizeText(raw.purchaseOrderNumber) || null,
+      customInvoiceNumber: this.normalizeText(raw.customInvoiceNumber) || null
+    });
   }
 
   private normalizeLine(line: InvoiceLine): InvoiceLine {

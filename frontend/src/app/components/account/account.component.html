@@ -1,0 +1,28 @@
+<section class="account-shell">
+  <header class="account-card account-card--hero">
+    <p class="account-eyebrow">Mon compte</p>
+    <h1>{{ user?.nom || user?.username || 'Utilisateur' }}</h1>
+    <p class="account-meta">{{ roleLabel }}<span *ngIf="user?.email"> • {{ user?.email }}</span></p>
+  </header>
+
+  <section class="account-grid">
+    <article class="account-card">
+      <h2>Acces actifs</h2>
+      <div class="account-tags" *ngIf="capabilitySummary.length; else noAccess">
+        <span class="account-tag" *ngFor="let capability of capabilitySummary">{{ capability.label }}</span>
+      </div>
+      <ng-template #noAccess>
+        <p class="muted">Aucun acces metier actif sur ce compte.</p>
+      </ng-template>
+    </article>
+
+    <article class="account-card">
+      <h2>Raccourcis</h2>
+      <div class="account-actions">
+        <a routerLink="/my-tasks" *ngIf="hasPermission('receiveTasks') && !hasPermission('manageTasks')">Mes taches</a>
+        <a routerLink="/tasks" *ngIf="hasPermission('manageTasks')">Taches</a>
+        <a routerLink="/settings" *ngIf="canOpenSettings">Parametres</a>
+      </div>
+    </article>
+  </section>
+</section>

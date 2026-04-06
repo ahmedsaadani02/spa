@@ -9,7 +9,7 @@ import { QuoteCalcService } from '../../services/quote-calc.service';
 import { InvoiceStoreService } from '../../services/invoice-store.service';
 import { QuoteStoreService } from '../../services/quote-store.service';
 import { AuthService } from '../../services/auth.service';
-import { ElectronService } from '../../services/electron.service';
+import { DocumentsService } from '../../services/documents.service';
 
 type MonthGroup<T> = {
   key: string;
@@ -55,6 +55,12 @@ export class QuoteListComponent implements OnInit, OnDestroy {
     open: false,
     type: 'info' as ToastType,
     message: ''
+  };
+
+  deleteConfirm = {
+    open: false,
+    quote: null as Quote | null,
+    submitting: false
   };
 
   convertConfirm = {
@@ -137,7 +143,7 @@ export class QuoteListComponent implements OnInit, OnDestroy {
     private invoices: InvoiceStoreService,
     private auth: AuthService,
     private router: Router,
-    private electron: ElectronService
+    private electron: DocumentsService
   ) {}
 
   get canConvertToInvoice(): boolean {
@@ -159,16 +165,6 @@ export class QuoteListComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     console.log('[quotes-page] route entered');
     console.log('[quotes-page] load requested');
-    await Promise.all([this.store.load(), this.invoices.load()]);
-    await Promise.all([this.store.refresh(), this.invoices.refresh()]);
-    this.rebuildInvoiceLookup();
-    const snapshot = this.store.getSnapshot();
-    console.log('[quotes-page] response received');
-    console.log(`[quotes-page] mapped quotes count: ${snapshot.length}`);
-    console.log(`[quotes-page] converted quotes count: ${this.countConvertedQuotes(snapshot)}`);
-    console.log('[quotes-page] empty state condition:', snapshot.length === 0);
-    this.triggerRenderReady('initial-load');
-
     window.addEventListener('afterprint', this.afterPrintHandler);
 
     this.selectedMonthLabel$
@@ -199,6 +195,17 @@ export class QuoteListComponent implements OnInit, OnDestroy {
         console.log(`[quotes-page] converted quotes count: ${this.countConvertedQuotes(currentQuotes)}`);
         this.triggerRenderReady('invoice-lookup-updated');
       });
+
+    void Promise.all([this.store.load(), this.invoices.load()])
+      .then(() => {
+        this.rebuildInvoiceLookup();
+        const snapshot = this.store.getSnapshot();
+        console.log('[quotes-page] response received');
+        console.log(`[quotes-page] mapped quotes count: ${snapshot.length}`);
+        console.log(`[quotes-page] converted quotes count: ${this.countConvertedQuotes(snapshot)}`);
+        console.log('[quotes-page] empty state condition:', snapshot.length === 0);
+        this.triggerRenderReady('initial-load');
+      });
   }
 
   ngOnDestroy(): void {
@@ -217,13 +224,42 @@ export class QuoteListComponent implements OnInit, OnDestroy {
     return this.calc.totals(quote).totalHorsTVA;
   }
 
-  async deleteQuote(quote: Quote): Promise<void> {
-    const confirmed = confirm(`Supprimer le devis ${quote.numero} ?`);
-    if (!confirmed) {
+  requestDeleteQuote(quote: Quote): void {
+    this.deleteConfirm = {
+      open: true,
+      quote,
+      submitting: false
+    };
+  }
+
+  cancelDeleteQuote(): void {
+    if (this.deleteConfirm.submitting) {
+      return;
+    }
+    this.deleteConfirm = {
+      open: false,
+      quote: null,
+      submitting: false
+    };
+  }
+
+  async confirmDeleteQuote(): Promise<void> {
+    const quote = this.deleteConfirm.quote;
+    if (!quote || this.deleteConfirm.submitting) {
       return;
     }
 
+    this.deleteConfirm = {
+      ...this.deleteConfirm,
+      submitting: true
+    };
+
     await this.store.delete(quote.id);
+    this.deleteConfirm = {
+      open: false,
+      quote: null,
+      submitting: false
+    };
   }
 
   convertToInvoice(quote: Quote): void {

@@ -1,11 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 import { Client } from '../models/client';
 import { Invoice } from '../models/invoice';
 import { Quote } from '../models/quote';
 import { StockColor } from '../models/stock-item';
 import { StockItem } from '../models/stock-item';
 import { StockMovement } from '../models/stock-movement';
-import { getSpaApi } from '../bridge/spa-bridge';
+import { MyTaskUpdateInput, TaskNotificationRecord, TaskRecord, TaskUpsertInput } from '../models/task.models';
+import { getAppApi } from '../bridge/app-api-bridge';
 import type {
   AuthBeginLoginResult,
   AuthPasswordActionResult,
@@ -42,27 +43,35 @@ import type {
   SpaProductRow,
   SpaStockRow,
   SpaUpdateStatusPayload
-} from '../types/electron';
+} from '../types/app-api.types';
 
 @Injectable({
   providedIn: 'root'
 })
 export class IpcService {
+  private readonly zone = inject(NgZone);
   private readonly apiReadyTimeoutMs = 5000;
   private readonly callTimeoutMs = 8000;
 
   private get spa(): SpaApi | null {
-    return getSpaApi();
+    return getAppApi();
   }
 
   get isAvailable(): boolean {
     return !!this.spa;
   }
 
+  private runInAngularZone<T>(fn: () => T): T {
+    if (NgZone.isInAngularZone()) {
+      return fn();
+    }
+    return this.zone.run(fn);
+  }
+
   private async waitForApi(timeout = this.apiReadyTimeoutMs): Promise<SpaApi | null> {
     const start = Date.now();
     while (Date.now() - start < timeout) {
-      const api = getSpaApi();
+      const api = getAppApi();
       if (api) return api;
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
@@ -89,13 +98,29 @@ export class IpcService {
     operation: (api: SpaApi) => Promise<T>
   ): Promise<T> {
     const api = await this.waitForApi();
-    if (!api) return fallback;
+    if (!api) {
+      return this.runInAngularZone(() => fallback);
+    }
 
     try {
-      return await this.withTimeout(operation(api), label);
+      const result = await this.withTimeout(operation(api), label);
+      return this.runInAngularZone(() => result);
     } catch {
-      return fallback;
+      return this.runInAngularZone(() => fallback);
     }
+  }
+
+  private async invokeOrThrow<T>(
+    label: string,
+    operation: (api: SpaApi) => Promise<T>
+  ): Promise<T> {
+    const api = await this.waitForApi();
+    if (!api) {
+      throw new Error(`${label.toUpperCase().replace(/[^\w]+/g, '_')}_API_UNAVAILABLE`);
+    }
+
+    const result = await this.withTimeout(operation(api), label);
+    return this.runInAngularZone(() => result);
   }
 
   async invoicesGetAll(): Promise<Invoice[]> {
@@ -307,7 +332,9 @@ export class IpcService {
     }
 
     try {
-      return api.updates.onStatus(listener);
+      return api.updates.onStatus((payload) => {
+        this.runInAngularZone(() => listener(payload));
+      });
     } catch {
       return () => {};
     }
@@ -320,17 +347,18 @@ export class IpcService {
   async authBeginLogin(identity: string, password: string, context?: { ip?: string | null; userAgent?: string | null }): Promise<AuthBeginLoginResult> {
     const api = await this.waitForApi();
     if (!api) {
-      return { status: 'operation_failed', message: 'AUTH_API_UNAVAILABLE' };
+      return this.runInAngularZone(() => ({ status: 'operation_failed', message: 'AUTH_API_UNAVAILABLE' }));
     }
 
     try {
-      return await this.withTimeout(
+      const result = await this.withTimeout(
         api.auth.beginLogin(identity, password, context ?? null),
         'auth.beginLogin'
       );
+      return this.runInAngularZone(() => result);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'AUTH_BEGIN_LOGIN_FAILED';
-      return { status: 'operation_failed', message };
+      return this.runInAngularZone(() => ({ status: 'operation_failed', message }));
     }
   }
 
@@ -384,6 +412,61 @@ export class IpcService {
 
   async employeesSetActive(id: string, actif: boolean): Promise<boolean> {
     return this.invoke('employees.setActive', false, (api) => api.employees.setActive(id, actif));
+  }
+
+  async tasksList(filters: { employeeId?: string; status?: string; priority?: string } = {}): Promise<TaskRecord[]> {
+    return this.invoke('tasks.list', [], (api) => api.tasks.list(filters));
+  }
+
+  async tasksGetById(id: string): Promise<TaskRecord | null> {
+    return this.invoke('tasks.getById', null, (api) => api.tasks.getById(id));
+  }
+
+  async tasksCreate(payload: TaskUpsertInput): Promise<TaskRecord | null> {
+    return this.invokeOrThrow('tasks.create', (api) => api.tasks.create(payload));
+  }
+
+  async tasksUpdate(id: string, payload: TaskUpsertInput): Promise<TaskRecord | null> {
+    return this.invokeOrThrow('tasks.update', (api) => api.tasks.update(id, payload));
+  }
+
+  async tasksDelete(id: string): Promise<boolean> {
+    return this.invoke('tasks.delete', false, (api) => api.tasks.delete(id));
+  }
+
+  async myTasksList(filters: { status?: string; priority?: string } = {}): Promise<TaskRecord[]> {
+    return this.invoke('myTasks.list', [], (api) => api.myTasks.list(filters));
+  }
+
+  async myTasksGetById(id: string): Promise<TaskRecord | null> {
+    return this.invoke('myTasks.getById', null, (api) => api.myTasks.getById(id));
+  }
+
+  async myTasksUpdate(id: string, payload: MyTaskUpdateInput): Promise<TaskRecord | null> {
+    return this.invokeOrThrow('myTasks.update', (api) => api.myTasks.update(id, payload));
+  }
+
+  async taskNotificationsList(limit = 20): Promise<TaskNotificationRecord[]> {
+    return this.invoke('taskNotifications.list', [], (api) => api.taskNotifications.list(limit));
+  }
+
+  async taskNotificationsMarkRead(id: string): Promise<TaskNotificationRecord | null> {
+    return this.invoke('taskNotifications.markRead', null, (api) => api.taskNotifications.markRead(id));
+  }
+
+  taskNotificationsOnMessage(listener: (notification: TaskNotificationRecord) => void): () => void {
+    const api = this.spa;
+    if (!api?.taskNotifications?.onMessage) {
+      return () => {};
+    }
+
+    try {
+      return api.taskNotifications.onMessage((notification) => {
+        this.runInAngularZone(() => listener(notification));
+      });
+    } catch {
+      return () => {};
+    }
   }
 
   async salaryAdvancesList(employeeId: string, month: number, year: number): Promise<SalaryAdvanceRecord[]> {

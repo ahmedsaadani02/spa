@@ -1,0 +1,142 @@
+{
+  "startedAt": "2026-03-24T13:43:19.858Z",
+  "finishedAt": "2026-03-24T13:43:35.329Z",
+  "status": "completed",
+  "sourceSqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "sqliteCopyPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\tmp\\invoices-delete-audit.2026-03-24T13-43-19-464Z.sqlite",
+  "baseUrl": "http://127.0.0.1:61750",
+  "routing": {
+    "configuredDriver": "postgres",
+    "quotesReadOptInEnabled": true,
+    "quotesWriteOptInEnabled": true,
+    "invoicesReadOptInEnabled": true,
+    "invoicesWriteOptInEnabled": true,
+    "catalogReadOptInEnabled": false,
+    "productWriteOptInEnabled": false,
+    "stockWriteOptInEnabled": false,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read",
+      "quotes-write",
+      "quotes-convert-write",
+      "invoices-read",
+      "invoices-write",
+      "invoices-delete-write",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read",
+      "quotes-write",
+      "quotes-convert-write",
+      "invoices-read",
+      "invoices-write",
+      "invoices-delete-write"
+    ]
+  },
+  "validated": [
+    "`invoices:delete` est compatible PostgreSQL sur la suppression simple facture -> reouverture du devis en `draft`, avec suppression de `convertedInvoiceId` et `convertedAt` comme en SQLite.",
+    "Quand plusieurs factures sont liees au meme devis, la suppression redirige correctement le devis vers la facture restante en conservant l etat `invoiced` et en mettant a jour `convertedInvoiceId` a parite avec SQLite.",
+    "Aucun ecart metier n a ete observe sur `invoices`, le devis lie ou les documents non cibles; la suppression inverse reste localisee au seul couple facture/devis concerne."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "token=2760a891..."
+    },
+    {
+      "name": "POST /api/quotes",
+      "ok": true,
+      "detail": "scenario A + B created"
+    },
+    {
+      "name": "POST /api/invoices",
+      "ok": true,
+      "detail": "extra invoice linked to scenario B quote"
+    },
+    {
+      "name": "DELETE /api/invoices/:id",
+      "ok": true,
+      "detail": "scenario A single linked invoice deleted"
+    },
+    {
+      "name": "DELETE /api/invoices/:id (replacement remains)",
+      "ok": true,
+      "detail": "scenario B converted invoice deleted, replacement kept"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "scenario A delete result parity",
+      "ok": true,
+      "detail": "quote=invoices-delete-quote-a-mn4o0fua"
+    },
+    {
+      "name": "scenario A quote reopened to draft parity",
+      "ok": true,
+      "detail": "quote=invoices-delete-quote-a-mn4o0fua"
+    },
+    {
+      "name": "scenario B delete result parity",
+      "ok": true,
+      "detail": "quote=invoices-delete-quote-b-mn4o0fua"
+    },
+    {
+      "name": "scenario B quote redirected to replacement invoice parity",
+      "ok": true,
+      "detail": "quote=invoices-delete-quote-b-mn4o0fua"
+    }
+  ],
+  "scopeChecks": [
+    {
+      "name": "scenario A linked invoice removed",
+      "ok": true,
+      "detail": "count=0 after delete"
+    },
+    {
+      "name": "scenario B remaining invoice preserved",
+      "ok": true,
+      "detail": "invoice=invoices-delete-extra-mn4o0fua"
+    },
+    {
+      "name": "unrelated quotes unchanged",
+      "ok": true,
+      "detail": "count=4"
+    },
+    {
+      "name": "unrelated invoices unchanged",
+      "ok": true,
+      "detail": "count=6"
+    }
+  ],
+  "remainingRisks": [
+    "Le dernier point restant est un audit global final du cycle complet `quote -> convertToInvoice -> delete invoice -> state quote` une fois cette tranche confirmee.",
+    "Les flags `DB_ENABLE_POSTGRES_QUOTES_READ=0`, `DB_ENABLE_POSTGRES_QUOTES_WRITES=0`, `DB_ENABLE_POSTGRES_INVOICES_READ=0` et `DB_ENABLE_POSTGRES_INVOICES_WRITES=0` doivent rester les valeurs par defaut hors audit.",
+    "SQLite reste la reference de secours tant que le cycle devis/facture complet n a pas ete revalide bout en bout en environnement controle."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-invoices-delete.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-invoices-delete.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-invoices-delete.2026-03-24T13-43-35-329Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-invoices-delete.2026-03-24T13-43-35-329Z.md"
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "startedAt": "2026-03-23T10:29:53.388Z",
+  "finishedAt": "2026-03-23T10:30:03.102Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "routing": {
+    "configuredDriver": "postgres",
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security"
+    ]
+  },
+  "validated": [
+    "Clients service and IPC handler read/write paths hit PostgreSQL successfully.",
+    "Employees service and IPC handler read/write paths hit PostgreSQL successfully.",
+    "Salary service and IPC handler read/write paths hit PostgreSQL successfully.",
+    "Auth-security repository lifecycle works on PostgreSQL, and auth:beginLogin writes audit events to PostgreSQL."
+  ],
+  "serviceChecks": [
+    {
+      "name": "clients.service.list",
+      "ok": true,
+      "detail": "count=4"
+    },
+    {
+      "name": "clients.service.upsert",
+      "ok": true,
+      "detail": "id=f9d2a406-d96b-43d3-9ba8-8bd3d0e8b064"
+    },
+    {
+      "name": "clients.service.getById",
+      "ok": true,
+      "detail": "id=f9d2a406-d96b-43d3-9ba8-8bd3d0e8b064"
+    },
+    {
+      "name": "clients.service.search",
+      "ok": true,
+      "detail": "matches=1"
+    },
+    {
+      "name": "clients.service.update",
+      "ok": true
+    },
+    {
+      "name": "clients.service.findOrCreate",
+      "ok": true
+    },
+    {
+      "name": "employees.service.create",
+      "ok": true,
+      "detail": "id=d25242ac-7f3b-41bc-83f0-9222b50ea581"
+    },
+    {
+      "name": "employees.service.list",
+      "ok": true,
+      "detail": "count=5"
+    },
+    {
+      "name": "employees.service.search",
+      "ok": true,
+      "detail": "matches=1"
+    },
+    {
+      "name": "employees.service.getById",
+      "ok": true
+    },
+    {
+      "name": "employees.service.update",
+      "ok": true
+    },
+    {
+      "name": "employees.service.setActive",
+      "ok": true
+    },
+    {
+      "name": "salary.service.create",
+      "ok": true,
+      "detail": "advance=232b1d3f-8dae-403e-b0d6-497ae07690da, bonus=68255b98-8443-4e91-bd49-ec23eca4e0ad, overtime=dd81d0ac-fa09-4d5b-8a92-7538cb847ace"
+    },
+    {
+      "name": "salary.service.list",
+      "ok": true,
+      "detail": "advances=1, bonuses=1, overtimes=1"
+    },
+    {
+      "name": "salary.service.summary",
+      "ok": true,
+      "detail": "resteAPayer=2376"
+    },
+    {
+      "name": "salary.service.delete",
+      "ok": true
+    },
+    {
+      "name": "employees.service.delete",
+      "ok": true
+    },
+    {
+      "name": "clients.service.delete",
+      "ok": true
+    }
+  ],
+  "handlerChecks": [
+    {
+      "name": "clients handler list",
+      "ok": true,
+      "detail": "count=5"
+    },
+    {
+      "name": "employees handler getById",
+      "ok": true
+    },
+    {
+      "name": "salary handler summary",
+      "ok": true
+    },
+    {
+      "name": "auth-security repository challenge lifecycle",
+      "ok": true
+    },
+    {
+      "name": "auth handler -> auth-security audit write",
+      "ok": true,
+      "detail": "events=1"
+    }
+  ],
+  "runtimePaths": [
+    {
+      "scope": "clients service + clients handlers",
+      "path": "clients.service/clients.handlers -> clients.runtime.repository -> postgres/clients.repository when DB_DRIVER=postgres"
+    },
+    {
+      "scope": "employees service + employees handlers",
+      "path": "employees.service/employees.handlers -> employees.runtime.repository -> postgres/employees.repository when DB_DRIVER=postgres"
+    },
+    {
+      "scope": "salary service + salary handlers",
+      "path": "salary.service/salary.handlers -> salary.runtime.repository -> postgres/salary.repository when DB_DRIVER=postgres"
+    },
+    {
+      "scope": "auth-security via auth flow",
+      "path": "auth.handlers -> auth-core.service -> employees.repository (SQLite read path) + auth-security.runtime.repository (PostgreSQL write path)"
+    }
+  ],
+  "remainingRisks": [
+    "Session resolution still reads employee auth rows from SQLite in server.js via getEmployeeAuthRowById.",
+    "auth-core.service still reads employee identities and password data from SQLite through employees.repository.",
+    "quotes/invoices still depend on SQLite client-link backfill helpers and are intentionally excluded from tranche 1.",
+    "This audit validates services and IPC handlers directly, not a full end-to-end HTTP session lifecycle with DB_DRIVER=postgres."
+  ],
+  "outOfScope": [
+    "quotes",
+    "invoices",
+    "products",
+    "stock",
+    "movements",
+    "inventory"
+  ],
+  "artifacts": null
+}

@@ -55,13 +55,49 @@
           <span class="stock-perm" [class.ok]="employee.isProtectedAccount">Protege</span>
         </div>
         <div class="row-actions" data-label="Actions">
-          <button class="btn ghost" type="button" (click)="openEmployee(employee)" [disabled]="isNavigating(employee, 'view')">
-            {{ isNavigating(employee, 'view') ? 'Ouverture...' : 'Voir' }}
+          <button
+            class="icon-btn icon-btn--ghost"
+            type="button"
+            (click)="openEmployee(employee)"
+            [disabled]="isNavigating(employee, 'view')"
+            [attr.aria-label]="isNavigating(employee, 'view') ? 'Ouverture apercu' : 'Apercu'"
+            [attr.title]="isNavigating(employee, 'view') ? 'Ouverture...' : 'Apercu'"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
           </button>
-          <button class="btn outline" type="button" (click)="openEditEmployee(employee)" *ngIf="canManageEmployees" [disabled]="isNavigating(employee, 'edit')">
-            {{ isNavigating(employee, 'edit') ? 'Ouverture...' : 'Modifier' }}
-          </button>
-          <button class="btn danger" type="button" (click)="deleteEmployee(employee)" *ngIf="canManageEmployees">Supprimer</button>
+          <div class="row-actions-icons" *ngIf="canManageEmployees">
+            <button
+              class="icon-btn icon-btn--outline"
+              type="button"
+              (click)="openEditEmployee(employee)"
+              [disabled]="isNavigating(employee, 'edit')"
+              [attr.aria-label]="isNavigating(employee, 'edit') ? 'Ouverture modification' : 'Modifier'"
+              [attr.title]="isNavigating(employee, 'edit') ? 'Ouverture...' : 'Modifier'"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+              </svg>
+            </button>
+            <button
+              class="icon-btn icon-btn--danger"
+              type="button"
+              (click)="deleteEmployee(employee)"
+              aria-label="Supprimer"
+              title="Supprimer"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 6h18" />
+                <path d="M8 6V4h8v2" />
+                <path d="M19 6l-1 14H6L5 6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>

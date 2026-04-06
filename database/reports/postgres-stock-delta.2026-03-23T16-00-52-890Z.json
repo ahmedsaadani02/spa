@@ -1,0 +1,171 @@
+{
+  "startedAt": "2026-03-23T16:00:35.594Z",
+  "finishedAt": "2026-03-23T16:00:52.296Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:61775",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "stockWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write"
+    ]
+  },
+  "writeCartography": [
+    "`stock:increment` calcule le nouveau `stock.qty` a partir de la valeur courante puis applique un upsert sur `stock`.",
+    "`stock:decrement` reutilise la meme logique avec un delta negatif, clamp a `0`, puis synchronise `product_variants.stock`.",
+    "Cette sous-etape met a jour `products.last_updated` et laisse `movements` strictement inchange."
+  ],
+  "validated": [
+    "`stock:increment` et `stock:decrement` sont compatibles PostgreSQL pour le recalcul de `stock.qty`, la synchronisation de `product_variants.stock` et la mise a jour de `products.last_updated`, avec parite validee contre une execution de reference SQLite.",
+    "`stock:decrement` preserve bien le clamp a `0`, conformement au comportement SQLite actuel.",
+    "Cette sous-etape ne cree aucune entree `movements`; elle reste audit-only et exige `DB_DRIVER=postgres`, `DB_ENABLE_POSTGRES_CATALOG_READ=1`, `DB_ENABLE_POSTGRES_PRODUCT_WRITES=1` et `DB_ENABLE_POSTGRES_STOCK_WRITES=1`."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "POST /api/products",
+      "ok": true,
+      "detail": "id=e763e013-7106-469a-a3b0-0f7509a8293b"
+    },
+    {
+      "name": "PATCH /api/stock/:productId/:color/set-qty",
+      "ok": true,
+      "detail": "setup qty=2"
+    },
+    {
+      "name": "PATCH /api/stock/:productId/:color/increment",
+      "ok": true,
+      "detail": "delta=3.5"
+    },
+    {
+      "name": "PATCH /api/stock/:productId/:color/decrement",
+      "ok": true,
+      "detail": "delta=9"
+    },
+    {
+      "name": "GET /api/stock after decrement",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "GET /api/stock/items after decrement",
+      "ok": true,
+      "detail": "reference=PG-STOCK-DELTA-MN3DH3WQ"
+    },
+    {
+      "name": "GET /api/movements after increment/decrement",
+      "ok": true,
+      "detail": "count=0"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "stock rows parity after increment",
+      "ok": true,
+      "detail": "qty=5.5"
+    },
+    {
+      "name": "product_variants parity after increment",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "stock rows parity after decrement",
+      "ok": true,
+      "detail": "qty=0"
+    },
+    {
+      "name": "product_variants parity after decrement",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "product semantic parity after decrement",
+      "ok": true,
+      "detail": "priceTtc=12.5"
+    }
+  ],
+  "sideEffects": [
+    {
+      "name": "products.last_updated updated",
+      "ok": true,
+      "detail": "changed after increment and after decrement"
+    },
+    {
+      "name": "movements untouched",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "product_variants.stock synchronized",
+      "ok": true,
+      "detail": "color=pg-audit-stock-delta-color-a-mn3dh3wq increment=5.5 decrement=0"
+    },
+    {
+      "name": "stock clamp preserved",
+      "ok": true,
+      "detail": "color=pg-audit-stock-delta-color-a-mn3dh3wq qty=0 after decrement"
+    }
+  ],
+  "sqliteIsolationChecks": [
+    {
+      "name": "products unchanged in SQLite",
+      "ok": true,
+      "detail": "reference=PG-STOCK-DELTA-MN3DH3WQ"
+    },
+    {
+      "name": "metadata unchanged in SQLite",
+      "ok": true,
+      "detail": "values=4"
+    }
+  ],
+  "remainingRisks": [
+    "`movements:add` reste sur SQLite; l historique de mouvements n est donc pas encore migre.",
+    "`stock:applyMovement` reste sur SQLite; la mutation combinee stock + historique n est pas encore coherente sur PostgreSQL.",
+    "Le domaine catalogue/stock ne doit toujours pas etre active en PostgreSQL en usage normal tant que ces deux sous-etapes ne sont pas validees."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-delta.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-delta.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-delta.2026-03-23T16-00-52-890Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-delta.2026-03-23T16-00-52-890Z.md"
+  }
+}

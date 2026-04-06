@@ -228,7 +228,9 @@
 .order-line {
   margin-top: 12px;
   font-size: 13px;
+  line-height: 1.5;
   color: #111;
+  white-space: normal;
 }
 
 .muted { color: #666; }
@@ -408,6 +410,15 @@
    RESPONSIVE (screen only)
 ========================= */
 @media (max-width: 980px) {
+  .preview-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+  }
+
   .invoice-page {
     height: auto;
     min-height: 297mm;
@@ -431,5 +442,37 @@
     gap: 10px;
   }
 
+  .order-line {
+    text-align: center;
+  }
+
   .date-right { text-align: center; justify-self: center; }
+}
+
+@media (max-width: 640px) {
+  .toolbar-actions .btn {
+    width: 100%;
+  }
+
+  .invoice-page {
+    padding: 16px 14px;
+  }
+
+  .top-logo img {
+    width: 96px;
+  }
+
+  .client-name,
+  .client-under-logo .client-name {
+    font-size: 18px;
+    white-space: normal;
+    width: 100%;
+  }
+
+  .client-sub,
+  .client-under-logo .client-sub,
+  .order-line {
+    white-space: normal;
+    width: 100%;
+  }
 }

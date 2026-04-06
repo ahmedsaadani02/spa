@@ -1,0 +1,144 @@
+{
+  "startedAt": "2026-03-23T15:47:17.939Z",
+  "finishedAt": "2026-03-23T15:47:29.348Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:50332",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "stockWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write"
+    ]
+  },
+  "writeCartography": [
+    "`stock:setQty` upsert `stock.qty` pour le produit/couleur cible.",
+    "`stock:setQty` synchronise `product_variants.stock` sans toucher au prix existant; si la variante n existe pas encore, elle prend comme fallback le prix courant du produit.",
+    "`stock:setQty` met a jour `products.last_updated` et ne cree pas d entree `movements`."
+  ],
+  "validated": [
+    "`stock:setQty` est compatible PostgreSQL pour l upsert de `stock.qty`, la synchronisation de `product_variants.stock` et la mise a jour de `products.last_updated`, avec parite validee contre une execution de reference SQLite.",
+    "`stock:setQty` ne cree pas d entree `movements`, conformement au comportement SQLite actuel.",
+    "Les routes REST et handlers IPC restent inchanges; le routage PostgreSQL de cette sous-etape reste audit-only et exige `DB_DRIVER=postgres`, `DB_ENABLE_POSTGRES_CATALOG_READ=1`, `DB_ENABLE_POSTGRES_PRODUCT_WRITES=1` et `DB_ENABLE_POSTGRES_STOCK_WRITES=1`."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "POST /api/products",
+      "ok": true,
+      "detail": "id=11074e81-5342-4c31-b647-af0a401dcea5"
+    },
+    {
+      "name": "PATCH /api/stock/:productId/:color/set-qty",
+      "ok": true,
+      "detail": "qty=7.25"
+    },
+    {
+      "name": "GET /api/stock after setQty",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "GET /api/stock/items after setQty",
+      "ok": true,
+      "detail": "reference=PG-STOCK-MN3D00FN"
+    },
+    {
+      "name": "GET /api/movements after setQty",
+      "ok": true,
+      "detail": "count=0"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "stock rows parity",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "product_variants parity",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "product semantic parity",
+      "ok": true,
+      "detail": "priceTtc=12.5"
+    }
+  ],
+  "sideEffects": [
+    {
+      "name": "products.last_updated updated",
+      "ok": true,
+      "detail": "changed after setQty"
+    },
+    {
+      "name": "movements untouched",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "product_variants.stock synchronized",
+      "ok": true,
+      "detail": "color=pg-audit-stock-color-a-mn3d00fn stock=7.25"
+    }
+  ],
+  "sqliteIsolationChecks": [
+    {
+      "name": "products unchanged in SQLite",
+      "ok": true,
+      "detail": "reference=PG-STOCK-MN3D00FN"
+    },
+    {
+      "name": "metadata unchanged in SQLite",
+      "ok": true,
+      "detail": "values=4"
+    }
+  ],
+  "remainingRisks": [
+    "`stock:increment` et `stock:decrement` restent sur SQLite; ils partagent une grande partie de la logique de `setQty` mais ajoutent le calcul du nouveau stock a partir de la valeur courante.",
+    "`movements:add` et `stock:applyMovement` restent sur SQLite; le domaine catalogue/stock ne doit donc toujours pas etre active en PostgreSQL en usage normal.",
+    "Le cas de rejet sur produit archive/supprime et le clamp des quantites negatives restent a auditer dans une sous-etape dediee si on veut couvrir tout le spectre comportemental."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-setqty.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-setqty.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-setqty.2026-03-23T15-47-29-882Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-setqty.2026-03-23T15-47-29-882Z.md"
+  }
+}

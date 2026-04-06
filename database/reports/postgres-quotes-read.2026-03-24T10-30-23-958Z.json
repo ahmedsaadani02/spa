@@ -1,0 +1,104 @@
+{
+  "startedAt": "2026-03-24T10:30:18.086Z",
+  "finishedAt": "2026-03-24T10:30:23.958Z",
+  "status": "completed",
+  "sourceSqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "sqliteCopyPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\tmp\\quotes-read-audit.2026-03-24T10-30-17-636Z.sqlite",
+  "baseUrl": "http://127.0.0.1:64882",
+  "routing": {
+    "configuredDriver": "postgres",
+    "quotesReadOptInEnabled": true,
+    "catalogReadOptInEnabled": false,
+    "productWriteOptInEnabled": false,
+    "stockWriteOptInEnabled": false,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read"
+    ]
+  },
+  "validated": [
+    "La lecture `quotes:list` et `quotes:getById` est compatible PostgreSQL et restitue la meme forme metier que SQLite sur les devis actuels.",
+    "Le chemin PostgreSQL ne reutilise pas `backfillDocumentClientLinks()` et ne provoque aucune ecriture sur `quotes`, `invoices` ou `clients` pendant la lecture.",
+    "Le scope `quotes-read` reste audit-only et desactive par defaut tant que les ecritures `quotes` et le cycle `quotes -> invoices` ne sont pas migres."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "token=5952c7fa..."
+    },
+    {
+      "name": "GET /api/quotes",
+      "ok": true,
+      "detail": "count=4"
+    },
+    {
+      "name": "GET /api/quotes/:id",
+      "ok": true,
+      "detail": "count=4"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "quotes list parity",
+      "ok": true,
+      "detail": "count=4"
+    },
+    {
+      "name": "quotes getById parity",
+      "ok": true,
+      "detail": "count=4"
+    }
+  ],
+  "writeChecks": [
+    {
+      "name": "quotes table unchanged during reads",
+      "ok": true,
+      "detail": "count=4"
+    },
+    {
+      "name": "invoices table unchanged during reads",
+      "ok": true,
+      "detail": "count=6"
+    },
+    {
+      "name": "clients table unchanged during reads",
+      "ok": true,
+      "detail": "count=4"
+    }
+  ],
+  "remainingRisks": [
+    "Les ecritures `quotes:put` et `quotes:delete` restent sur SQLite.",
+    "`quotes:convertToInvoice` reste sur SQLite et depend encore du domaine `invoices`.",
+    "Le domaine `invoices` reste entierement sur SQLite a ce stade; `DB_ENABLE_POSTGRES_QUOTES_READ=0` doit rester la valeur par defaut hors audit."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-read.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-read.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-read.2026-03-24T10-30-23-958Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-read.2026-03-24T10-30-23-958Z.md"
+  }
+}

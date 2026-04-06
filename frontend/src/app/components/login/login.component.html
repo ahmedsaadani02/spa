@@ -1,46 +1,77 @@
 <div class="login-page">
   <div class="bg">
     <div class="grain"></div>
-    <div class="glow glow-1"></div>
-    <div class="glow glow-2"></div>
+    <div class="halo halo-primary"></div>
+    <div class="halo halo-secondary"></div>
   </div>
 
   <div class="shell">
-    <section class="brand-panel">
-      <div class="brand-top">
-        <img src="assets/logospa.png" alt="SPA" class="brand-logo" />
-        <div class="brand-text">
-          <div class="brand-name">SPA - Societe d'Aluminium</div>
-          <div class="brand-sub">Facturation - Stock - Devis - Estimation</div>
+    <section class="brand-panel" aria-label="Presentation de SPA">
+      <div class="brand-panel__content">
+        <div class="brand-top">
+          <div class="brand-mark">
+            <img src="assets/logospa.png" alt="SPA" class="brand-logo" />
+          </div>
+          <div class="brand-text">
+            <div class="brand-name">SPA - Soci&eacute;t&eacute; d&#39;Aluminium</div>
+          </div>
+        </div>
+
+        <div class="brand-copy">
+          <p class="eyebrow">ESPACE DE GESTION INTERNE</p>
+          <h2>Plus de 25 ans d&#39;experience au service de l&#39;aluminium.</h2>
+          <p>
+            SPA - Soci&eacute;t&eacute; d&#39;Aluminium met a disposition un espace de gestion
+            professionnel, concu pour accompagner les operations quotidiennes de l&#39;entreprise
+            avec rigueur et fiabilite.
+          </p>
+          <p class="brand-note">Propriete de la societe - Direction : Karim Saadani</p>
         </div>
       </div>
 
-      <div class="brand-quote">
-        <div class="quote-mark">"</div>
-        <p>
-          Connexion ERP simplifiee :
-          developer/pdg par email + mot de passe,
-          autres utilisateurs par username + mot de passe.
-        </p>
-      </div>
-
       <div class="brand-bottom">
-        <span>Statut : OK</span>
-        <span>&copy; SPA</span>
+        <div class="brand-status">
+          <span class="status-dot"></span>
+          <span class="brand-status__text">Statut systeme : en ligne</span>
+        </div>
+        <span class="brand-bottom__copy">&copy; SPA</span>
       </div>
     </section>
 
     <section class="login-panel">
       <div class="card">
+        <div class="compact-brand">
+          <img src="assets/logospa.png" alt="SPA" class="compact-brand__logo" />
+          <div class="compact-brand__text">
+            <strong>SPA</strong>
+            <span>Soci&eacute;t&eacute; d&#39;Aluminium</span>
+          </div>
+        </div>
+
         <div class="card-head">
+          <p class="eyebrow">Espace securise</p>
           <h1 *ngIf="step === 'login'">Connexion</h1>
-          <h1 *ngIf="step === 'setup-protected'">Creation mot de passe protege</h1>
+          <h1 *ngIf="step === 'setup-protected'">Creation du mot de passe</h1>
+
+          <p *ngIf="step === 'login'">
+            Connectez-vous pour acceder a l&#39;espace de gestion de la Soci&eacute;t&eacute;
+            d&#39;Aluminium.
+          </p>
+          <p *ngIf="step === 'setup-protected'">
+            Configurez le mot de passe initial du compte developpeur/PDG.
+          </p>
         </div>
 
         <form *ngIf="step === 'login'" [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="form">
           <label class="field">
-            <span>Username (employes) ou email (developer/pdg)</span>
-            <input class="input" type="text" formControlName="identity" autocomplete="username" />
+            <span>Nom d&#39;utilisateur ou email</span>
+            <input
+              class="input"
+              type="text"
+              formControlName="identity"
+              autocomplete="username"
+              placeholder="Saisissez votre identifiant ou votre email"
+            />
           </label>
 
           <label class="field">
@@ -51,15 +82,20 @@
                 [type]="showPassword ? 'text' : 'password'"
                 formControlName="password"
                 autocomplete="current-password"
+                placeholder="Saisissez votre mot de passe"
               />
-              <button type="button" class="icon-btn" (click)="togglePassword()">
-                <span class="dot" *ngIf="!showPassword"></span>
-                <span class="dot open" *ngIf="showPassword"></span>
+              <button
+                type="button"
+                class="icon-btn"
+                (click)="togglePassword()"
+                [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+              >
+                <span class="dot" [class.open]="showPassword"></span>
               </button>
             </div>
           </label>
 
-          <div class="row">
+          <div class="row row-meta">
             <label class="check">
               <input type="checkbox" formControlName="remember" />
               <span>Rester connecte</span>
@@ -72,35 +108,56 @@
           </button>
 
           <button class="link-btn secondary" type="button" (click)="openProtectedSetup()">
-            Creer mot de passe developer/pdg
+            Creer / reinitialiser le mot de passe developpeur/PDG
           </button>
         </form>
 
-        <form *ngIf="step === 'setup-protected'" [formGroup]="setupForm" class="form" (ngSubmit)="submitSetupProtectedPassword()">
-          <p class="help" *ngIf="maskedEmail">Compte detecte: {{ maskedEmail }}</p>
+        <form
+          *ngIf="step === 'setup-protected'"
+          [formGroup]="setupForm"
+          class="form"
+          (ngSubmit)="submitSetupProtectedPassword()"
+        >
+          <p class="help" *ngIf="maskedEmail">Compte detecte : {{ maskedEmail }}</p>
 
           <label class="field">
             <span>Email autorise</span>
-            <input class="input" type="email" formControlName="email" autocomplete="email" />
+            <input
+              class="input"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              placeholder="Saisissez votre email autorise"
+            />
           </label>
 
           <label class="field">
             <span>Nouveau mot de passe</span>
-            <input class="input" [type]="showSetupPassword ? 'text' : 'password'" formControlName="newPassword" />
+            <input
+              class="input"
+              [type]="showSetupPassword ? 'text' : 'password'"
+              formControlName="newPassword"
+              placeholder="Choisissez un mot de passe robuste"
+            />
           </label>
 
           <label class="field">
             <span>Confirmation mot de passe</span>
-            <input class="input" [type]="showSetupPassword ? 'text' : 'password'" formControlName="confirmPassword" />
+            <input
+              class="input"
+              [type]="showSetupPassword ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              placeholder="Confirmez le mot de passe"
+            />
           </label>
 
-          <div class="row">
+          <div class="row row-actions">
             <button class="btn primary" type="submit" [disabled]="loading">Enregistrer</button>
             <button class="btn ghost" type="button" (click)="backToLogin()">Retour</button>
           </div>
 
           <button class="link-btn secondary" type="button" (click)="toggleSetupPassword()">
-            {{ showSetupPassword ? 'Masquer mot de passe' : 'Afficher mot de passe' }}
+            {{ showSetupPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe' }}
           </button>
         </form>
 
@@ -110,4 +167,3 @@
     </section>
   </div>
 </div>
-

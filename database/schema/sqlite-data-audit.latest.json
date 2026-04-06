@@ -1,0 +1,213 @@
+{
+  "generatedAt": "2026-03-19T17:11:35.932Z",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "tablesDetected": [
+    "auth_challenges",
+    "clients",
+    "employees",
+    "invoices",
+    "movements",
+    "price_history",
+    "product_catalog_metadata",
+    "product_variants",
+    "products",
+    "quotes",
+    "salary_advances",
+    "salary_bonuses",
+    "salary_overtimes",
+    "security_audit_log",
+    "stock"
+  ],
+  "checks": {
+    "duplicateProductsReference": {
+      "count": 0,
+      "rows": []
+    },
+    "orphanReferences": [
+      {
+        "key": "quotes.client_id",
+        "description": "quotes.client_id -> clients.id",
+        "table": "quotes",
+        "sql": "\n      SELECT q.id AS row_id, q.client_id AS dangling_value\n      FROM quotes q\n      LEFT JOIN clients c ON c.id = q.client_id\n      WHERE q.client_id IS NOT NULL AND c.id IS NULL\n      ORDER BY q.id\n      LIMIT 20\n    ",
+        "skipped": false,
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "invoices.client_id",
+        "description": "invoices.client_id -> clients.id",
+        "table": "invoices",
+        "sql": "\n      SELECT i.id AS row_id, i.client_id AS dangling_value\n      FROM invoices i\n      LEFT JOIN clients c ON c.id = i.client_id\n      WHERE i.client_id IS NOT NULL AND c.id IS NULL\n      ORDER BY i.id\n      LIMIT 20\n    ",
+        "skipped": false,
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "invoices.quote_id",
+        "description": "invoices.quote_id -> quotes.id",
+        "table": "invoices",
+        "sql": "\n      SELECT i.id AS row_id, i.quote_id AS dangling_value\n      FROM invoices i\n      LEFT JOIN quotes q ON q.id = i.quote_id\n      WHERE i.quote_id IS NOT NULL AND q.id IS NULL\n      ORDER BY i.id\n      LIMIT 20\n    ",
+        "skipped": false,
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "stock.product_id",
+        "description": "stock.product_id -> products.id",
+        "table": "stock",
+        "sql": "\n      SELECT (s.product_id || ':' || s.color) AS row_id, s.product_id AS dangling_value\n      FROM stock s\n      LEFT JOIN products p ON p.id = s.product_id\n      WHERE s.product_id IS NOT NULL AND p.id IS NULL\n      ORDER BY s.product_id, s.color\n      LIMIT 20\n    ",
+        "skipped": false,
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "product_variants.product_id",
+        "description": "product_variants.product_id -> products.id",
+        "table": "product_variants",
+        "sql": "\n      SELECT pv.id AS row_id, pv.product_id AS dangling_value\n      FROM product_variants pv\n      LEFT JOIN products p ON p.id = pv.product_id\n      WHERE pv.product_id IS NOT NULL AND p.id IS NULL\n      ORDER BY pv.id\n      LIMIT 20\n    ",
+        "skipped": false,
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "price_history.product_id",
+        "description": "price_history.product_id -> products.id",
+        "table": "price_history",
+        "sql": "\n      SELECT ph.id AS row_id, ph.product_id AS dangling_value\n      FROM price_history ph\n      LEFT JOIN products p ON p.id = ph.product_id\n      WHERE ph.product_id IS NOT NULL AND p.id IS NULL\n      ORDER BY ph.id\n      LIMIT 20\n    ",
+        "skipped": false,
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "salary_advances.employee_id",
+        "description": "salary_advances.employee_id -> employees.id",
+        "table": "salary_advances",
+        "sql": "\n      SELECT sa.id AS row_id, sa.employee_id AS dangling_value\n      FROM salary_advances sa\n      LEFT JOIN employees e ON e.id = sa.employee_id\n      WHERE sa.employee_id IS NOT NULL AND e.id IS NULL\n      ORDER BY sa.id\n      LIMIT 20\n    ",
+        "skipped": false,
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "salary_bonuses.employee_id",
+        "description": "salary_bonuses.employee_id -> employees.id",
+        "table": "salary_bonuses",
+        "sql": "\n      SELECT sb.id AS row_id, sb.employee_id AS dangling_value\n      FROM salary_bonuses sb\n      LEFT JOIN employees e ON e.id = sb.employee_id\n      WHERE sb.employee_id IS NOT NULL AND e.id IS NULL\n      ORDER BY sb.id\n      LIMIT 20\n    ",
+        "skipped": false,
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "salary_overtimes.employee_id",
+        "description": "salary_overtimes.employee_id -> employees.id",
+        "table": "salary_overtimes",
+        "sql": "\n      SELECT so.id AS row_id, so.employee_id AS dangling_value\n      FROM salary_overtimes so\n      LEFT JOIN employees e ON e.id = so.employee_id\n      WHERE so.employee_id IS NOT NULL AND e.id IS NULL\n      ORDER BY so.id\n      LIMIT 20\n    ",
+        "skipped": false,
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "auth_challenges.user_id",
+        "description": "auth_challenges.user_id -> employees.id",
+        "table": "auth_challenges",
+        "sql": "\n      SELECT ac.id AS row_id, ac.user_id AS dangling_value\n      FROM auth_challenges ac\n      LEFT JOIN employees e ON e.id = ac.user_id\n      WHERE ac.user_id IS NOT NULL AND e.id IS NULL\n      ORDER BY ac.id\n      LIMIT 20\n    ",
+        "skipped": false,
+        "count": 0,
+        "sample": []
+      }
+    ],
+    "futureNotNullViolations": [],
+    "dateFormatIssues": [],
+    "numericFormatIssues": [],
+    "booleanIssues": [],
+    "jsonChecks": [
+      {
+        "table": "quotes",
+        "column": "payload",
+        "totalRows": 4,
+        "invalidCount": 0,
+        "invalidSample": []
+      },
+      {
+        "table": "invoices",
+        "column": "payload",
+        "totalRows": 6,
+        "invalidCount": 0,
+        "invalidSample": []
+      }
+    ]
+  },
+  "recommendations": {
+    "safeToApplyImmediately": [
+      {
+        "name": "Unique active products.reference (case-insensitive)",
+        "reason": "No duplicate active references were found with lower(trim(reference))."
+      },
+      {
+        "name": "quotes.client_id -> clients.id",
+        "reason": "No orphan rows were found."
+      },
+      {
+        "name": "invoices.client_id -> clients.id",
+        "reason": "No orphan rows were found."
+      },
+      {
+        "name": "invoices.quote_id -> quotes.id",
+        "reason": "No orphan rows were found. Data is clean, but the foreign key is still a business-rule decision because SQLite does not currently enforce it physically."
+      },
+      {
+        "name": "stock.product_id -> products.id",
+        "reason": "No orphan rows were found."
+      },
+      {
+        "name": "product_variants.product_id -> products.id",
+        "reason": "No orphan rows were found."
+      },
+      {
+        "name": "price_history.product_id -> products.id",
+        "reason": "No orphan rows were found."
+      },
+      {
+        "name": "salary_advances.employee_id -> employees.id",
+        "reason": "No orphan rows were found."
+      },
+      {
+        "name": "salary_bonuses.employee_id -> employees.id",
+        "reason": "No orphan rows were found."
+      },
+      {
+        "name": "salary_overtimes.employee_id -> employees.id",
+        "reason": "No orphan rows were found."
+      },
+      {
+        "name": "auth_challenges.user_id -> employees.id",
+        "reason": "No orphan rows were found."
+      },
+      {
+        "name": "quotes.payload as JSONB",
+        "reason": "All 4 rows parsed successfully as JSON."
+      },
+      {
+        "name": "invoices.payload as JSONB",
+        "reason": "All 6 rows parsed successfully as JSON."
+      },
+      {
+        "name": "Current draft NOT NULL constraints",
+        "reason": "No NULL values were found in the audited columns that the current PostgreSQL draft marks as NOT NULL."
+      },
+      {
+        "name": "Timestamp casting to PostgreSQL TIMESTAMPTZ",
+        "reason": "No suspicious non-null date values were found in the audited date/timestamp columns."
+      },
+      {
+        "name": "Numeric casting to PostgreSQL NUMERIC/INTEGER",
+        "reason": "No non-numeric SQLite storage classes were found in the audited numeric columns."
+      },
+      {
+        "name": "BOOLEAN mapping for audited flag columns",
+        "reason": "All audited boolean-like values are compatible with PostgreSQL BOOLEAN conversion."
+      }
+    ],
+    "deferUntilCleanupOrDecision": [],
+    "cleanupRequiredBeforeMigration": []
+  }
+}

@@ -13,10 +13,29 @@ export class InvoiceStoreService {
   // ✅ initialized = connexion/seed une seule fois
   // load() rafraîchit toujours les données à chaque navigation
   private initialized = false;
+  private loadInFlight: Promise<void> | null = null;
 
   constructor(private persistence: InvoicePersistenceService) {}
 
   async load(): Promise<void> {
+    if (this.loadInFlight) {
+      return this.loadInFlight;
+    }
+
+    this.loadInFlight = this.performLoad().finally(() => {
+      this.loadInFlight = null;
+    });
+    return this.loadInFlight;
+  }
+
+  async warm(): Promise<void> {
+    if (this.invoicesSubject.value.length > 0) {
+      return;
+    }
+    await this.load();
+  }
+
+  private async performLoad(): Promise<void> {
     console.log('[invoices-page] load requested');
     if (!this.initialized) {
       await this.persistence.ensureSeed();

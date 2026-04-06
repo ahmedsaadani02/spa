@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { BehaviorSubject, Subject, combineLatest, debounceTime, distinctUntilChanged, skip, startWith, takeUntil } from 'rxjs';
 import { StockColor, StockItem } from '../../models/stock-item';
 import { StockStoreService } from '../../services/stock-store.service';
 import { AuthService } from '../../services/auth.service';
+import { DocumentsService } from '../../services/documents.service';
 import type { SpaInventoryResponse, SpaPriceHistoryEntry } from '../../types/electron';
 
 interface CataloguePriceEntry {
@@ -56,6 +57,26 @@ interface ColorVisual {
   chipText: string;
 }
 
+interface InventoryExportSummary {
+  totalProducts: number;
+  totalQuantity: number;
+  totalValue: number;
+  outOfStockCount: number;
+  lowStockCount: number;
+}
+
+interface InventoryExportRow {
+  reference: string;
+  designation: string;
+  categorie: string;
+  serie: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  stockValue: number;
+  status: string;
+}
+
 @Component({
   selector: 'app-inventaire',
   standalone: true,
@@ -65,6 +86,8 @@ interface ColorVisual {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InventaireComponent implements OnInit, OnDestroy {
+  @ViewChild('exportMenu') private exportMenu?: ElementRef<HTMLDetailsElement>;
+
   private readonly destroy$ = new Subject<void>();
   private readonly catalogueSubject = new BehaviorSubject<Record<string, CataloguePriceEntry>>({});
   private readonly colorVisualCache = new Map<string, ColorVisual>();
@@ -104,6 +127,9 @@ export class InventaireComponent implements OnInit, OnDestroy {
   totalStockValue = 0;
   totalProducts = 0;
   filteredStockValue = 0;
+  loading = true;
+  loadingMessage = 'Preparation de l inventaire...';
+  exportFeedback: { type: 'info' | 'error'; message: string } | null = null;
 
   editingProductId: string | null = null;
   editingColor: StockColor | null = null;
@@ -127,7 +153,8 @@ export class InventaireComponent implements OnInit, OnDestroy {
     private store: StockStoreService,
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
-    private auth: AuthService
+    private auth: AuthService,
+    private documents: DocumentsService
   ) {}
 
   private get actor(): string {
@@ -136,6 +163,10 @@ export class InventaireComponent implements OnInit, OnDestroy {
 
   get supportsPriceEditing(): boolean {
     return this.store.supportsInventory;
+  }
+
+  get exportSummary(): InventoryExportSummary {
+    return this.buildExportSummary(this.rows);
   }
 
   ngOnInit(): void {
@@ -341,20 +372,27 @@ export class InventaireComponent implements OnInit, OnDestroy {
   }
 
   private async initializeDataSources(): Promise<void> {
-    await this.store.load();
+    this.loading = true;
+    this.loadingMessage = 'Preparation de l inventaire...';
+    this.cdr.markForCheck();
 
     if (this.store.supportsInventory) {
-      this.store.items$
-        .pipe(takeUntil(this.destroy$))
-        .pipe(skip(1))
-        .subscribe(() => {
-          void this.refreshFromIpc();
-        });
+      const cached = this.store.getCachedInventory();
+      if (cached) {
+        this.loadingMessage = 'Affichage de l inventaire...';
+        this.cdr.markForCheck();
+        this.consumeInventoryResponse(cached);
+      } else {
+        this.loadingMessage = 'Chargement des donnees inventaire...';
+        this.cdr.markForCheck();
+      }
 
-      await this.refreshFromIpc();
+      await this.store.warmInventory();
+      await this.refreshFromIpc(false);
       return;
     }
 
+    await this.store.load();
     this.loadCatalogue();
 
     combineLatest([this.store.items$, this.catalogueSubject])
@@ -391,13 +429,17 @@ export class InventaireComponent implements OnInit, OnDestroy {
     });
   }
 
-  private async refreshFromIpc(): Promise<void> {
-    const response = await this.store.getInventory();
+  private async refreshFromIpc(forceRefresh = true): Promise<void> {
+    const response = await this.store.getInventory(forceRefresh);
     if (!response) {
       this.setRows([], 0);
       return;
     }
 
+    this.consumeInventoryResponse(response);
+  }
+
+  private consumeInventoryResponse(response: SpaInventoryResponse): void {
     const inventoryRows = this.mapInventoryResponse(response);
     const total = response.totalValue ?? inventoryRows.reduce((sum, row) => sum + row.totalValue, 0);
     this.setRows(inventoryRows, total);
@@ -550,6 +592,7 @@ export class InventaireComponent implements OnInit, OnDestroy {
     this.totalProducts = rows.length;
     this.totalStockValue = totalValue;
     this.applyFilter(this.searchControl.getRawValue());
+    this.loading = false;
     console.log('[inventaire-page] api response received');
     console.log(`[inventaire-page] rendered items count: ${this.rows.length}`);
     console.log('[inventaire-page] empty state condition:', this.rows.length === 0);
@@ -809,5 +852,385 @@ export class InventaireComponent implements OnInit, OnDestroy {
 
   private toSafeLower(value: unknown): string {
     return typeof value === 'string' ? value.trim().toLowerCase() : '';
+  }
+
+  async printInventory(): Promise<void> {
+    if (!this.rows.length) {
+      this.showExportFeedback('error', 'Aucune ligne a imprimer.');
+      return;
+    }
+
+    this.closeExportMenu();
+    const title = 'Etat d inventaire';
+    const html = this.buildInventoryDocumentHtml(title);
+    const result = await this.documents.printDocument(
+      'inventory',
+      this.buildDocumentNumberToken(),
+      html,
+      title,
+      'landscape'
+    );
+
+    if (!result) {
+      this.showExportFeedback('error', 'Impression indisponible.');
+      return;
+    }
+
+    if (!result.ok && !result.canceled) {
+      this.showExportFeedback('error', result.message || 'Impression impossible.');
+      return;
+    }
+
+    if (result.ok) {
+      this.showExportFeedback('info', 'Impression de l inventaire envoyee.');
+    }
+  }
+
+  private showExportFeedback(type: 'info' | 'error', message: string): void {
+    this.exportFeedback = { type, message };
+    this.cdr.markForCheck();
+  }
+
+  private closeExportMenu(): void {
+    this.exportMenu?.nativeElement.removeAttribute('open');
+  }
+
+  private buildExportSummary(rows: InventoryRow[]): InventoryExportSummary {
+    return {
+      totalProducts: rows.length,
+      totalQuantity: rows.reduce((sum, row) => sum + row.qtyTotal, 0),
+      totalValue: rows.reduce((sum, row) => sum + row.totalValue, 0),
+      outOfStockCount: rows.filter((row) => row.qtyTotal <= 0).length,
+      lowStockCount: rows.filter((row) => this.isLowStock(row)).length
+    };
+  }
+
+  private isLowStock(row: InventoryRow): boolean {
+    const threshold = Number(row.item.lowStockThreshold ?? 0) || 0;
+    return threshold > 0 && row.qtyTotal > 0 && row.qtyTotal <= threshold;
+  }
+
+  private getRowStatus(row: InventoryRow): string {
+    if (row.qtyTotal <= 0) return 'Rupture';
+    if (this.isLowStock(row)) return 'Stock faible';
+    return 'Disponible';
+  }
+
+  private buildExportRows(): InventoryExportRow[] {
+    return this.rows.map((row) => ({
+      reference: row.item.reference || '-',
+      designation: row.item.label || '-',
+      categorie: String(row.item.category || '-'),
+      serie: String(row.item.serie || '-'),
+      quantity: row.qtyTotal,
+      unit: row.item.unit || '-',
+      unitPrice: row.unitPrice,
+      stockValue: row.totalValue,
+      status: this.getRowStatus(row)
+    }));
+  }
+
+  private buildInventoryDocumentHtml(title: string): string {
+    const summary = this.exportSummary;
+    const generatedAt = this.getGeneratedAt();
+    const userLabel = this.escapeHtml(this.getCurrentUserLabel());
+    const documentNumber = this.escapeHtml(this.buildDocumentNumberToken());
+    const logoSrc = this.escapeHtml(new URL('assets/logospa.png', document.baseURI).toString());
+    const rowsMarkup = this.buildExportRows()
+      .map((row) => `
+        <tr>
+          <td>${this.escapeHtml(row.reference)}</td>
+          <td>${this.escapeHtml(row.designation)}</td>
+          <td>${this.escapeHtml(row.categorie)}</td>
+          <td>${this.escapeHtml(row.serie)}</td>
+          <td class="align-right">${this.formatDocumentNumber(row.quantity, 0)}</td>
+          <td>${this.escapeHtml(row.unit)}</td>
+          <td class="align-right">${this.formatDocumentCurrency(row.unitPrice)}</td>
+          <td class="align-right">${this.formatDocumentCurrency(row.stockValue)}</td>
+          <td>${this.escapeHtml(row.status)}</td>
+        </tr>
+      `)
+      .join('');
+
+    return `
+      <!doctype html>
+      <html lang="fr">
+        <head>
+          <meta charset="utf-8">
+          <title>${this.escapeHtml(title)}</title>
+          <style>
+            @page {
+              size: A4 landscape;
+              margin: 14mm 10mm 14mm;
+            }
+
+            * {
+              box-sizing: border-box;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+            html, body {
+              margin: 0;
+              padding: 0;
+              background: #ffffff;
+              color: #0f172a;
+              font-family: 'Source Sans 3', 'Segoe UI', Arial, sans-serif;
+            }
+
+            body {
+              padding: 0;
+            }
+
+            .inventory-document {
+              padding: 14mm 10mm 12mm;
+            }
+
+            .inventory-header {
+              display: flex;
+              align-items: flex-start;
+              justify-content: space-between;
+              gap: 20px;
+              padding-bottom: 14px;
+              border-bottom: 2px solid #dbe4f0;
+            }
+
+            .inventory-brand {
+              display: flex;
+              align-items: center;
+              gap: 14px;
+            }
+
+            .inventory-logo {
+              width: 58px;
+              height: 58px;
+              object-fit: contain;
+            }
+
+            .inventory-brand-title {
+              margin: 0;
+              font-size: 18px;
+              font-weight: 700;
+              color: #0f172a;
+            }
+
+            .inventory-brand-subtitle {
+              margin: 3px 0 0;
+              font-size: 11px;
+              color: #64748b;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+            }
+
+            .inventory-title-block {
+              text-align: right;
+            }
+
+            .inventory-title-block h1 {
+              margin: 0;
+              font-size: 26px;
+              font-weight: 700;
+              letter-spacing: -0.02em;
+            }
+
+            .inventory-title-block p {
+              margin: 4px 0 0;
+              color: #475569;
+              font-size: 12px;
+            }
+
+            .inventory-meta {
+              display: grid;
+              grid-template-columns: repeat(4, minmax(0, 1fr));
+              gap: 10px;
+              margin-top: 16px;
+            }
+
+            .inventory-metric {
+              border: 1px solid #dbe4f0;
+              border-radius: 12px;
+              padding: 10px 12px;
+              background: #f8fbff;
+            }
+
+            .inventory-metric span {
+              display: block;
+              color: #64748b;
+              font-size: 10px;
+              font-weight: 700;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+            }
+
+            .inventory-metric strong {
+              display: block;
+              margin-top: 6px;
+              color: #0f172a;
+              font-size: 18px;
+              font-weight: 800;
+            }
+
+            .inventory-table-wrap {
+              margin-top: 18px;
+              border: 1px solid #dbe4f0;
+              border-radius: 14px;
+              overflow: hidden;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+
+            thead th {
+              padding: 11px 10px;
+              background: #f8fafc;
+              border-bottom: 1px solid #dbe4f0;
+              color: #475569;
+              font-size: 10px;
+              font-weight: 800;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+              text-align: left;
+            }
+
+            tbody td {
+              padding: 10px;
+              border-bottom: 1px solid #e8eef6;
+              color: #0f172a;
+              font-size: 11px;
+              vertical-align: top;
+            }
+
+            tbody tr:nth-child(even) td {
+              background: #fcfdff;
+            }
+
+            tbody tr:last-child td {
+              border-bottom: none;
+            }
+
+            .align-right {
+              text-align: right;
+              white-space: nowrap;
+            }
+
+            .inventory-footer {
+              display: flex;
+              justify-content: space-between;
+              gap: 12px;
+              margin-top: 12px;
+              color: #64748b;
+              font-size: 10px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="inventory-document">
+            <header class="inventory-header">
+              <div class="inventory-brand">
+                <img class="inventory-logo" src="${logoSrc}" alt="SPA">
+                <div>
+                  <p class="inventory-brand-title">SPA - Societe d Aluminium</p>
+                  <p class="inventory-brand-subtitle">Etat d inventaire</p>
+                </div>
+              </div>
+
+              <div class="inventory-title-block">
+                <h1>${this.escapeHtml(title)}</h1>
+                <p>Genere le ${this.escapeHtml(generatedAt)}</p>
+                <p>Utilisateur : ${userLabel}</p>
+              </div>
+            </header>
+
+            <section class="inventory-meta">
+              <article class="inventory-metric">
+                <span>Total produits</span>
+                <strong>${this.formatDocumentNumber(summary.totalProducts, 0)}</strong>
+              </article>
+              <article class="inventory-metric">
+                <span>Quantite totale</span>
+                <strong>${this.formatDocumentNumber(summary.totalQuantity, 0)}</strong>
+              </article>
+              <article class="inventory-metric">
+                <span>Valeur totale stock</span>
+                <strong>${this.formatDocumentCurrency(summary.totalValue)}</strong>
+              </article>
+              <article class="inventory-metric">
+                <span>Rupture / stock faible</span>
+                <strong>${this.formatDocumentNumber(summary.outOfStockCount, 0)} / ${this.formatDocumentNumber(summary.lowStockCount, 0)}</strong>
+              </article>
+            </section>
+
+            <section class="inventory-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Reference</th>
+                    <th>Designation</th>
+                    <th>Categorie</th>
+                    <th>Serie</th>
+                    <th class="align-right">Quantite</th>
+                    <th>Unite</th>
+                    <th class="align-right">Prix unitaire</th>
+                    <th class="align-right">Valeur stock</th>
+                    <th>Statut</th>
+                  </tr>
+                </thead>
+                <tbody>${rowsMarkup}</tbody>
+              </table>
+            </section>
+
+            <footer class="inventory-footer">
+              <span>Document interne SPA - usage comptable et gestion.</span>
+              <span>Reference export : ${documentNumber}</span>
+            </footer>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  private buildDocumentNumberToken(): string {
+    const now = new Date();
+    const parts = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0'),
+      String(now.getHours()).padStart(2, '0'),
+      String(now.getMinutes()).padStart(2, '0')
+    ];
+    return parts.join('');
+  }
+
+  private getGeneratedAt(): string {
+    return new Intl.DateTimeFormat('fr-TN', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    }).format(new Date());
+  }
+
+  private getCurrentUserLabel(): string {
+    return this.auth.displayName() || this.auth.username() || 'Utilisateur non renseigne';
+  }
+
+  private formatDocumentCurrency(value: number): string {
+    return `${this.formatDocumentNumber(value, 2)} DT`;
+  }
+
+  private formatDocumentNumber(value: number, digits = 2): string {
+    return new Intl.NumberFormat('fr-TN', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits
+    }).format(Number(value) || 0);
+  }
+
+  private escapeHtml(value: string): string {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 }

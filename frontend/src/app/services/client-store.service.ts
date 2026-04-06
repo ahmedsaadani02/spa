@@ -13,10 +13,29 @@ export class ClientStoreService {
   private refreshInFlight: Promise<void> | null = null;
   private refreshQueued = false;
   private initialized = false;
+  private loadInFlight: Promise<void> | null = null;
 
   constructor(private persistence: ClientPersistenceService) {}
 
   async load(): Promise<void> {
+    if (this.loadInFlight) {
+      return this.loadInFlight;
+    }
+
+    this.loadInFlight = this.performLoad().finally(() => {
+      this.loadInFlight = null;
+    });
+    return this.loadInFlight;
+  }
+
+  async warm(): Promise<void> {
+    if (this.clientsSubject.value.length > 0) {
+      return;
+    }
+    await this.load();
+  }
+
+  private async performLoad(): Promise<void> {
     console.log('[clients-page] load requested');
     if (!this.initialized) {
       this.initialized = true;

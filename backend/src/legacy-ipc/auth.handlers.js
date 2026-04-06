@@ -56,9 +56,9 @@ const registerAuthHandlers = (ipcMain, getDb) => {
   ipcMain.handle('auth:getCurrentUser', () => getCurrentUser());
   ipcMain.handle('auth:hasPermission', (event, permissionKey) => hasPermission(permissionKey));
 
-  ipcMain.handle('auth:resetPassword', (event, employeeId, newPassword) => {
+  ipcMain.handle('auth:resetPassword', async (event, employeeId, newPassword) => {
     try {
-      return resetPassword(getDb(), employeeId, newPassword);
+      return await resetPassword(getDb(), employeeId, newPassword);
     } catch (error) {
       console.error('[auth:resetPassword] error', error);
       return false;

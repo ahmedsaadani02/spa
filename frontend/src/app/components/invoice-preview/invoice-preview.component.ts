@@ -4,8 +4,9 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Invoice } from '../../models/invoice';
 import { InvoiceCalcService, InvoiceTotals } from '../../services/invoice-calc.service';
 import { InvoiceStoreService } from '../../services/invoice-store.service';
-import { ElectronService } from '../../services/electron.service';
+import { DocumentsService } from '../../services/documents.service';
 import { buildMasterDocumentHtml } from '../../utils/master-document-render';
+import { getInvoiceDisplayNumber } from '../../utils/invoice-payload';
 
 type TotalsFinal = {
   fodec: number;
@@ -72,7 +73,7 @@ export class InvoicePreviewComponent implements OnInit {
     private router: Router,
     private store: InvoiceStoreService,
     public calc: InvoiceCalcService,
-    public electron: ElectronService,
+    public electron: DocumentsService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -155,7 +156,7 @@ export class InvoicePreviewComponent implements OnInit {
     this.noticeMessage = '';
 
     await this.flushView();
-    const title = this.invoice?.numero ? `Facture ${this.invoice.numero}` : 'Facture';
+    const title = this.invoice ? `Facture ${this.displayNumber(this.invoice)}` : 'Facture';
     console.log('[invoice-preview] using master page layout', { mode: 'print', title });
     const html = await this.buildPrintableHtml(title);
     if (!html) {
@@ -188,7 +189,7 @@ export class InvoicePreviewComponent implements OnInit {
 
     try {
       await this.flushView();
-      const title = `Facture ${this.invoice.numero}`;
+      const title = `Facture ${this.displayNumber(this.invoice)}`;
       console.log('[invoice-preview] using master page layout', { mode: 'pdf', title });
       const html = await this.buildPrintableHtml(title);
       if (!html) {
@@ -252,6 +253,10 @@ export class InvoicePreviewComponent implements OnInit {
     const totalTTCFinal = this.round3(totalHorsTVA + tva + timbre);
 
     this.totalsFinal = { fodec, totalHorsTVA, tva, timbre, totalTTCFinal };
+  }
+
+  displayNumber(invoice: Invoice | null | undefined): string {
+    return getInvoiceDisplayNumber(invoice);
   }
 
   private round3(n: number): number {

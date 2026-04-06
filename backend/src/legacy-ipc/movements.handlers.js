@@ -1,4 +1,6 @@
 const { assertPermission, getCurrentUser } = require('../services/auth-session.service');
+const { listMovements: listMovementsRead } = require('../repositories/movements-read.runtime.repository');
+const { addMovement: addMovementWrite } = require('../repositories/movements-write.runtime.repository');
 
 const hasTable = (db, tableName) => !!db.prepare(`
   SELECT 1
@@ -117,20 +119,20 @@ const addMovement = (db, movement, currentUser) => {
 };
 
 const registerMovementsHandlers = (ipcMain, getDb) => {
-  ipcMain.handle('movements:list', () => {
+  ipcMain.handle('movements:list', async () => {
     try {
       assertPermission('viewHistory');
-      return listMovements(getDb());
+      return await listMovementsRead(getDb());
     } catch (error) {
       console.error('[movements:list] error', error);
       return [];
     }
   });
 
-  ipcMain.handle('movements:add', (event, movement) => {
+  ipcMain.handle('movements:add', async (event, movement) => {
     try {
       assertPermission('manageStock');
-      return addMovement(getDb(), movement, getCurrentUser());
+      return await addMovementWrite(getDb(), movement, getCurrentUser());
     } catch (error) {
       console.error('[movements:add] error', error);
       return false;

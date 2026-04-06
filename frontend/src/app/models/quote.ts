@@ -7,6 +7,7 @@ export interface Quote {
   id: string;
   numero: string;
   date: string;
+  purchaseOrderNumber?: string | null;
   clientId: string | null;
   client: Client;
   lignes: InvoiceLine[];

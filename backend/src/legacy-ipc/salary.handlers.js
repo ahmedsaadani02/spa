@@ -12,7 +12,7 @@ const {
   deleteOvertime,
   getMonthlyOvertimeTotals,
   getSalarySummary
-} = require('../repositories/salary.repository');
+} = require('../repositories/salary.runtime.repository');
 const { assertPermission } = require('../services/auth-session.service');
 
 const toMonthYear = (month, year) => {
@@ -26,137 +26,137 @@ const toMonthYear = (month, year) => {
 };
 
 const registerSalaryHandlers = (ipcMain, getDb) => {
-  ipcMain.handle('salary:advances:list', (event, employeeId, month, year) => {
+  ipcMain.handle('salary:advances:list', async (event, employeeId, month, year) => {
     try {
       assertPermission('manageSalary');
       const scope = toMonthYear(month, year);
-      return listAdvancesByEmployee(getDb(), employeeId, scope.month, scope.year);
+      return await listAdvancesByEmployee(getDb(), employeeId, scope.month, scope.year);
     } catch (error) {
       console.error('[salary:advances:list] error', error);
       return [];
     }
   });
 
-  ipcMain.handle('salary:advances:create', (event, payload) => {
+  ipcMain.handle('salary:advances:create', async (event, payload) => {
     try {
       assertPermission('manageSalary');
-      return createAdvance(getDb(), payload);
+      return await createAdvance(getDb(), payload);
     } catch (error) {
       console.error('[salary:advances:create] error', error);
       return null;
     }
   });
 
-  ipcMain.handle('salary:advances:delete', (event, advanceId) => {
+  ipcMain.handle('salary:advances:delete', async (event, advanceId) => {
     try {
       assertPermission('manageSalary');
-      return deleteAdvance(getDb(), advanceId);
+      return await deleteAdvance(getDb(), advanceId);
     } catch (error) {
       console.error('[salary:advances:delete] error', error);
       return false;
     }
   });
 
-  ipcMain.handle('salary:advances:total', (event, employeeId, month, year) => {
+  ipcMain.handle('salary:advances:total', async (event, employeeId, month, year) => {
     try {
       assertPermission('manageSalary');
       const scope = toMonthYear(month, year);
-      return getMonthlyAdvanceTotal(getDb(), employeeId, scope.month, scope.year);
+      return await getMonthlyAdvanceTotal(getDb(), employeeId, scope.month, scope.year);
     } catch (error) {
       console.error('[salary:advances:total] error', error);
       return 0;
     }
   });
 
-  ipcMain.handle('salary:bonuses:list', (event, employeeId, month, year) => {
+  ipcMain.handle('salary:bonuses:list', async (event, employeeId, month, year) => {
     try {
       assertPermission('manageSalary');
       const scope = toMonthYear(month, year);
-      return listBonusesByEmployee(getDb(), employeeId, scope.month, scope.year);
+      return await listBonusesByEmployee(getDb(), employeeId, scope.month, scope.year);
     } catch (error) {
       console.error('[salary:bonuses:list] error', error);
       return [];
     }
   });
 
-  ipcMain.handle('salary:bonuses:create', (event, payload) => {
+  ipcMain.handle('salary:bonuses:create', async (event, payload) => {
     try {
       assertPermission('manageSalary');
-      return createBonus(getDb(), payload);
+      return await createBonus(getDb(), payload);
     } catch (error) {
       console.error('[salary:bonuses:create] error', error);
       return null;
     }
   });
 
-  ipcMain.handle('salary:bonuses:delete', (event, bonusId) => {
+  ipcMain.handle('salary:bonuses:delete', async (event, bonusId) => {
     try {
       assertPermission('manageSalary');
-      return deleteBonus(getDb(), bonusId);
+      return await deleteBonus(getDb(), bonusId);
     } catch (error) {
       console.error('[salary:bonuses:delete] error', error);
       return false;
     }
   });
 
-  ipcMain.handle('salary:bonuses:total', (event, employeeId, month, year) => {
+  ipcMain.handle('salary:bonuses:total', async (event, employeeId, month, year) => {
     try {
       assertPermission('manageSalary');
       const scope = toMonthYear(month, year);
-      return getMonthlyBonusTotal(getDb(), employeeId, scope.month, scope.year);
+      return await getMonthlyBonusTotal(getDb(), employeeId, scope.month, scope.year);
     } catch (error) {
       console.error('[salary:bonuses:total] error', error);
       return 0;
     }
   });
 
-  ipcMain.handle('salary:summary', (event, employeeId, month, year) => {
+  ipcMain.handle('salary:summary', async (event, employeeId, month, year) => {
     try {
       assertPermission('manageSalary');
       const scope = toMonthYear(month, year);
-      return getSalarySummary(getDb(), employeeId, scope.month, scope.year);
+      return await getSalarySummary(getDb(), employeeId, scope.month, scope.year);
     } catch (error) {
       console.error('[salary:summary] error', error);
       return null;
     }
   });
 
-  ipcMain.handle('salary:overtimes:list', (event, employeeId, month, year) => {
+  ipcMain.handle('salary:overtimes:list', async (event, employeeId, month, year) => {
     try {
       assertPermission('manageSalary');
       const scope = toMonthYear(month, year);
-      return listOvertimesByEmployee(getDb(), employeeId, scope.month, scope.year);
+      return await listOvertimesByEmployee(getDb(), employeeId, scope.month, scope.year);
     } catch (error) {
       console.error('[salary:overtimes:list] error', error);
       return [];
     }
   });
 
-  ipcMain.handle('salary:overtimes:create', (event, payload) => {
+  ipcMain.handle('salary:overtimes:create', async (event, payload) => {
     try {
       assertPermission('manageSalary');
-      return createOvertime(getDb(), payload);
+      return await createOvertime(getDb(), payload);
     } catch (error) {
       console.error('[salary:overtimes:create] error', error);
       return null;
     }
   });
 
-  ipcMain.handle('salary:overtimes:delete', (event, overtimeId) => {
+  ipcMain.handle('salary:overtimes:delete', async (event, overtimeId) => {
     try {
       assertPermission('manageSalary');
-      return deleteOvertime(getDb(), overtimeId);
+      return await deleteOvertime(getDb(), overtimeId);
     } catch (error) {
       console.error('[salary:overtimes:delete] error', error);
       return false;
     }
   });
 
-  ipcMain.handle('salary:overtimes:totalHours', (event, employeeId, month, year) => {
+  ipcMain.handle('salary:overtimes:totalHours', async (event, employeeId, month, year) => {
     try {
       assertPermission('manageSalary');
       const scope = toMonthYear(month, year);
-      return getMonthlyOvertimeTotals(getDb(), employeeId, scope.month, scope.year).totalHours;
+      return (await getMonthlyOvertimeTotals(getDb(), employeeId, scope.month, scope.year)).totalHours;
     } catch (error) {
       console.error('[salary:overtimes:totalHours] error', error);
       return 0;

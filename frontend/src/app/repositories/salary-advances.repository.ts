@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { SalaryAdvance, SalaryAdvanceInput } from '../models/employee.models';
-import { IpcService } from '../services/ipc.service';
+import { AppApiService } from '../services/app-api.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SalaryAdvancesRepository {
-  constructor(private ipc: IpcService) {}
+  constructor(private ipc: AppApiService) {}
 
   listByEmployee(employeeId: string, month: number, year: number): Promise<SalaryAdvance[]> {
     return this.ipc.salaryAdvancesList(employeeId, month, year);

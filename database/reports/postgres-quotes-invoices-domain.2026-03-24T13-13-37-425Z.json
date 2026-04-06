@@ -1,0 +1,242 @@
+{
+  "startedAt": "2026-03-24T13:13:12.077Z",
+  "finishedAt": "2026-03-24T13:13:37.425Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "sqliteCopyPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\tmp\\quotes-invoices-domain-audit.2026-03-24T13-13-11-730Z.sqlite",
+  "baseUrl": "http://127.0.0.1:62333",
+  "routing": {
+    "configuredDriver": "postgres",
+    "quotesReadOptInEnabled": true,
+    "quotesWriteOptInEnabled": true,
+    "invoicesReadOptInEnabled": true,
+    "invoicesWriteOptInEnabled": true,
+    "catalogReadOptInEnabled": false,
+    "productWriteOptInEnabled": false,
+    "stockWriteOptInEnabled": false,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read",
+      "quotes-write",
+      "quotes-convert-write",
+      "invoices-read",
+      "invoices-write",
+      "invoices-delete-write",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read",
+      "quotes-write",
+      "quotes-convert-write",
+      "invoices-read",
+      "invoices-write",
+      "invoices-delete-write"
+    ]
+  },
+  "activationDecision": "activable-in-controlled-environment",
+  "validated": [
+    "Le domaine quotes/invoices complet est coherent sur PostgreSQL en audit: lectures `quotes`/`invoices`, mutations `quotes:put`, `quotes:delete`, `invoices:put`, `quotes:convertToInvoice` et `invoices:delete` sont valides sur une meme sequence metier.",
+    "Les relectures finales apres mutations correspondent a la reference SQLite, y compris la suppression d un devis, la creation/mise a jour d une facture standalone, la conversion devis -> facture, la reouverture du devis en `draft` et la redirection vers une autre facture restante.",
+    "Le domaine peut maintenant etre active sur PostgreSQL en environnement controle sans divergence metier visible, sous reserve de garder les flags a `0` par defaut dans le depot et de conserver SQLite en secours pendant l activation initiale."
+  ],
+  "sequenceChecks": [
+    {
+      "name": "auth login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "create quote for delete scenario",
+      "ok": true,
+      "detail": "id=qid-delete-mn4mxoy5"
+    },
+    {
+      "name": "update quote",
+      "ok": true,
+      "detail": "id=qid-delete-mn4mxoy5"
+    },
+    {
+      "name": "create cycle quotes",
+      "ok": true,
+      "detail": "ids=qid-reopen-mn4mxoy5, qid-redirect-mn4mxoy5"
+    },
+    {
+      "name": "create standalone invoice",
+      "ok": true,
+      "detail": "id=iid-standalone-mn4mxoy5"
+    },
+    {
+      "name": "update standalone invoice",
+      "ok": true,
+      "detail": "id=iid-standalone-mn4mxoy5"
+    },
+    {
+      "name": "quotes-read after setup",
+      "ok": true,
+      "detail": "count=3"
+    },
+    {
+      "name": "invoices-read after setup",
+      "ok": true,
+      "detail": "count=1"
+    },
+    {
+      "name": "delete quote",
+      "ok": true,
+      "detail": "id=qid-delete-mn4mxoy5"
+    },
+    {
+      "name": "convert quote to invoice (reopen cycle)",
+      "ok": true,
+      "detail": "quote=qid-reopen-mn4mxoy5"
+    },
+    {
+      "name": "convert quote to invoice (redirect cycle)",
+      "ok": true,
+      "detail": "quote=qid-redirect-mn4mxoy5"
+    },
+    {
+      "name": "create replacement invoice for redirect cycle",
+      "ok": true,
+      "detail": "id=iid-redirect-extra-mn4mxoy5"
+    },
+    {
+      "name": "delete invoice to reopen quote",
+      "ok": true,
+      "detail": "quote=qid-reopen-mn4mxoy5"
+    },
+    {
+      "name": "delete invoice and redirect quote to remaining invoice",
+      "ok": true,
+      "detail": "quote=qid-redirect-mn4mxoy5"
+    },
+    {
+      "name": "final quotes reread",
+      "ok": true,
+      "detail": "count=2"
+    },
+    {
+      "name": "final invoices reread",
+      "ok": true,
+      "detail": "count=2"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "quotes list parity after setup",
+      "ok": true,
+      "detail": "count=3"
+    },
+    {
+      "name": "invoices list parity after setup",
+      "ok": true,
+      "detail": "count=1"
+    },
+    {
+      "name": "quote getById parity after setup",
+      "ok": true,
+      "detail": "id=qid-delete-mn4mxoy5"
+    },
+    {
+      "name": "invoice getById parity after setup",
+      "ok": true,
+      "detail": "id=iid-standalone-mn4mxoy5"
+    },
+    {
+      "name": "quotes list parity after quote delete",
+      "ok": true,
+      "detail": "count=2"
+    },
+    {
+      "name": "quote delete state parity",
+      "ok": true,
+      "detail": "id=qid-delete-mn4mxoy5"
+    },
+    {
+      "name": "quotes list parity after convert flow",
+      "ok": true,
+      "detail": "count=2"
+    },
+    {
+      "name": "invoices list parity after convert flow",
+      "ok": true,
+      "detail": "count=4"
+    },
+    {
+      "name": "converted invoice parity (reopen cycle)",
+      "ok": true,
+      "detail": "quote=qid-reopen-mn4mxoy5"
+    },
+    {
+      "name": "final quotes list parity",
+      "ok": true,
+      "detail": "count=2"
+    },
+    {
+      "name": "final invoices list parity",
+      "ok": true,
+      "detail": "count=2"
+    },
+    {
+      "name": "final quote getById parity after invoice deletes",
+      "ok": true,
+      "detail": "quotes=qid-reopen-mn4mxoy5, qid-redirect-mn4mxoy5"
+    },
+    {
+      "name": "final invoice getById parity after all mutations",
+      "ok": true,
+      "detail": "ids=iid-standalone-mn4mxoy5, iid-redirect-extra-mn4mxoy5"
+    },
+    {
+      "name": "stored quotes row parity",
+      "ok": true,
+      "detail": "delete + reopen + redirect scenarios"
+    },
+    {
+      "name": "stored invoices row parity",
+      "ok": true,
+      "detail": "standalone + redirect replacement invoices"
+    },
+    {
+      "name": "unrelated documents unchanged",
+      "ok": true,
+      "detail": "quotes=4, invoices=6"
+    }
+  ],
+  "activationPlan": [
+    "Sur un environnement controle, definir `DB_DRIVER=postgres`, `DB_ENABLE_POSTGRES_QUOTES_READ=1`, `DB_ENABLE_POSTGRES_QUOTES_WRITES=1`, `DB_ENABLE_POSTGRES_INVOICES_READ=1` et `DB_ENABLE_POSTGRES_INVOICES_WRITES=1`.",
+    "Conserver SQLite et `DATABASE_PATH` en place pendant la premiere activation controlee pour garder un rollback simple.",
+    "Activer d abord sur une instance backend dediee ou un environnement de validation, puis rejouer cet audit global avant d ouvrir le trafic utilisateur normal.",
+    "Une fois ce domaine active en environnement controle, la prochaine etape logique vers la bascule finale est un audit global transversal backend complet, puis une activation progressive de tous les domaines PostgreSQL valides."
+  ],
+  "remainingRisks": [
+    "Les flags `DB_ENABLE_POSTGRES_QUOTES_READ=0`, `DB_ENABLE_POSTGRES_QUOTES_WRITES=0`, `DB_ENABLE_POSTGRES_INVOICES_READ=0` et `DB_ENABLE_POSTGRES_INVOICES_WRITES=0` doivent rester les valeurs par defaut dans le depot.",
+    "SQLite reste la reference de secours tant que l activation controlee n a pas ete revalidee sur votre environnement cible.",
+    "La prochaine etape ne doit plus etre une migration metier `quotes/invoices`, mais une validation finale transversale avant bascule applicative plus large."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-invoices-domain.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-invoices-domain.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-invoices-domain.2026-03-24T13-13-37-425Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-invoices-domain.2026-03-24T13-13-37-425Z.md"
+  }
+}

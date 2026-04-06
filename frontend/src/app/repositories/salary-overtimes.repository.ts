@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { SalaryOvertime, SalaryOvertimeInput } from '../models/employee.models';
-import { IpcService } from '../services/ipc.service';
+import { AppApiService } from '../services/app-api.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SalaryOvertimesRepository {
-  constructor(private ipc: IpcService) {}
+  constructor(private ipc: AppApiService) {}
 
   listByEmployee(employeeId: string, month: number, year: number): Promise<SalaryOvertime[]> {
     return this.ipc.salaryOvertimesList(employeeId, month, year);

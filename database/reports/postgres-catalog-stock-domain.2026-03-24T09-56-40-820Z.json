@@ -1,0 +1,714 @@
+{
+  "startedAt": "2026-03-24T09:55:51.358Z",
+  "finishedAt": "2026-03-24T09:56:40.280Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:63572",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "stockWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ]
+  },
+  "activationDecision": "activable-in-controlled-environment",
+  "validated": [
+    "Le domaine catalogue/stock complet est coherent sur PostgreSQL en audit: lectures catalogue/stock/inventory/movements, mutations produit, historique prix, mutations stock et `stock:applyMovement` sont valides sur une meme sequence metier.",
+    "Les relectures apres mutation, archive, restore et purge correspondent a la reference SQLite, y compris la preservation de l historique `movements` apres purge et la suppression de `stock`, `product_variants` et `price_history`.",
+    "Le domaine peut etre active sur PostgreSQL en environnement controle sans divergence metier visible, sous reserve de garder `quotes` et `invoices` hors scope."
+  ],
+  "sequenceChecks": [
+    {
+      "name": "auth login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "create product",
+      "ok": true,
+      "detail": "id=c7c42686-62bc-4f17-ad0b-f8c77449a83b"
+    },
+    {
+      "name": "update product",
+      "ok": true,
+      "detail": "id=c7c42686-62bc-4f17-ad0b-f8c77449a83b"
+    },
+    {
+      "name": "update price",
+      "ok": true,
+      "detail": "color=pg-audit-csd-color-a-mn4fvwl9"
+    },
+    {
+      "name": "restore price",
+      "ok": true,
+      "detail": "color=pg-audit-csd-color-a-mn4fvwl9"
+    },
+    {
+      "name": "setQty",
+      "ok": true,
+      "detail": "color=pg-audit-csd-color-b-mn4fvwl9 qty=3"
+    },
+    {
+      "name": "increment stock",
+      "ok": true,
+      "detail": "color=pg-audit-csd-color-b-mn4fvwl9 delta=2"
+    },
+    {
+      "name": "decrement stock",
+      "ok": true,
+      "detail": "color=pg-audit-csd-color-b-mn4fvwl9 delta=1"
+    },
+    {
+      "name": "add movement history",
+      "ok": true,
+      "detail": "id=0005d61b-359c-4220-8318-3c85084b4cdb"
+    },
+    {
+      "name": "applyMovement positive",
+      "ok": true,
+      "detail": "id=555f10cd-30cc-4536-8369-fa7ee6ccfe18"
+    },
+    {
+      "name": "applyMovement negative clamp",
+      "ok": true,
+      "detail": "id=ddf928a2-a66b-4d4e-8a14-591ec6866e12"
+    },
+    {
+      "name": "archive product",
+      "ok": true,
+      "detail": "id=c7c42686-62bc-4f17-ad0b-f8c77449a83b"
+    },
+    {
+      "name": "restore product",
+      "ok": true,
+      "detail": "id=c7c42686-62bc-4f17-ad0b-f8c77449a83b"
+    },
+    {
+      "name": "re-archive product for purge precondition",
+      "ok": true,
+      "detail": "id=c7c42686-62bc-4f17-ad0b-f8c77449a83b"
+    },
+    {
+      "name": "purge product",
+      "ok": true,
+      "detail": "id=c7c42686-62bc-4f17-ad0b-f8c77449a83b"
+    },
+    {
+      "name": "sqlite isolation",
+      "ok": true,
+      "detail": "reference=PG-CSD-MN4FVWL9"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "after create active product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create archived product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create metadata",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create stock rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create stock item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create inventory item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create inventory total value",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create price history",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create movements",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct lifecycle",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct variants",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct metadata rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct stock count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct price history count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct movement count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update active product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update archived product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update metadata",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update stock rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update stock item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update inventory item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update inventory total value",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update price history",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update movements",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct lifecycle",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct variants",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct metadata rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct stock count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct price history count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct movement count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes active product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes archived product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes metadata",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes stock rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes stock item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes inventory item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes inventory total value",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes price history",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes movements",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes direct product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes direct lifecycle",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes direct variants",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes direct metadata rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes direct stock count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes direct price history count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes direct movement count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations active product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations archived product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations metadata",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations stock rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations stock item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations inventory item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations inventory total value",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations price history",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations movements",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations direct product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations direct lifecycle",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations direct variants",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations direct metadata rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations direct stock count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations direct price history count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after stock and movement mutations direct movement count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive active product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive archived product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive metadata",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive stock rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive stock item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive inventory item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive inventory total value",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive price history",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive movements",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive direct product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive direct lifecycle",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive direct variants",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive direct metadata rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive direct stock count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive direct price history count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after archive direct movement count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore active product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore archived product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore metadata",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore stock rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore stock item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore inventory item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore inventory total value",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore price history",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore movements",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore direct product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore direct lifecycle",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore direct variants",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore direct metadata rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore direct stock count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore direct price history count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after restore direct movement count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge active product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge archived product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge metadata",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge stock rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge stock item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge inventory item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge inventory total value",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge price history",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge movements",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge direct product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge direct lifecycle",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge direct variants",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge direct metadata rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge direct stock count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge direct price history count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after purge direct movement count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    }
+  ],
+  "activationPlan": [
+    "Sur un environnement controle, definir `DB_DRIVER=postgres`, `DB_ENABLE_POSTGRES_CATALOG_READ=1`, `DB_ENABLE_POSTGRES_PRODUCT_WRITES=1` et `DB_ENABLE_POSTGRES_STOCK_WRITES=1`.",
+    "Conserver SQLite et `DATABASE_PATH` en place pendant la premiere activation controlee pour garder le rollback simple.",
+    "Activer d abord sur staging ou sur une instance backend isolee, puis rejouer ce script global avant d ouvrir le trafic utilisateur normal.",
+    "Ne pas ouvrir encore `quotes` et `invoices`; la tranche suivante la plus sure reste ce domaine documentaire, traite separement."
+  ],
+  "remainingRisks": [],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.2026-03-24T09-56-40-820Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.2026-03-24T09-56-40-820Z.md"
+  }
+}

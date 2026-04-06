@@ -220,7 +220,7 @@
 
 .stock-actions .stock-action-btn {
   justify-content: center;
-  min-height: 38px;
+  min-height: 42px;
   border-radius: 10px;
   border: 1px solid #d4deeb;
   font-weight: 700;
@@ -565,7 +565,12 @@
 
   .panel-actions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: stretch;
+  }
+
+  .panel-actions > .btn,
+  .panel-actions > .lang-switch {
+    width: 100%;
   }
 
   .filters {
@@ -574,6 +579,12 @@
 
   .summary {
     flex-direction: column;
+  }
+
+  .group-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 
   .stock-actions {
@@ -606,12 +617,27 @@
   }
 
   .lang-switch {
-    align-self: flex-start;
+    align-self: stretch;
+    width: 100%;
+  }
+
+  .lang-switch .lang-btn {
+    flex: 1 1 50%;
+    min-height: 42px;
   }
 
   .summary div {
     min-width: 0;
     width: 100%;
+  }
+
+  .stock-card {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .stock-image {
+    height: 180px;
   }
 
   .color-row {
@@ -629,6 +655,29 @@
   .modal-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .inline-add .btn,
+  .inline-add .input,
+  .image-picker-actions .btn,
+  .modal-actions .btn,
+  .modal-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .image-picker-row {
+    gap: 12px;
+  }
+
+  .image-preview {
+    width: 100%;
+    max-width: 220px;
+    align-self: center;
+  }
+
+  .modal-card {
+    padding: 14px;
   }
 
   .toast-wrapper {

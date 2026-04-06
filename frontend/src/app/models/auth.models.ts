@@ -17,6 +17,8 @@ export interface PermissionSet {
   manageInventory: boolean;
   viewHistory: boolean;
   manageSalary: boolean;
+  manageTasks: boolean;
+  receiveTasks: boolean;
   manageAll: boolean;
 }
 

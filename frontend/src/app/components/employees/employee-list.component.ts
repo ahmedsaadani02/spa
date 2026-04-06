@@ -63,10 +63,19 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     this.searchControl.valueChanges
       .pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe((query) => {
-        void this.search(query, false);
+        void this.search(query, false, true);
       });
 
-    void this.search(this.searchControl.getRawValue(), true);
+    const cachedEmployees = this.employeesRepository.getCachedList();
+    if (cachedEmployees.length) {
+      this.employees = cachedEmployees;
+      this.loading = false;
+      this.error = '';
+      this.cdr.detectChanges();
+      this.logRenderState();
+    }
+
+    void this.search(this.searchControl.getRawValue(), true, !cachedEmployees.length);
   }
 
   ngOnDestroy(): void {
@@ -84,7 +93,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
       this.error = "Impossible de modifier le statut du salarie.";
       return;
     }
-    await this.search(this.searchControl.getRawValue(), false);
+    await this.search(this.searchControl.getRawValue(), false, true);
   }
 
   async deleteEmployee(employee: Employee): Promise<void> {
@@ -112,7 +121,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    await this.search(this.searchControl.getRawValue(), false);
+    await this.search(this.searchControl.getRawValue(), false, true);
     console.log('[archives:delete] ui updated', { success: true });
     console.log('[ui-action] state updated', { action: 'archives:delete', success: true });
     this.cdr.detectChanges();
@@ -184,15 +193,17 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     return this.navigatingEmployeeId === employee.id && this.navigatingAction === action;
   }
 
-  private async search(query: string, isInitialLoad: boolean): Promise<void> {
+  private async search(query: string, isInitialLoad: boolean, showLoading: boolean): Promise<void> {
     console.log('[employees-page] load requested', { query, isInitialLoad });
-    this.loading = true;
+    if (showLoading) {
+      this.loading = true;
+    }
     this.error = '';
     try {
       const text = query.trim();
       let rows = text
         ? await this.employeesRepository.search(text)
-        : await this.employeesRepository.list();
+        : await this.employeesRepository.list(true);
       console.log('[employees-page] api response received');
       console.log(`[employees-page] employees count: ${rows.length}`);
 

@@ -13,20 +13,49 @@
     <h2>Informations facture</h2>
     <div class="grid-3">
       <label class="field">
-        <span>Numero</span>
+        <span>Numero interne</span>
         <input class="input" formControlName="numero" type="text">
         <span class="error" *ngIf="numeroConflict">Ce numero existe deja.</span>
+      </label>
+
+      <label class="field">
+        <span>Bon de Commande N°</span>
+        <input class="input" formControlName="purchaseOrderNumber" type="text" placeholder="1">
       </label>
 
       <label class="field">
         <span>Date</span>
         <input class="input" formControlName="date" type="date">
       </label>
+    </div>
+  </section>
 
-      <div class="field">
-        <span>Statut</span>
-        <div class="tag">{{ isEdit ? 'Brouillon' : 'Nouvelle' }}</div>
-      </div>
+  <section class="card">
+    <h2>Paiement & Reference client</h2>
+    <div class="grid-3">
+      <label class="field">
+        <span>Statut de paiement</span>
+        <select class="input" formControlName="paymentStatus">
+          <option value="unpaid">Non payee</option>
+          <option value="partial">Partiellement payee</option>
+          <option value="paid">Payee</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Date de paiement</span>
+        <input class="input" formControlName="paidAt" type="date">
+      </label>
+
+      <label class="field">
+        <span>Methode de paiement</span>
+        <select class="input" formControlName="paymentMethod">
+          <option value="">-</option>
+          <option value="Especes">Espèces</option>
+          <option value="Cheque">Chèque</option>
+          <option value="Virement">Virement</option>
+        </select>
+      </label>
     </div>
   </section>
 

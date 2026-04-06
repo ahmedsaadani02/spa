@@ -12,10 +12,29 @@ export class QuoteStoreService {
   readonly quotes$ = this.quotesSubject.asObservable();
 
   private initialized = false;
+  private loadInFlight: Promise<void> | null = null;
 
   constructor(private persistence: QuotePersistenceService) {}
 
   async load(): Promise<void> {
+    if (this.loadInFlight) {
+      return this.loadInFlight;
+    }
+
+    this.loadInFlight = this.performLoad().finally(() => {
+      this.loadInFlight = null;
+    });
+    return this.loadInFlight;
+  }
+
+  async warm(): Promise<void> {
+    if (this.quotesSubject.value.length > 0) {
+      return;
+    }
+    await this.load();
+  }
+
+  private async performLoad(): Promise<void> {
     console.log('[quotes-page] load requested');
     if (!this.initialized) {
       await this.persistence.ensureSeed();

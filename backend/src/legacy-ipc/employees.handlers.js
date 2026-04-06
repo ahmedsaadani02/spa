@@ -6,9 +6,10 @@ const {
   updateEmployee,
   deleteEmployee,
   setEmployeeActive,
-} = require('../repositories/employees.repository');
-const { assertPermission, getCurrentUser, hashPassword, hasPermission, validatePasswordStrength } = require('../services/auth-core.service');
+} = require('../repositories/employees.runtime.repository');
+const { assertPermission, getCurrentUser, hashPassword, hasPermission } = require('../services/auth-core.service');
 const { isProtectedEmail } = require('../services/auth-protected-accounts.service');
+const { validateEmployeeAccountPassword } = require('../services/employee-password-policy.service');
 
 const normalizeEmployeePayload = (payload = {}) => {
   const normalized = {
@@ -43,6 +44,8 @@ const normalizeEmployeePayload = (payload = {}) => {
     canManageInventory: !!payload.canManageInventory,
     canViewHistory: !!payload.canViewHistory,
     canManageSalary: !!payload.canManageSalary,
+    canManageTasks: !!payload.canManageTasks,
+    canReceiveTasks: !!payload.canReceiveTasks,
     canManageAll: !!payload.canManageAll
   };
 
@@ -68,6 +71,8 @@ const normalizeEmployeePayload = (payload = {}) => {
     normalized.canManageInventory = true;
     normalized.canViewHistory = true;
     normalized.canManageSalary = true;
+    normalized.canManageTasks = true;
+    normalized.canReceiveTasks = true;
   }
 
   if (normalized.canManageStock) {
@@ -79,7 +84,7 @@ const normalizeEmployeePayload = (payload = {}) => {
   }
 
   if (typeof payload.initialPassword === 'string' && payload.initialPassword.trim().length > 0) {
-    const policy = validatePasswordStrength(payload.initialPassword.trim());
+    const policy = validateEmployeeAccountPassword(payload.initialPassword.trim(), normalized.role);
     if (!policy.ok) {
       throw new Error(policy.message);
     }
@@ -139,53 +144,53 @@ const assertCanManageExistingEmployee = (target) => {
 };
 
 const registerEmployeesHandlers = (ipcMain, getDb) => {
-  ipcMain.handle('employees:list', () => {
+  ipcMain.handle('employees:list', async () => {
     try {
       assertCanReadEmployees();
-      return listEmployees(getDb());
+      return await listEmployees(getDb());
     } catch (error) {
       console.error('[employees:list] error', error);
       return [];
     }
   });
 
-  ipcMain.handle('employees:search', (event, query) => {
+  ipcMain.handle('employees:search', async (event, query) => {
     try {
       assertCanReadEmployees();
-      return searchEmployees(getDb(), query ?? '');
+      return await searchEmployees(getDb(), query ?? '');
     } catch (error) {
       console.error('[employees:search] error', error);
       return [];
     }
   });
 
-  ipcMain.handle('employees:getById', (event, id) => {
+  ipcMain.handle('employees:getById', async (event, id) => {
     try {
       assertCanReadEmployees();
-      return getEmployeeById(getDb(), id);
+      return await getEmployeeById(getDb(), id);
     } catch (error) {
       console.error('[employees:getById] error', error);
       return null;
     }
   });
 
-  ipcMain.handle('employees:create', (event, payload) => {
+  ipcMain.handle('employees:create', async (event, payload) => {
     try {
       const normalized = normalizeEmployeePayload(payload);
       assertCanManageEmployees(normalized.role, normalized.isProtectedAccount);
       if (normalized.email && isProtectedEmail(normalized.email)) {
         return null;
       }
-      return createEmployee(getDb(), normalized);
+      return await createEmployee(getDb(), normalized);
     } catch (error) {
       console.error('[employees:create] error', error);
       return null;
     }
   });
 
-  ipcMain.handle('employees:update', (event, id, payload) => {
+  ipcMain.handle('employees:update', async (event, id, payload) => {
     try {
-      const existing = getEmployeeById(getDb(), id);
+      const existing = await getEmployeeById(getDb(), id);
       if (!existing) return null;
       assertCanManageExistingEmployee(existing);
       const normalized = normalizeEmployeePayload(payload);
@@ -200,35 +205,35 @@ const registerEmployeesHandlers = (ipcMain, getDb) => {
         return null;
       }
       assertCanManageEmployees(normalized.role, normalized.isProtectedAccount || existing.isProtectedAccount);
-      return updateEmployee(getDb(), id, normalized);
+      return await updateEmployee(getDb(), id, normalized);
     } catch (error) {
       console.error('[employees:update] error', error);
       return null;
     }
   });
 
-  ipcMain.handle('employees:delete', (event, id) => {
+  ipcMain.handle('employees:delete', async (event, id) => {
     try {
       assertPermission('manageEmployees');
-      const existing = getEmployeeById(getDb(), id);
+      const existing = await getEmployeeById(getDb(), id);
       if (!existing) return false;
       if (existing.isProtectedAccount) return false;
       assertCanManageExistingEmployee(existing);
-      return deleteEmployee(getDb(), id);
+      return await deleteEmployee(getDb(), id);
     } catch (error) {
       console.error('[employees:delete] error', error);
       return false;
     }
   });
 
-  ipcMain.handle('employees:setActive', (event, id, actif) => {
+  ipcMain.handle('employees:setActive', async (event, id, actif) => {
     try {
       assertPermission('manageEmployees');
-      const existing = getEmployeeById(getDb(), id);
+      const existing = await getEmployeeById(getDb(), id);
       if (!existing) return false;
       if (existing.isProtectedAccount && !actif) return false;
       assertCanManageExistingEmployee(existing);
-      return setEmployeeActive(getDb(), id, !!actif);
+      return await setEmployeeActive(getDb(), id, !!actif);
     } catch (error) {
       console.error('[employees:setActive] error', error);
       return false;

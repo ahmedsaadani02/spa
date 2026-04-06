@@ -1,0 +1,60 @@
+{
+  "startedAt": "2026-03-24T11:01:53.262Z",
+  "finishedAt": "2026-03-24T11:01:53.615Z",
+  "status": "failed",
+  "sourceSqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "sqliteCopyPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\tmp\\invoices-read-audit.2026-03-24T11-01-52-904Z.sqlite",
+  "baseUrl": null,
+  "routing": {
+    "configuredDriver": "postgres",
+    "quotesReadOptInEnabled": false,
+    "quotesWriteOptInEnabled": false,
+    "invoicesReadOptInEnabled": true,
+    "catalogReadOptInEnabled": false,
+    "productWriteOptInEnabled": false,
+    "stockWriteOptInEnabled": false,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read",
+      "quotes-write",
+      "invoices-read",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "invoices-read"
+    ]
+  },
+  "validated": [],
+  "httpChecks": [],
+  "parityChecks": [],
+  "writeChecks": [],
+  "remainingRisks": [
+    "Audit failed before full validation: ",
+    "Cleanup warning: "
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-invoices-read.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-invoices-read.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-invoices-read.2026-03-24T11-01-53-616Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-invoices-read.2026-03-24T11-01-53-616Z.md"
+  }
+}

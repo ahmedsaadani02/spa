@@ -3,6 +3,7 @@ import { Client } from '../models/client';
 import { Invoice } from '../models/invoice';
 import { INVOICES_REPOSITORY, InvoicesRepository } from '../repositories/invoices.repository';
 import { ClientPersistenceService } from './client-persistence.service';
+import { normalizeInvoice } from '../utils/invoice-payload';
 
 @Injectable({
   providedIn: 'root'
@@ -17,15 +18,16 @@ export class InvoicePersistenceService {
       console.warn('[InvoicePersistence] Repository returned invalid list');
       return [];
     }
-    return Array.isArray(all) ? all : [];
+    return Array.isArray(all) ? all.map((invoice) => normalizeInvoice(invoice)) : [];
   }
 
   async getById(id: string): Promise<Invoice | null> {
-    return (await this.repository.getById(id)) ?? null;
+    const invoice = await this.repository.getById(id);
+    return invoice ? normalizeInvoice(invoice) : null;
   }
 
   async put(invoice: Invoice): Promise<void> {
-    const normalized = await this.attachClient(invoice);
+    const normalized = await this.attachClient(normalizeInvoice(invoice));
     await this.repository.put(normalized);
   }
 

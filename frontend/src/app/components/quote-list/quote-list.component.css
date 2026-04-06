@@ -1,3 +1,5 @@
+@import '../shared/action-icon-buttons.css';
+
 .panel {
   display: flex;
   flex-direction: column;
@@ -75,68 +77,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: #fff;
-  color: var(--ink);
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
-}
-
-.icon-btn svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.icon-btn--ghost {
-  background: #f8f6f1;
-}
-
-.icon-btn--outline {
-  background: #fff;
-}
-
-.icon-btn--primary {
-  background: #ecf3ff;
-  border-color: rgba(29, 78, 216, 0.35);
-  color: #1d4ed8;
-}
-
-.icon-btn--done {
-  background: #ecfdf3;
-  border-color: rgba(22, 163, 74, 0.35);
-  color: #15803d;
-}
-
-.icon-btn--danger {
-  background: #fff5f5;
-  border-color: rgba(180, 35, 24, 0.3);
-  color: #b42318;
-}
-
-.icon-btn:hover {
-  background: #111827;
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
-}
-
-.icon-btn--danger:hover {
-  background: #b42318;
-  color: #fff;
 }
 
 .empty {
@@ -282,11 +222,53 @@
 
   .panel-actions {
     width: 100%;
+    justify-content: stretch;
+  }
+
+  .panel-actions > * {
+    flex: 1 1 220px;
   }
 
   .table-row {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .table-row > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .table-row > div::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .amount {
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .month-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .panel-actions > * {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .toast {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
   }
 }
 

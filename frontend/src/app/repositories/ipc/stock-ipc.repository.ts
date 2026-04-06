@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { NewStockProductInput, ProductImageSelection, StockColor, StockItem } from '../../models/stock-item';
 import { StockMovement } from '../../models/stock-movement';
-import { IpcService } from '../../services/ipc.service';
+import { AppApiService } from '../../services/app-api.service';
 import type {
   SpaInventoryResponse,
   SpaProductMetadataAddResult,
@@ -20,7 +20,7 @@ import { StockRepository } from '../stock.repository';
 export class StockIpcRepository implements StockRepository {
   readonly supportsInventory = true;
 
-  constructor(private ipc: IpcService) {}
+  constructor(private ipc: AppApiService) {}
 
   async initialize(): Promise<void> {
     return;

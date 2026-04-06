@@ -1,0 +1,151 @@
+{
+  "startedAt": "2026-03-23T12:58:26.655Z",
+  "finishedAt": "2026-03-23T12:58:33.189Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:56934",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read"
+    ]
+  },
+  "validated": [
+    "La lecture catalogue `products` est compatible PostgreSQL et restitue le meme resultat que SQLite pour la liste active, les archives et les metadonnees.",
+    "La lecture `stock` est compatible PostgreSQL en mode read-only pour les lignes brutes et la vue enrichie `/api/stock/items`.",
+    "La lecture `inventory` est compatible PostgreSQL en mode read-only avec la meme valorisation et les memes quantites que SQLite.",
+    "Les routes REST et les handlers IPC restent inchanges cote contrat, avec un routage PostgreSQL uniquement sur les lectures tranche 3."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "token=34534424..."
+    },
+    {
+      "name": "GET /api/products",
+      "ok": true,
+      "detail": "count=61"
+    },
+    {
+      "name": "GET /api/products/archived",
+      "ok": true,
+      "detail": "count=3"
+    },
+    {
+      "name": "GET /api/products/metadata",
+      "ok": true,
+      "detail": "categories=6, series=8, colors=4"
+    },
+    {
+      "name": "GET /api/stock",
+      "ok": true,
+      "detail": "count=178"
+    },
+    {
+      "name": "GET /api/stock/items",
+      "ok": true,
+      "detail": "count=61"
+    },
+    {
+      "name": "GET /api/inventory",
+      "ok": true,
+      "detail": "items=61"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "products list parity",
+      "ok": true,
+      "detail": "count=61"
+    },
+    {
+      "name": "products archived parity",
+      "ok": true,
+      "detail": "count=3"
+    },
+    {
+      "name": "products metadata parity",
+      "ok": true
+    },
+    {
+      "name": "stock rows parity",
+      "ok": true,
+      "detail": "count=178"
+    },
+    {
+      "name": "stock items parity",
+      "ok": true,
+      "detail": "count=61"
+    },
+    {
+      "name": "inventory parity",
+      "ok": true,
+      "detail": "totalValue=3505"
+    }
+  ],
+  "postgresChecks": [
+    {
+      "name": "active products count",
+      "ok": true,
+      "detail": "count=61"
+    },
+    {
+      "name": "archived products count",
+      "ok": true,
+      "detail": "count=3"
+    },
+    {
+      "name": "stock rows count",
+      "ok": true,
+      "detail": "count=178"
+    }
+  ],
+  "runtimePaths": [
+    {
+      "scope": "products read",
+      "path": "products.service/products.handlers -> catalog-read.runtime.repository -> postgres/catalog-read.repository when scope products-read is active"
+    },
+    {
+      "scope": "stock read",
+      "path": "stock.service/stock.handlers -> catalog-read.runtime.repository -> postgres/catalog-read.repository when scope stock-read is active"
+    },
+    {
+      "scope": "inventory read",
+      "path": "inventory.service/inventory.handlers -> catalog-read.runtime.repository -> postgres/catalog-read.repository when scope stock-read is active"
+    }
+  ],
+  "remainingRisks": [
+    "Les ecritures `products`, `stock` et `movements` restent volontairement sur SQLite; la tranche 3 ne couvre pas ces mutations.",
+    "Le backend reste hybride: `products-read` et `stock-read` peuvent lire PostgreSQL, tandis que les mutations catalogue/stock et les documents metier restent sur SQLite.",
+    "Les domaines `quotes` et `invoices` ne sont pas touches par cette tranche et restent entierement sur SQLite.",
+    "Cette validation prouve la parite de lecture, mais pas encore les scenarios de concurrence ou de double-ecriture entre SQLite et PostgreSQL."
+  ],
+  "outOfScope": [
+    "products create/update/archive/restore/purge",
+    "stock setQty/increment/decrement/applyMovement",
+    "movements writes",
+    "quotes",
+    "invoices"
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche3-catalog-read.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche3-catalog-read.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche3-catalog-read.2026-03-23T12-58-33-190Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche3-catalog-read.2026-03-23T12-58-33-190Z.md"
+  }
+}

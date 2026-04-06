@@ -6,7 +6,7 @@ const {
   updateEmployee,
   deleteEmployee,
   setEmployeeActive
-} = require('../repositories/employees.repository');
+} = require('../repositories/employees.runtime.repository');
 const {
   normalizeEmployeePayload,
   assertCanManageEmployees,
@@ -17,15 +17,15 @@ const { assertPermission } = require('./auth-session.service');
 const { isProtectedEmail } = require('./auth-protected-accounts.service');
 
 const createEmployeesService = ({ getDb, resolveSessionUser, setCurrentUser, clearCurrentUser }) => {
-  const withAuthorizedUser = (token, operation) => {
-    const user = resolveSessionUser(token || '');
+  const withAuthorizedUser = async (token, operation) => {
+    const user = await resolveSessionUser(token || '');
     if (!user) {
       throw new Error('UNAUTHORIZED');
     }
 
     setCurrentUser(user);
     try {
-      return operation();
+      return await operation();
     } finally {
       clearCurrentUser();
     }
@@ -33,28 +33,28 @@ const createEmployeesService = ({ getDb, resolveSessionUser, setCurrentUser, cle
 
   return {
     async list(token) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertCanReadEmployees();
         return listEmployees(getDb());
       });
     },
 
     async search(token, query) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertCanReadEmployees();
         return searchEmployees(getDb(), query ?? '');
       });
     },
 
     async getById(token, id) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertCanReadEmployees();
         return getEmployeeById(getDb(), id);
       });
     },
 
     async create(token, payload) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         const normalized = normalizeEmployeePayload(payload);
         assertCanManageEmployees(normalized.role, normalized.isProtectedAccount);
         if (normalized.email && isProtectedEmail(normalized.email)) {
@@ -65,8 +65,8 @@ const createEmployeesService = ({ getDb, resolveSessionUser, setCurrentUser, cle
     },
 
     async update(token, id, payload) {
-      return withAuthorizedUser(token, () => {
-        const existing = getEmployeeById(getDb(), id);
+      return withAuthorizedUser(token, async () => {
+        const existing = await getEmployeeById(getDb(), id);
         if (!existing) return null;
         assertCanManageExistingEmployee(existing);
         const normalized = normalizeEmployeePayload(payload);
@@ -86,9 +86,9 @@ const createEmployeesService = ({ getDb, resolveSessionUser, setCurrentUser, cle
     },
 
     async delete(token, id) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertPermission('manageEmployees');
-        const existing = getEmployeeById(getDb(), id);
+        const existing = await getEmployeeById(getDb(), id);
         if (!existing) return false;
         if (existing.isProtectedAccount) return false;
         assertCanManageExistingEmployee(existing);
@@ -97,9 +97,9 @@ const createEmployeesService = ({ getDb, resolveSessionUser, setCurrentUser, cle
     },
 
     async setActive(token, id, actif) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertPermission('manageEmployees');
-        const existing = getEmployeeById(getDb(), id);
+        const existing = await getEmployeeById(getDb(), id);
         if (!existing) return false;
         if (existing.isProtectedAccount && !actif) return false;
         assertCanManageExistingEmployee(existing);

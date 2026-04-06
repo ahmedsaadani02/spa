@@ -6,12 +6,12 @@ const {
   getClientRowById,
   mapClientRow,
   findOrCreateClient
-} = require('../repositories/clients.repository');
+} = require('../repositories/clients.runtime.repository');
 const { assertPermission } = require('./auth-session.service');
 
 const createClientsService = ({ getDb, resolveSessionUser, setCurrentUser, clearCurrentUser }) => {
-  const withAuthorizedUser = (token, operation) => {
-    const user = resolveSessionUser(token || '');
+  const withAuthorizedUser = async (token, operation) => {
+    const user = await resolveSessionUser(token || '');
     if (!user) {
       throw new Error('UNAUTHORIZED');
     }
@@ -19,7 +19,7 @@ const createClientsService = ({ getDb, resolveSessionUser, setCurrentUser, clear
     setCurrentUser(user);
     try {
       assertPermission('manageClients');
-      return operation();
+      return await operation();
     } finally {
       clearCurrentUser();
     }
@@ -31,7 +31,7 @@ const createClientsService = ({ getDb, resolveSessionUser, setCurrentUser, clear
     },
 
     async getById(token, id) {
-      return withAuthorizedUser(token, () => mapClientRow(getClientRowById(getDb(), id)));
+      return withAuthorizedUser(token, async () => mapClientRow(await getClientRowById(getDb(), id)));
     },
 
     async search(token, query) {

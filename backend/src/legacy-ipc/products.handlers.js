@@ -10,6 +10,22 @@ const {
   copyProductImageToStore,
   getProductsImagesDirectory
 } = require('../utils/product-images');
+const {
+  listProducts: listProductsRead,
+  listArchivedProducts: listArchivedProductsRead,
+  getProductMetadata: getProductMetadataRead
+} = require('../repositories/catalog-read.runtime.repository');
+const { getPriceHistory: getPriceHistoryRead } = require('../repositories/price-history-read.runtime.repository');
+const {
+  upsertProductMetadata: upsertProductMetadataWrite,
+  createProduct: createProductWrite,
+  updateProduct: updateProductWrite,
+  updateVariantPriceWithHistory: updateVariantPriceWithHistoryWrite,
+  upsertProduct: upsertProductWrite,
+  archiveProduct: archiveProductWrite,
+  purgeProduct: purgeProductWrite,
+  restoreProduct: restoreProductWrite
+} = require('../repositories/product-write.runtime.repository');
 
 const DEFAULT_COLORS = ['blanc', 'gris', 'noir'];
 const PRIVILEGED_ROLES = new Set(['admin', 'developer', 'owner']);
@@ -777,10 +793,10 @@ const upsertProduct = (db, product) => {
 const registerProductsHandlers = (ipcMain, getDb) => {
   console.log('[ipc] registering products handlers');
 
-  registerHandle(ipcMain, 'products:list', () => {
+  registerHandle(ipcMain, 'products:list', async () => {
     try {
       assertPermission('viewStock');
-      return listProducts(getDb()).map((row) => ({
+      return (await listProductsRead(getDb())).map((row) => ({
         ...row,
         image_url: normalizeStoredProductImageRef(row.image_url) || row.image_url || null
       }));
@@ -790,10 +806,10 @@ const registerProductsHandlers = (ipcMain, getDb) => {
     }
   });
 
-  registerHandle(ipcMain, 'products:listArchived', () => {
+  registerHandle(ipcMain, 'products:listArchived', async () => {
     try {
       assertProductCatalogPermission();
-      return listArchivedProducts(getDb()).map((row) => ({
+      return (await listArchivedProductsRead(getDb())).map((row) => ({
         ...row,
         image_url: normalizeStoredProductImageRef(row.image_url) || row.image_url || null
       }));
@@ -803,20 +819,20 @@ const registerProductsHandlers = (ipcMain, getDb) => {
     }
   });
 
-  registerHandle(ipcMain, 'products:metadata', () => {
+  registerHandle(ipcMain, 'products:metadata', async () => {
     try {
       assertPermission('viewStock');
-      return getProductMetadata(getDb());
+      return await getProductMetadataRead(getDb());
     } catch (error) {
       console.error('[products:metadata] error', error);
       return { categories: [], series: [], colors: DEFAULT_COLORS };
     }
   });
 
-  registerHandle(ipcMain, 'products:addMetadata', (event, kind, value) => {
+  registerHandle(ipcMain, 'products:addMetadata', async (event, kind, value) => {
     try {
       assertProductCatalogPermission();
-      return upsertProductMetadata(getDb(), kind, value);
+      return await upsertProductMetadataWrite(getDb(), kind, value);
     } catch (error) {
       console.error('[products:addMetadata] error', error);
       return { ok: false, message: error.message || 'PRODUCT_METADATA_ADD_FAILED' };
@@ -876,7 +892,7 @@ const registerProductsHandlers = (ipcMain, getDb) => {
   registerHandle(ipcMain, 'products:select-image', selectImageHandler);
   console.log('[ipc] products:select-image registered');
 
-  registerHandle(ipcMain, 'products:create', (event, payload) => {
+  registerHandle(ipcMain, 'products:create', async (event, payload) => {
     try {
       console.log('[ipc] products:create invoked', {
         reference: payload?.reference,
@@ -886,7 +902,7 @@ const registerProductsHandlers = (ipcMain, getDb) => {
         colors: payload?.colors
       });
       assertProductCatalogPermission();
-      const result = createProduct(getDb(), payload);
+      const result = await createProductWrite(getDb(), payload);
       if (!result?.ok) {
         console.warn('[products:create] rejected', result?.message, payload?.reference, payload?.label);
       }
@@ -898,41 +914,41 @@ const registerProductsHandlers = (ipcMain, getDb) => {
   });
   console.log('[ipc] products:create registered');
 
-  registerHandle(ipcMain, 'products:update', (event, productId, payload) => {
+  registerHandle(ipcMain, 'products:update', async (event, productId, payload) => {
     try {
       assertCanEditStockProduct();
-      return updateProduct(getDb(), productId, payload);
+      return await updateProductWrite(getDb(), productId, payload);
     } catch (error) {
       console.error('[products:update] error', error);
       return { ok: false, message: error.message || 'PRODUCT_UPDATE_FAILED' };
     }
   });
 
-  registerHandle(ipcMain, 'products:upsert', (event, product) => {
+  registerHandle(ipcMain, 'products:upsert', async (event, product) => {
     try {
       assertProductCatalogPermission();
-      return upsertProduct(getDb(), product);
+      return await upsertProductWrite(getDb(), product);
     } catch (error) {
       console.error('[products:upsert] error', error);
       return false;
     }
   });
 
-  registerHandle(ipcMain, 'products:delete', (event, id) => {
+  registerHandle(ipcMain, 'products:delete', async (event, id) => {
     try {
       assertCanArchiveStockProduct();
-      return archiveProduct(getDb(), id).ok;
+      return (await archiveProductWrite(getDb(), id)).ok;
     } catch (error) {
       console.error('[products:delete] error', error);
       return false;
     }
   });
 
-  registerHandle(ipcMain, 'products:archive', (event, productId) => {
+  registerHandle(ipcMain, 'products:archive', async (event, productId) => {
     try {
       assertCanArchiveStockProduct();
       console.log('[ipc] products:archive invoked', { productId });
-      return archiveProduct(getDb(), productId);
+      return await archiveProductWrite(getDb(), productId);
     } catch (error) {
       console.error('[products:archive] error', error);
       return { ok: false, message: error.message || 'PRODUCT_ARCHIVE_FAILED' };
@@ -940,57 +956,56 @@ const registerProductsHandlers = (ipcMain, getDb) => {
   });
   console.log('[ipc] products:archive registered');
 
-  registerHandle(ipcMain, 'products:restore', (event, productId) => {
+  registerHandle(ipcMain, 'products:restore', async (event, productId) => {
     try {
       assertProductCatalogPermission();
-      return restoreProduct(getDb(), productId);
+      return await restoreProductWrite(getDb(), productId);
     } catch (error) {
       console.error('[products:restore] error', error);
       return { ok: false, message: error.message || 'PRODUCT_RESTORE_FAILED' };
     }
   });
 
-  registerHandle(ipcMain, 'products:purge', (event, productId) => {
+  registerHandle(ipcMain, 'products:purge', async (event, productId) => {
     try {
       assertProductCatalogPermission();
-      return purgeProduct(getDb(), productId);
+      return await purgeProductWrite(getDb(), productId);
     } catch (error) {
       console.error('[products:purge] error', error);
       return { ok: false, message: error.message || 'PRODUCT_PURGE_FAILED' };
     }
   });
 
-  registerHandle(ipcMain, 'products:updatePrice', (event, productId, color, newPrice, changedBy) => {
+  registerHandle(ipcMain, 'products:updatePrice', async (event, productId, color, newPrice, changedBy) => {
     try {
       assertProductCatalogPermission();
       const db = getDb();
       const currentUser = getCurrentUser();
       const actor = currentUser?.username ?? changedBy;
-      return updateVariantPriceWithHistory(db, productId, color, newPrice, actor);
+      return await updateVariantPriceWithHistoryWrite(db, productId, color, newPrice, actor);
     } catch (error) {
       console.error('[products:updatePrice] error', error);
       return false;
     }
   });
 
-  registerHandle(ipcMain, 'products:priceHistory', (event, productId, color) => {
+  registerHandle(ipcMain, 'products:priceHistory', async (event, productId, color) => {
     try {
       assertPermission('viewStock');
-      const db = getDb();
-      return getPriceHistory(db, productId, color);
+      return await getPriceHistoryRead(getDb(), productId, color);
     } catch (error) {
       console.error('[products:priceHistory] error', error);
       return [];
     }
   });
 
-  registerHandle(ipcMain, 'products:restorePrice', (event, productId, color, targetPrice, changedBy) => {
+  registerHandle(ipcMain, 'products:restorePrice', async (event, productId, color, targetPrice, changedBy) => {
     try {
       assertProductCatalogPermission();
       const db = getDb();
       const currentUser = getCurrentUser();
       const actor = currentUser?.username ?? changedBy;
-      return updateVariantPriceWithHistory(db, productId, color, targetPrice, actor, { allowZero: true });
+      return await updateVariantPriceWithHistoryWrite(db, productId, color, targetPrice, actor, { allowZero: true });
     } catch (error) {
       console.error('[products:restorePrice] error', error);
       return false;

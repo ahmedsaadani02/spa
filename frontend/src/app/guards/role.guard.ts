@@ -37,6 +37,26 @@ export const permissionGuard: CanActivateFn = async (route) => {
 
 export const roleGuard = permissionGuard;
 
+export const standardEmployeeGuard: CanActivateFn = async () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  await auth.ensureInitialized();
+
+  if (!auth.isLoggedIn()) {
+    return router.createUrlTree(['/login']);
+  }
+
+  const isStandardEmployee = auth.role() === 'employee'
+    && auth.hasPermission('receiveTasks')
+    && !auth.hasPermission('manageTasks');
+
+  if (isStandardEmployee) {
+    return true;
+  }
+
+  return router.createUrlTree(['/access-denied']);
+};
+
 export const redirectGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);

@@ -6,67 +6,67 @@ const {
   getClientRowById,
   mapClientRow,
   findOrCreateClient
-} = require('../repositories/clients.repository');
+} = require('../repositories/clients.runtime.repository');
 const { assertPermission } = require('../services/auth-session.service');
 
 const registerClientsHandlers = (ipcMain, getDb) => {
-  ipcMain.handle('clients:list', () => {
+  ipcMain.handle('clients:list', async () => {
     try {
       assertPermission('manageClients');
-      return listClients(getDb());
+      return await listClients(getDb());
     } catch (error) {
       console.error('[clients:list] error', error);
       return [];
     }
   });
 
-  ipcMain.handle('clients:getById', (event, id) => {
+  ipcMain.handle('clients:getById', async (event, id) => {
     try {
       assertPermission('manageClients');
       if (!id) return null;
-      return mapClientRow(getClientRowById(getDb(), id));
+      return mapClientRow(await getClientRowById(getDb(), id));
     } catch (error) {
       console.error('[clients:getById] error', error);
       return null;
     }
   });
 
-  ipcMain.handle('clients:search', (event, query) => {
+  ipcMain.handle('clients:search', async (event, query) => {
     try {
       assertPermission('manageClients');
-      return searchClients(getDb(), query ?? '');
+      return await searchClients(getDb(), query ?? '');
     } catch (error) {
       console.error('[clients:search] error', error);
       return [];
     }
   });
 
-  ipcMain.handle('clients:upsert', (event, client) => {
+  ipcMain.handle('clients:upsert', async (event, client) => {
     try {
       assertPermission('manageClients');
       if (!client || typeof client !== 'object') return null;
-      return upsertClient(getDb(), client);
+      return await upsertClient(getDb(), client);
     } catch (error) {
       console.error('[clients:upsert] error', error);
       return null;
     }
   });
 
-  ipcMain.handle('clients:delete', (event, id) => {
+  ipcMain.handle('clients:delete', async (event, id) => {
     try {
       assertPermission('manageClients');
-      return deleteClientById(getDb(), id);
+      return await deleteClientById(getDb(), id);
     } catch (error) {
       console.error('[clients:delete] error', error);
       return false;
     }
   });
 
-  ipcMain.handle('clients:findOrCreate', (event, client, preferredId) => {
+  ipcMain.handle('clients:findOrCreate', async (event, client, preferredId) => {
     try {
       assertPermission('manageClients');
       if (!client || typeof client !== 'object') return null;
-      return findOrCreateClient(getDb(), client, preferredId ?? null);
+      return await findOrCreateClient(getDb(), client, preferredId ?? null);
     } catch (error) {
       console.error('[clients:findOrCreate] error', error);
       return null;

@@ -4,8 +4,8 @@ const {
   getEmployeeById,
   updateEmployeeLastLogin,
   updateEmployeePasswordHash
-} = require('../repositories/employees.repository');
-const { addSecurityAuditEvent } = require('../repositories/auth-security.repository');
+} = require('../repositories/employees.runtime.repository');
+const { addSecurityAuditEvent } = require('../repositories/auth-security.runtime.repository');
 const {
   toAppUser,
   setCurrentUser,
@@ -15,6 +15,7 @@ const {
   hasPermission
 } = require('./auth-session.service');
 const { normalizeEmail, isProtectedEmail } = require('./auth-protected-accounts.service');
+const { validateEmployeeAccountPassword } = require('./employee-password-policy.service');
 
 const LOGIN_RATE = { maxFails: 5, windowMs: 15 * 60 * 1000, blockMs: 15 * 60 * 1000 };
 const SETUP_RATE = { maxFails: 5, windowMs: 10 * 60 * 1000, blockMs: 10 * 60 * 1000 };
@@ -108,9 +109,9 @@ const toAuditPayload = (ctx = {}) => ({
   details: ctx.details ?? null
 });
 
-const audit = (db, ctx) => {
+const audit = async (db, ctx) => {
   try {
-    addSecurityAuditEvent(db, toAuditPayload(ctx));
+    await addSecurityAuditEvent(db, toAuditPayload(ctx));
   } catch (error) {
     console.error('[auth:audit] failed', error);
   }
@@ -143,11 +144,11 @@ const beginLogin = async (db, identity, password, context = {}) => {
     return { status: 'invalid_credentials' };
   }
 
-  const row = findEmployeeForAuthIdentity(db, normalizedIdentity);
+  const row = await findEmployeeForAuthIdentity(db, normalizedIdentity);
   console.log('[auth-web] account found:', row ? 'yes' : 'no');
   if (!row || !isUserActive(row)) {
     recordFailure(runtimeLimiter.login, normalizedIdentity, LOGIN_RATE);
-    audit(db, {
+    await audit(db, {
       eventType: 'auth_login_failed',
       emailAttempted: normalizedIdentity.includes('@') ? normalizedIdentity : null,
       success: false,
@@ -163,7 +164,7 @@ const beginLogin = async (db, identity, password, context = {}) => {
   const usingEmail = normalizedIdentity.includes('@');
   if (usingEmail && !isProtectedUser(row)) {
     recordFailure(runtimeLimiter.login, normalizedIdentity, LOGIN_RATE);
-    audit(db, {
+    await audit(db, {
       userId: row.id,
       eventType: 'auth_login_failed',
       emailAttempted: row.email_normalized ?? normalizedIdentity,
@@ -193,7 +194,7 @@ const beginLogin = async (db, identity, password, context = {}) => {
   console.log('[auth-web] password valid:', passwordValid ? 'yes' : 'no');
   if (!passwordValid) {
     recordFailure(runtimeLimiter.login, normalizedIdentity, LOGIN_RATE);
-    audit(db, {
+    await audit(db, {
       userId: row.id,
       eventType: 'auth_login_failed',
       emailAttempted: row.email_normalized ?? null,
@@ -211,14 +212,14 @@ const beginLogin = async (db, identity, password, context = {}) => {
   const appUser = toAppUser(row);
   setCurrentUser(appUser);
   try {
-    updateEmployeeLastLogin(db, row.id, nowIso());
+    await updateEmployeeLastLogin(db, row.id, nowIso());
   } catch (error) {
     console.warn('[auth-web] login metadata update failed', {
       userId: row.id,
       reason: error instanceof Error ? error.message : 'UNKNOWN'
     });
   }
-  audit(db, {
+  await audit(db, {
     userId: row.id,
     eventType: 'auth_login_success',
     emailAttempted: row.email_normalized ?? null,
@@ -231,7 +232,7 @@ const beginLogin = async (db, identity, password, context = {}) => {
   return { status: 'success', user: appUser };
 };
 
-const setupProtectedPassword = (db, email, newPassword, context = {}) => {
+const setupProtectedPassword = async (db, email, newPassword, context = {}) => {
   const normalizedEmail = normalizeEmail(email);
   console.log('[auth] protected password setup requested', { email: normalizedEmail || null });
 
@@ -252,7 +253,7 @@ const setupProtectedPassword = (db, email, newPassword, context = {}) => {
 
   let user = null;
   try {
-    user = findEmployeeForAuthIdentity(db, normalizedEmail);
+    user = await findEmployeeForAuthIdentity(db, normalizedEmail);
   } catch (error) {
     console.error('[auth] protected password setup failed: account lookup error', error);
     return {
@@ -292,7 +293,7 @@ const setupProtectedPassword = (db, email, newPassword, context = {}) => {
 
   let updated = false;
   try {
-    updated = updateEmployeePasswordHash(db, user.id, hashPassword(newPassword), { mustSetupPassword: false });
+    updated = await updateEmployeePasswordHash(db, user.id, hashPassword(newPassword), { mustSetupPassword: false });
   } catch (error) {
     console.error('[auth] protected password setup failed: password update error', error);
     return {
@@ -308,7 +309,7 @@ const setupProtectedPassword = (db, email, newPassword, context = {}) => {
   }
 
   clearFailures(runtimeLimiter.setup, normalizedEmail);
-  audit(db, {
+  await audit(db, {
     userId: user.id,
     eventType: 'auth_setup_password_completed',
     emailAttempted: user.email,
@@ -321,11 +322,12 @@ const setupProtectedPassword = (db, email, newPassword, context = {}) => {
   return { ok: true, status: 'completed' };
 };
 
-const resetPassword = (db, employeeId, newPassword) => {
+const resetPassword = async (db, employeeId, newPassword) => {
   assertPermission('manageEmployees');
 
   const current = getCurrentUser();
-  const target = getEmployeeById(db, employeeId);
+  const target = await getEmployeeById(db, employeeId);
+  const normalizedNewPassword = typeof newPassword === 'string' ? newPassword.trim() : '';
   if (!current || !target) {
     return false;
   }
@@ -334,12 +336,12 @@ const resetPassword = (db, employeeId, newPassword) => {
     return false;
   }
 
-  const policy = validatePasswordStrength(newPassword);
+  const policy = validateEmployeeAccountPassword(normalizedNewPassword, target.role);
   if (!policy.ok) {
     return false;
   }
 
-  if (!employeeId || !newPassword) {
+  if (!employeeId || !normalizedNewPassword) {
     return false;
   }
 
@@ -347,15 +349,16 @@ const resetPassword = (db, employeeId, newPassword) => {
     return false;
   }
 
-  return updateEmployeePasswordHash(db, employeeId, hashPassword(newPassword), { mustSetupPassword: false });
+  return updateEmployeePasswordHash(db, employeeId, hashPassword(normalizedNewPassword), { mustSetupPassword: false });
 };
 
-const login = (db, username, password, context = {}) => beginLogin(db, username, password, context).then((result) => {
+const login = async (db, username, password, context = {}) => {
+  const result = await beginLogin(db, username, password, context);
   if (result?.status === 'success') {
     return result.user;
   }
   return null;
-});
+};
 
 const logout = () => {
   clearCurrentUser();

@@ -1,9 +1,9 @@
 const { assertPermission } = require('./auth-session.service');
-const { getInventoryResponse } = require('../legacy-ipc/inventory.handlers');
+const { getInventoryResponse } = require('../repositories/catalog-read.runtime.repository');
 
 const createInventoryService = ({ getDb, resolveSessionUser, setCurrentUser, clearCurrentUser }) => {
-  const withAuthorizedUser = (token, operation) => {
-    const user = resolveSessionUser(token || '');
+  const withAuthorizedUser = async (token, operation) => {
+    const user = await resolveSessionUser(token || '');
     if (!user) {
       throw new Error('UNAUTHORIZED');
     }
@@ -11,7 +11,7 @@ const createInventoryService = ({ getDb, resolveSessionUser, setCurrentUser, cle
     setCurrentUser(user);
     try {
       assertPermission('manageInventory');
-      return operation();
+      return await operation();
     } finally {
       clearCurrentUser();
     }

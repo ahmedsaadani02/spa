@@ -7,7 +7,12 @@ import { Router } from '@angular/router';
 import { Invoice } from '../../models/invoice';
 import { InvoiceCalcService } from '../../services/invoice-calc.service';
 import { InvoiceStoreService } from '../../services/invoice-store.service';
-import { ElectronService } from '../../services/electron.service';
+import { DocumentsService } from '../../services/documents.service';
+import {
+  getInvoiceDisplayNumber,
+  getInvoicePaymentStatusClass,
+  getInvoicePaymentStatusLabel
+} from '../../utils/invoice-payload';
 
 type MonthGroup<T> = {
   key: string;
@@ -53,6 +58,12 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     message: ''
   };
 
+  deleteConfirm = {
+    open: false,
+    invoice: null as Invoice | null,
+    submitting: false
+  };
+
   readonly filteredInvoices$ = combineLatest([
     this.store.invoices$,
     this.searchControl.valueChanges.pipe(startWith(''))
@@ -62,6 +73,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
       if (!query) return invoices;
       return invoices.filter((invoice) =>
         invoice.numero.toLowerCase().includes(query) ||
+        (invoice.customInvoiceNumber || '').toLowerCase().includes(query) ||
         invoice.client.nom.toLowerCase().includes(query)
       );
     })
@@ -116,17 +128,12 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     private store: InvoiceStoreService,
     private calc: InvoiceCalcService,
     private cdr: ChangeDetectorRef,
-    private electron: ElectronService,
+    private electron: DocumentsService,
     private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
     console.log('[invoices-page] load requested');
-    await this.store.load();
-    console.log('[invoices-page] api response received');
-    console.log(`[invoices-page] rendered items count: ${this.store.getSnapshot().length}`);
-    console.log('[invoices-page] empty state condition:', this.store.getSnapshot().length === 0);
-
     window.addEventListener('afterprint', this.afterPrintHandler);
 
     this.selectedMonthLabel$
@@ -147,6 +154,8 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         console.log(`[invoices-page] rendered items count: ${list.length}`);
         console.log('[invoices-page] empty state condition:', list.length === 0);
       });
+
+    void this.store.load();
   }
 
   ngOnDestroy(): void {
@@ -161,10 +170,54 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     return this.calc.totals(invoice).totalTTC;
   }
 
-  async deleteInvoice(invoice: Invoice): Promise<void> {
-    const confirmed = confirm(`Supprimer la facture ${invoice.numero} ?`);
-    if (!confirmed) return;
+  displayNumber(invoice: Invoice): string {
+    return getInvoiceDisplayNumber(invoice);
+  }
+
+  paymentStatusLabel(invoice: Invoice): string {
+    return getInvoicePaymentStatusLabel(invoice);
+  }
+
+  paymentStatusClass(invoice: Invoice): string {
+    return getInvoicePaymentStatusClass(invoice);
+  }
+
+  showInternalNumber(invoice: Invoice): boolean {
+    return this.displayNumber(invoice) !== invoice.numero;
+  }
+
+  requestDeleteInvoice(invoice: Invoice): void {
+    this.deleteConfirm = {
+      open: true,
+      invoice,
+      submitting: false
+    };
+  }
+
+  cancelDeleteInvoice(): void {
+    if (this.deleteConfirm.submitting) return;
+    this.deleteConfirm = {
+      open: false,
+      invoice: null,
+      submitting: false
+    };
+  }
+
+  async confirmDeleteInvoice(): Promise<void> {
+    const invoice = this.deleteConfirm.invoice;
+    if (!invoice || this.deleteConfirm.submitting) return;
+
+    this.deleteConfirm = {
+      ...this.deleteConfirm,
+      submitting: true
+    };
+
     await this.store.delete(invoice.id);
+    this.deleteConfirm = {
+      open: false,
+      invoice: null,
+      submitting: false
+    };
   }
 
   duplicateInvoice(invoice: Invoice): void {

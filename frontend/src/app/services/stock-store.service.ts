@@ -42,20 +42,36 @@ export class StockStoreService {
   });
   readonly productMetadata$ = this.productMetadataSubject.asObservable();
 
+  private readonly inventorySubject = new BehaviorSubject<SpaInventoryResponse | null>(null);
+  readonly inventory$ = this.inventorySubject.asObservable();
+
   private initialized = false;
+  private stockHydrated = false;
+  private movementsHydrated = false;
+  private archivesHydrated = false;
+  private metadataHydrated = false;
+  private stockWarmPromise: Promise<void> | null = null;
+  private movementsWarmPromise: Promise<void> | null = null;
+  private archivesWarmPromise: Promise<void> | null = null;
+  private inventoryWarmPromise: Promise<SpaInventoryResponse | null> | null = null;
 
   private readonly repository = inject<StockRepository>(STOCK_REPOSITORY);
   private readonly zone = inject(NgZone);
+
+  async ensureReady(): Promise<void> {
+    if (this.initialized) {
+      return;
+    }
+    await this.repository.initialize();
+    this.initialized = true;
+  }
 
   async load(): Promise<void> {
     console.log('[stock-page] load requested');
     console.log('[stock-archives-page] load requested');
     console.log('[stock-history-page] load requested');
     console.log('[inventaire-page] load requested');
-    if (!this.initialized) {
-      await this.repository.initialize();
-      this.initialized = true;
-    }
+    await this.ensureReady();
     await this.refreshItems();
     await this.refreshMovements();
     await this.refreshArchivedProducts();
@@ -76,6 +92,7 @@ export class StockStoreService {
       return a.reference.localeCompare(b.reference);
     });
     this.emitInZone(this.itemsSubject, sorted);
+    this.stockHydrated = true;
     console.log('[stock-page] api response received');
     console.log(`[stock-page] rendered items count: ${sorted.length}`);
     console.log('[stock-page] empty state condition:', sorted.length === 0);
@@ -84,6 +101,7 @@ export class StockStoreService {
   async refreshMovements(): Promise<void> {
     const all = await this.repository.getMovements();
     this.emitInZone(this.movementsSubject, all);
+    this.movementsHydrated = true;
     console.log('[stock-history-page] api response received');
     console.log(`[stock-history-page] rendered items count: ${all.length}`);
     console.log('[stock-history-page] empty state condition:', all.length === 0);
@@ -92,6 +110,7 @@ export class StockStoreService {
   async refreshArchivedProducts(): Promise<void> {
     const archived = await this.repository.listArchivedProducts();
     this.emitInZone(this.archivedProductsSubject, archived);
+    this.archivesHydrated = true;
     console.log('[stock-archives-page] api response received');
     console.log(`[stock-archives-page] rendered items count: ${archived.length}`);
     console.log('[stock-archives-page] empty state condition:', archived.length === 0);
@@ -100,6 +119,7 @@ export class StockStoreService {
   async refreshProductMetadata(): Promise<void> {
     const metadata = await this.repository.getProductMetadata();
     this.emitInZone(this.productMetadataSubject, metadata);
+    this.metadataHydrated = true;
   }
 
   async addProductMetadata(kind: 'category' | 'serie' | 'color', value: string): Promise<SpaProductMetadataAddResult> {
@@ -116,6 +136,67 @@ export class StockStoreService {
 
   getSnapshotMovements(): StockMovement[] {
     return this.movementsSubject.value;
+  }
+
+  getSnapshotArchivedProducts(): SpaProductRow[] {
+    return this.archivedProductsSubject.value;
+  }
+
+  async warmStockCatalog(): Promise<void> {
+    if (this.stockHydrated && this.metadataHydrated) {
+      return;
+    }
+    if (this.stockWarmPromise) {
+      return this.stockWarmPromise;
+    }
+
+    this.stockWarmPromise = (async () => {
+      await this.ensureReady();
+      await Promise.all([
+        this.stockHydrated ? Promise.resolve() : this.refreshItems(),
+        this.metadataHydrated ? Promise.resolve() : this.refreshProductMetadata()
+      ]);
+    })().finally(() => {
+      this.stockWarmPromise = null;
+    });
+
+    return this.stockWarmPromise;
+  }
+
+  async warmMovements(): Promise<void> {
+    if (this.movementsHydrated) {
+      return;
+    }
+    if (this.movementsWarmPromise) {
+      return this.movementsWarmPromise;
+    }
+
+    this.movementsWarmPromise = (async () => {
+      await this.ensureReady();
+      await this.refreshMovements();
+    })().finally(() => {
+      this.movementsWarmPromise = null;
+    });
+
+    return this.movementsWarmPromise;
+  }
+
+  async warmArchives(): Promise<void> {
+    if (this.archivesHydrated) {
+      return;
+    }
+    if (this.archivesWarmPromise) {
+      return this.archivesWarmPromise;
+    }
+
+    this.archivesWarmPromise = (async () => {
+      await this.ensureReady();
+      await this.refreshArchivedProducts();
+    })().finally(() => {
+      this.archivesWarmPromise = null;
+    });
+
+    return this.archivesWarmPromise;
   }
 
   async moveStock(input: MoveStockInput): Promise<void> {
@@ -207,8 +288,50 @@ export class StockStoreService {
     return this.repository.supportsInventory;
   }
 
-  async getInventory(): Promise<SpaInventoryResponse | null> {
+  async warmInventory(): Promise<SpaInventoryResponse | null> {
+    if (!this.supportsInventory) {
+      return null;
+    }
+
+    if (this.inventorySubject.value) {
+      return this.inventorySubject.value;
+    }
+
+    if (this.inventoryWarmPromise) {
+      return this.inventoryWarmPromise;
+    }
+
+    this.inventoryWarmPromise = (async () => {
+      await this.ensureReady();
+      const response = await this.repository.getInventory();
+      this.emitInZone(this.inventorySubject, response);
+      return response;
+    })().finally(() => {
+      this.inventoryWarmPromise = null;
+    });
+
+    return this.inventoryWarmPromise;
+  }
+
+  getCachedInventory(): SpaInventoryResponse | null {
+    return this.inventorySubject.value;
+  }
+
+  async getInventory(forceRefresh = false): Promise<SpaInventoryResponse | null> {
+    if (this.supportsInventory && !forceRefresh) {
+      const cached = this.inventorySubject.value;
+      if (cached) {
+        const count = Array.isArray(cached.items) ? cached.items.length : 0;
+        console.log('[inventaire-page] api response received');
+        console.log(`[inventaire-page] rendered items count: ${count}`);
+        console.log('[inventaire-page] empty state condition:', count === 0);
+        return cached;
+      }
+    }
+
+    await this.ensureReady();
     const response = await this.repository.getInventory();
+    this.emitInZone(this.inventorySubject, response);
     const count = Array.isArray(response?.items) ? response.items.length : 0;
     console.log('[inventaire-page] api response received');
     console.log(`[inventaire-page] rendered items count: ${count}`);

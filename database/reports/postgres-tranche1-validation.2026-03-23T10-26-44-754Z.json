@@ -1,0 +1,60 @@
+{
+  "startedAt": "2026-03-23T10:26:43.068Z",
+  "finishedAt": "2026-03-23T10:26:44.753Z",
+  "status": "failed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "routing": {
+    "configuredDriver": "postgres",
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security"
+    ]
+  },
+  "validated": [],
+  "serviceChecks": [
+    {
+      "name": "clients.service.list",
+      "ok": true,
+      "detail": "count=4"
+    }
+  ],
+  "handlerChecks": [],
+  "runtimePaths": [
+    {
+      "scope": "clients service + clients handlers",
+      "path": "clients.service/clients.handlers -> clients.runtime.repository -> postgres/clients.repository when DB_DRIVER=postgres"
+    },
+    {
+      "scope": "employees service + employees handlers",
+      "path": "employees.service/employees.handlers -> employees.runtime.repository -> postgres/employees.repository when DB_DRIVER=postgres"
+    },
+    {
+      "scope": "salary service + salary handlers",
+      "path": "salary.service/salary.handlers -> salary.runtime.repository -> postgres/salary.repository when DB_DRIVER=postgres"
+    },
+    {
+      "scope": "auth-security via auth flow",
+      "path": "auth.handlers -> auth-core.service -> employees.repository (SQLite read path) + auth-security.runtime.repository (PostgreSQL write path)"
+    }
+  ],
+  "remainingRisks": [
+    "Audit failed before full validation: clients.service.upsert did not create a client."
+  ],
+  "outOfScope": [
+    "quotes",
+    "invoices",
+    "products",
+    "stock",
+    "movements",
+    "inventory"
+  ],
+  "artifacts": null
+}

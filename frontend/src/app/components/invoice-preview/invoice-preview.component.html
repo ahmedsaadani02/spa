@@ -67,11 +67,12 @@
 
       <!-- ======= TITLE ======= -->
       <div class="invoice-title">
-        FACTURE N&deg; <span class="mono">{{ inv.numero }}</span>
+        FACTURE N&deg; <span class="mono">{{ displayNumber(inv) }}</span>
       </div>
 
       <div class="order-line">
-        Bon de Commande N&deg; <span class="muted">&mdash;</span>
+        Bon de Commande N&deg; <strong>{{ inv.purchaseOrderNumber || '-' }}</strong> du
+        <strong>{{ inv.date | date:'dd/MM/yyyy' }}</strong>
       </div>
 
       <!-- ======= TABLE ======= -->

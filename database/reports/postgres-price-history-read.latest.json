@@ -1,0 +1,69 @@
+{
+  "startedAt": "2026-03-23T13:56:29.147Z",
+  "finishedAt": "2026-03-23T13:56:33.252Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:64449",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read"
+    ]
+  },
+  "validated": [
+    "La lecture `products:priceHistory` est compatible PostgreSQL et restitue le meme historique de prix que SQLite pour tous les couples produit/couleur audites.",
+    "Le chemin REST `/api/products/:id/price-history` et le handler IPC conservent le meme contrat, avec un routage PostgreSQL lecture seule seulement sous opt-in audit."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "token=543efeb8..."
+    },
+    {
+      "name": "GET /api/products/:id/price-history",
+      "ok": true,
+      "detail": "pairs=4"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "price history parity",
+      "ok": true,
+      "detail": "pairs=4"
+    },
+    {
+      "name": "price_history rows count parity",
+      "ok": true,
+      "detail": "count=16"
+    }
+  ],
+  "remainingRisks": [
+    "Les ecritures de prix produit restent sur SQLite; `products:priceHistory` PostgreSQL doit donc rester desactive en usage normal tant que les ecritures `products` ne sont pas migrees.",
+    "Le domaine catalogue/stock doit continuer a utiliser `DB_ENABLE_POSTGRES_CATALOG_READ=0` par defaut pour eviter une divergence visible."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-price-history-read.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-price-history-read.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-price-history-read.2026-03-23T13-56-33-253Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-price-history-read.2026-03-23T13-56-33-253Z.md"
+  }
+}

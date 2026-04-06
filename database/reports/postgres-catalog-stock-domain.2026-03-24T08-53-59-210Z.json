@@ -1,0 +1,76 @@
+{
+  "startedAt": "2026-03-24T08:53:44.002Z",
+  "finishedAt": "2026-03-24T08:53:58.485Z",
+  "status": "failed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:51322",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "stockWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ]
+  },
+  "activationDecision": "not-activable-yet",
+  "validated": [],
+  "sequenceChecks": [
+    {
+      "name": "auth login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "create product",
+      "ok": true,
+      "detail": "id=f2437dd4-5c44-4e7c-8e56-82e5b9528e02"
+    }
+  ],
+  "parityChecks": [],
+  "activationPlan": [],
+  "remainingRisks": [
+    "Global catalog/stock audit HTTP check #3 failed with status 500."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.2026-03-24T08-53-59-210Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.2026-03-24T08-53-59-210Z.md"
+  }
+}

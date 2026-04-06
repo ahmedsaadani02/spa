@@ -13,8 +13,7 @@ const {
   deleteOvertime,
   getMonthlyOvertimeTotals,
   getSalarySummary
-} = require('../repositories/salary.repository');
-
+} = require('../repositories/salary.runtime.repository');
 const toMonthYear = (month, year) => {
   const current = new Date();
   const parsedMonth = Number(month);
@@ -26,8 +25,8 @@ const toMonthYear = (month, year) => {
 };
 
 const createSalaryService = ({ getDb, resolveSessionUser, setCurrentUser, clearCurrentUser }) => {
-  const withAuthorizedUser = (token, operation) => {
-    const user = resolveSessionUser(token || '');
+  const withAuthorizedUser = async (token, operation) => {
+    const user = await resolveSessionUser(token || '');
     if (!user) {
       throw new Error('UNAUTHORIZED');
     }
@@ -35,7 +34,7 @@ const createSalaryService = ({ getDb, resolveSessionUser, setCurrentUser, clearC
     setCurrentUser(user);
     try {
       assertPermission('manageSalary');
-      return operation();
+      return await operation();
     } finally {
       clearCurrentUser();
     }
@@ -102,9 +101,9 @@ const createSalaryService = ({ getDb, resolveSessionUser, setCurrentUser, clearC
     },
 
     async totalOvertimeHours(token, employeeId, month, year) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         const scope = toMonthYear(month, year);
-        return getMonthlyOvertimeTotals(getDb(), employeeId, scope.month, scope.year).totalHours;
+        return (await getMonthlyOvertimeTotals(getDb(), employeeId, scope.month, scope.year)).totalHours;
       });
     },
 

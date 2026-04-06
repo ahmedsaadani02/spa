@@ -8,6 +8,14 @@
     <div class="panel-actions">
       <span class="tag">Produits: {{ totalProducts }}</span>
       <span class="tag tag-strong">Valeur totale: {{ totalStockValue | number:'1.2-2' }} DT</span>
+      <details class="export-menu" #exportMenu>
+        <summary class="btn ghost export-menu__trigger">Exporter</summary>
+        <div class="export-menu__panel">
+          <button class="export-menu__action" type="button" (click)="printInventory()">
+            Imprimer
+          </button>
+        </div>
+      </details>
     </div>
   </div>
 
@@ -37,7 +45,19 @@
     {{ priceInteractionMessage }}
   </div>
 
-  <section class="inventory-board" *ngIf="rows.length; else emptyState">
+  <div class="export-feedback" *ngIf="exportFeedback" [class.export-feedback--error]="exportFeedback.type === 'error'">
+    {{ exportFeedback.message }}
+  </div>
+
+  <section class="card inventory-loading" *ngIf="loading">
+    <span class="loading-dot"></span>
+    <div>
+      <strong>Inventaire en cours de chargement</strong>
+      <p>{{ loadingMessage }}</p>
+    </div>
+  </section>
+
+  <section class="inventory-board" *ngIf="!loading && rows.length; else emptyState">
     <article class="inventory-product-card" *ngFor="let row of rows; trackBy: trackByRow">
       <section class="zone zone-identity">
         <div class="identity-ref">{{ row.item.reference }}</div>
@@ -200,7 +220,7 @@
 </section>
 
 <ng-template #emptyState>
-  <section class="card empty-state">
+  <section class="card empty-state" *ngIf="!loading">
     Aucun produit ne correspond au filtre actuel.
   </section>
 </ng-template>

@@ -50,8 +50,6 @@ export class ClientsComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     console.log('[clients-page] load requested');
-    await this.clientStore.load();
-
     this.clientStore.clients$
       .pipe(takeUntil(this.destroy$))
       .subscribe((clients) => {
@@ -62,6 +60,8 @@ export class ClientsComponent implements OnInit, OnDestroy {
         console.log('[clients-page] empty state condition:', this.filteredClients.length === 0);
         this.cdr.markForCheck();
       });
+
+    void this.clientStore.load();
 
     this.searchControl.valueChanges
       .pipe(

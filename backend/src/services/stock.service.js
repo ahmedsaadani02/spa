@@ -1,24 +1,28 @@
 const { assertPermission } = require('./auth-session.service');
 const {
-  getStockRows,
-  buildStockItems,
   setStockQty,
   incrementStockQty,
-  applyStockMovement,
+  applyStockMovement
+} = require('../repositories/stock-write.runtime.repository');
+const {
   assertAnyPermission,
   inferMovementPermission
 } = require('../legacy-ipc/stock.handlers');
+const {
+  getStockRows,
+  buildStockItems
+} = require('../repositories/catalog-read.runtime.repository');
 
 const createStockService = ({ getDb, resolveSessionUser, setCurrentUser, clearCurrentUser }) => {
-  const withAuthorizedUser = (token, operation) => {
-    const user = resolveSessionUser(token || '');
+  const withAuthorizedUser = async (token, operation) => {
+    const user = await resolveSessionUser(token || '');
     if (!user) {
       throw new Error('UNAUTHORIZED');
     }
 
     setCurrentUser(user);
     try {
-      return operation(user);
+      return await operation(user);
     } finally {
       clearCurrentUser();
     }
@@ -40,30 +44,30 @@ const createStockService = ({ getDb, resolveSessionUser, setCurrentUser, clearCu
     },
 
     async applyMovement(token, movement) {
-      return withAuthorizedUser(token, (user) => {
+      return withAuthorizedUser(token, async (user) => {
         assertAnyPermission([inferMovementPermission(movement), 'manageStock']);
-        return applyStockMovement(getDb(), movement, user);
+        return await applyStockMovement(getDb(), movement, user);
       });
     },
 
     async setQty(token, productId, color, qty) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertAnyPermission(['adjustStock', 'manageStock']);
-        return setStockQty(getDb(), productId, color, qty);
+        return await setStockQty(getDb(), productId, color, qty);
       });
     },
 
     async increment(token, productId, color, delta) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertAnyPermission(['addStock', 'manageStock']);
-        return incrementStockQty(getDb(), productId, color, delta);
+        return await incrementStockQty(getDb(), productId, color, delta);
       });
     },
 
     async decrement(token, productId, color, delta) {
-      return withAuthorizedUser(token, () => {
+      return withAuthorizedUser(token, async () => {
         assertAnyPermission(['removeStock', 'manageStock']);
-        return incrementStockQty(getDb(), productId, color, -Math.abs(Number(delta) || 0));
+        return await incrementStockQty(getDb(), productId, color, -Math.abs(Number(delta) || 0));
       });
     }
   };

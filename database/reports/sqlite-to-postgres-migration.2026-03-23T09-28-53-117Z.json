@@ -1,0 +1,253 @@
+{
+  "startedAt": "2026-03-23T09:28:40.856Z",
+  "finishedAt": "2026-03-23T09:28:53.116Z",
+  "status": "dry-run",
+  "execute": false,
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "target": {
+    "host": "ep-fancy-voice-a4ucqvpf.us-east-1.aws.neon.tech",
+    "port": null,
+    "database": "neondb",
+    "ssl": "enabled"
+  },
+  "tables": [
+    {
+      "name": "employees",
+      "sourceCount": 4,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "clients",
+      "sourceCount": 4,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "products",
+      "sourceCount": 69,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "product_catalog_metadata",
+      "sourceCount": 18,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "stock",
+      "sourceCount": 178,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "product_variants",
+      "sourceCount": 178,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "price_history",
+      "sourceCount": 16,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "movements",
+      "sourceCount": 17,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "quotes",
+      "sourceCount": 4,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "invoices",
+      "sourceCount": 6,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "salary_advances",
+      "sourceCount": 5,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "salary_bonuses",
+      "sourceCount": 1,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "salary_overtimes",
+      "sourceCount": 3,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "auth_challenges",
+      "sourceCount": 4,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    },
+    {
+      "name": "security_audit_log",
+      "sourceCount": 127,
+      "targetBeforeCount": 0,
+      "deletedCount": null,
+      "insertedCount": null,
+      "targetAfterCount": null,
+      "countsMatch": null
+    }
+  ],
+  "validations": {
+    "relations": [
+      {
+        "key": "quotes.client_id",
+        "description": "quotes.client_id -> clients.id",
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "invoices.client_id",
+        "description": "invoices.client_id -> clients.id",
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "invoices.quote_id",
+        "description": "invoices.quote_id -> quotes.id",
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "stock.product_id",
+        "description": "stock.product_id -> products.id",
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "product_variants.product_id",
+        "description": "product_variants.product_id -> products.id",
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "price_history.product_id",
+        "description": "price_history.product_id -> products.id",
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "salary_advances.employee_id",
+        "description": "salary_advances.employee_id -> employees.id",
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "salary_bonuses.employee_id",
+        "description": "salary_bonuses.employee_id -> employees.id",
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "salary_overtimes.employee_id",
+        "description": "salary_overtimes.employee_id -> employees.id",
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "auth_challenges.user_id",
+        "description": "auth_challenges.user_id -> employees.id",
+        "count": 0,
+        "sample": []
+      },
+      {
+        "key": "security_audit_log.user_id",
+        "description": "security_audit_log.user_id -> employees.id",
+        "count": 0,
+        "sample": []
+      }
+    ],
+    "json": [
+      {
+        "table": "quotes",
+        "column": "payload",
+        "required": true,
+        "sourceRowCount": 4,
+        "sourceInvalidCount": 0,
+        "sourceInvalidSample": [],
+        "targetRowCount": 0,
+        "targetNullCount": 0
+      },
+      {
+        "table": "invoices",
+        "column": "payload",
+        "required": true,
+        "sourceRowCount": 6,
+        "sourceInvalidCount": 0,
+        "sourceInvalidSample": [],
+        "targetRowCount": 0,
+        "targetNullCount": 0
+      },
+      {
+        "table": "security_audit_log",
+        "column": "details",
+        "required": false,
+        "sourceRowCount": 127,
+        "sourceInvalidCount": 0,
+        "sourceInvalidSample": [],
+        "targetRowCount": 0,
+        "targetNullCount": 0
+      }
+    ]
+  },
+  "error": null
+}

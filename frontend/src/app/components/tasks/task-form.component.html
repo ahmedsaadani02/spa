@@ -1,0 +1,125 @@
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h1>{{ isEditMode ? ui.form.editTitle : ui.form.newTitle }}</h1>
+      <p>{{ ui.form.subtitle }}</p>
+    </div>
+    <div class="actions">
+      <a class="btn ghost" routerLink="/tasks">{{ ui.form.back }}</a>
+    </div>
+  </div>
+
+  <section class="card loading-card" *ngIf="loading">
+    <div class="loading-state">
+      <span class="loading-dot"></span>
+      <div>
+        <strong>{{ ui.form.openingStrong }}</strong>
+        <p>{{ ui.form.openingText }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" *ngIf="!loading">
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+      <label class="field">
+        <span>{{ activeTitleLabel }}</span>
+        <input
+          class="input"
+          type="text"
+          [formControlName]="activeTitleControlName"
+          [attr.dir]="activeFieldDirection"
+        />
+      </label>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>{{ ui.form.employee }}</span>
+          <select class="input" formControlName="employeeId">
+            <option value="">{{ ui.form.unassigned }}</option>
+            <option *ngFor="let employee of employees" [value]="employee.id">
+              {{ employee.nom }}
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <div class="task-meta-card" *ngIf="task">
+        <div><strong>{{ ui.form.createdAt }}:</strong> {{ task.createdAt ? (task.createdAt | date:'dd/MM/yyyy HH:mm') : '-' }}</div>
+        <div><strong>{{ ui.form.createdBy }}:</strong> {{ task.createdByName || ui.misc.unknownAuthor }}</div>
+      </div>
+
+      <label class="field">
+        <span>{{ activeDescriptionLabel }}</span>
+        <textarea
+          class="textarea"
+          rows="5"
+          [formControlName]="activeDescriptionControlName"
+          [attr.dir]="activeFieldDirection"
+        ></textarea>
+      </label>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>{{ ui.form.priority }}</span>
+          <select class="input" formControlName="priority">
+            <option *ngFor="let option of priorityOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>{{ ui.form.dueDate }}</span>
+          <input class="input" type="date" formControlName="dueDate" />
+        </label>
+      </div>
+
+      <label class="field checkbox-field">
+        <span>{{ requiresPhotoProofLabel }}</span>
+        <label class="checkbox-inline">
+          <input type="checkbox" formControlName="requiresPhotoProof" />
+          <span>{{ requiresPhotoProofHint }}</span>
+        </label>
+      </label>
+
+      <section class="subtasks-card">
+        <div class="subtasks-header">
+          <div>
+            <strong>{{ subtasksTitle }}</strong>
+            <p>{{ subtasksHint }}</p>
+          </div>
+          <button class="btn outline" type="button" (click)="addSubtask()">{{ addSubtaskLabel }}</button>
+        </div>
+
+        <div class="subtasks-list" *ngIf="subtasksArray.controls.length > 0">
+          <div class="subtask-row" *ngFor="let subtask of subtasksArray.controls; let i = index">
+            <input class="input" type="text" [formControl]="subtaskTitleControl(i)" [attr.placeholder]="subtaskPlaceholder" />
+            <button class="btn danger" type="button" (click)="removeSubtask(i)">{{ removeSubtaskLabel }}</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="subtasks-card" *ngIf="task?.photoProofs?.length">
+        <div class="subtasks-header">
+          <div>
+            <strong>{{ existingProofsTitle }}</strong>
+            <p>{{ existingProofsHint }}</p>
+          </div>
+        </div>
+
+        <div class="proof-gallery">
+          <a class="proof-link" *ngFor="let photo of task?.photoProofs" [href]="photo.imageUrl || photo.imageRef" target="_blank" rel="noreferrer">
+            <img [src]="photo.imageUrl || photo.imageRef" [alt]="photo.fileName || 'preuve-photo'" />
+            <span>{{ photo.createdAt ? (photo.createdAt | date:'dd/MM/yyyy HH:mm') : '-' }}</span>
+          </a>
+        </div>
+      </section>
+
+      <div class="error" *ngIf="error">{{ error === 'TASK_TITLE_REQUIRED' ? activeTitleLabel : error }}</div>
+
+      <div class="actions">
+        <a class="btn ghost" routerLink="/tasks">{{ ui.form.cancel }}</a>
+        <button class="btn primary" type="submit" [disabled]="saving">
+          {{ saving ? ui.form.saving : ui.form.save }}
+        </button>
+      </div>
+    </form>
+  </section>
+</section>

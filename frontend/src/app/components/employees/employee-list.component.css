@@ -1,3 +1,5 @@
+@import '../shared/action-icon-buttons.css';
+
 .panel {
   display: flex;
   flex-direction: column;
@@ -55,6 +57,14 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.row-actions-icons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .chip {
@@ -141,5 +151,15 @@
 
   .row-actions {
     width: 100%;
+  }
+
+  .row-actions > .btn:not(.icon-btn),
+  .chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stock-perm {
+    margin-right: 6px;
   }
 }

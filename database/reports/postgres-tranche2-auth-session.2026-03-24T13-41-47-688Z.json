@@ -1,0 +1,151 @@
+{
+  "startedAt": "2026-03-24T13:41:43.140Z",
+  "finishedAt": "2026-03-24T13:41:47.688Z",
+  "status": "completed",
+  "baseUrl": "http://127.0.0.1:59331",
+  "routing": {
+    "configuredDriver": "postgres",
+    "quotesReadOptInEnabled": false,
+    "quotesWriteOptInEnabled": false,
+    "invoicesReadOptInEnabled": false,
+    "invoicesWriteOptInEnabled": false,
+    "catalogReadOptInEnabled": false,
+    "productWriteOptInEnabled": false,
+    "stockWriteOptInEnabled": false,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read",
+      "quotes-write",
+      "quotes-convert-write",
+      "invoices-read",
+      "invoices-write",
+      "invoices-delete-write",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security"
+    ]
+  },
+  "validated": [
+    "Le login HTTP `/api/auth/login` lit bien les identites employe et mots de passe depuis PostgreSQL quand `DB_DRIVER=postgres`.",
+    "La resolution de session `/api/auth/me` et les verifications de permission ne repassent plus par un chemin SQLite pour les employes/auth.",
+    "Le reset mot de passe `/api/auth/reset-password` met bien a jour PostgreSQL, puis le relogin fonctionne avec le nouveau mot de passe.",
+    "Un endpoint protege hors auth (`/api/clients`) accepte une session employee/auth resolue depuis PostgreSQL.",
+    "Les evenements `auth_login_success` continuent d etre traces dans PostgreSQL via `auth-security`."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login owner",
+      "ok": true,
+      "detail": "token=1ce8edb3..."
+    },
+    {
+      "name": "GET /api/auth/me",
+      "ok": true,
+      "detail": "userId=tranche2-owner-mn4nyd7n"
+    },
+    {
+      "name": "GET /api/auth/permissions/manageEmployees",
+      "ok": true
+    },
+    {
+      "name": "GET /api/clients with PostgreSQL-backed session",
+      "ok": true,
+      "detail": "count=8"
+    },
+    {
+      "name": "POST /api/auth/reset-password",
+      "ok": true,
+      "detail": "employeeId=tranche2-employee-mn4nyd7n"
+    },
+    {
+      "name": "POST /api/auth/login employee after reset",
+      "ok": true,
+      "detail": "token=32b382f9..."
+    },
+    {
+      "name": "GET /api/auth/me employee",
+      "ok": true,
+      "detail": "userId=tranche2-employee-mn4nyd7n"
+    }
+  ],
+  "dataChecks": [
+    {
+      "name": "employees.last_login_at owner",
+      "ok": true,
+      "detail": "2026-03-24T13:41:44.865Z"
+    },
+    {
+      "name": "employees.last_login_at employee",
+      "ok": true,
+      "detail": "2026-03-24T13:41:46.621Z"
+    },
+    {
+      "name": "employees.must_setup_password employee",
+      "ok": true,
+      "detail": "false"
+    },
+    {
+      "name": "security_audit_log owner login success",
+      "ok": true,
+      "detail": "events=1"
+    },
+    {
+      "name": "security_audit_log employee login success",
+      "ok": true,
+      "detail": "events=1"
+    }
+  ],
+  "runtimePaths": [
+    {
+      "scope": "employee auth repository runtime",
+      "path": "auth-core.service -> employees.runtime.repository -> postgres/employees.repository when DB_DRIVER=postgres"
+    },
+    {
+      "scope": "session resolution",
+      "path": "server.js/auth.service -> session-resolver -> employees.runtime.repository -> postgres/employees.repository when DB_DRIVER=postgres"
+    },
+    {
+      "scope": "security audit trail",
+      "path": "auth-core.service -> auth-security.runtime.repository -> postgres/auth-security.repository when DB_DRIVER=postgres"
+    }
+  ],
+  "remainingRisks": [
+    "La session applicative reste stockee en memoire du process Node; elle n est pas encore externalisee ou partagee entre plusieurs instances.",
+    "Les domaines `quotes`, `invoices`, `products`, `stock`, `movements` et `inventory` restent volontairement sur SQLite pour leurs donnees metier.",
+    "Cette validation couvre le flux HTTP auth/session principal, pas encore des scenarios multi-instance, expiration persistante ou rotation de secret.",
+    "Le backend reste hybride: `DB_DRIVER=postgres` route employees/auth, clients, salary et auth-security vers PostgreSQL, mais conserve SQLite pour le reste."
+  ],
+  "outOfScope": [
+    "quotes",
+    "invoices",
+    "products",
+    "stock",
+    "movements",
+    "inventory"
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche2-auth-session.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche2-auth-session.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche2-auth-session.2026-03-24T13-41-47-688Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche2-auth-session.2026-03-24T13-41-47-688Z.md"
+  }
+}

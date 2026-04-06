@@ -1,0 +1,171 @@
+{
+  "startedAt": "2026-03-23T15:31:17.423Z",
+  "finishedAt": "2026-03-23T15:31:29.593Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:57251",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write"
+    ]
+  },
+  "writeCartography": [
+    "`products:purge` ne supprime pas la ligne `products`; il la marque `is_deleted=1`, conserve `is_archived=1`, renseigne `deleted_at` et conserve `archived_at`.",
+    "`products:purge` supprime `stock`, `product_variants` et `price_history` pour le produit cible.",
+    "`products:purge` ne supprime pas `product_catalog_metadata` et doit conserver l historique `movements` tant que la ligne `products` physique reste presente."
+  ],
+  "validated": [
+    "`products:purge` est compatible PostgreSQL avec la meme semantique que SQLite: suppression de `stock`, `product_variants` et `price_history`, mais conservation de la ligne `products` marquee `is_deleted=1`.",
+    "`products:purge` conserve `product_catalog_metadata` et l historique `movements`; la ligne produit reste donc presente en base pour referencer cet historique.",
+    "Les routes REST et handlers IPC restent inchanges; le routage PostgreSQL de cette tranche reste audit-only et exige `DB_DRIVER=postgres`, `DB_ENABLE_POSTGRES_CATALOG_READ=1` et `DB_ENABLE_POSTGRES_PRODUCT_WRITES=1`."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "POST /api/products",
+      "ok": true,
+      "detail": "id=4e7f0b2b-e6ac-4eb9-a907-2822a4836746"
+    },
+    {
+      "name": "PATCH /api/products/:id/price",
+      "ok": true,
+      "detail": "color=pg-audit-purge-color-a-mn3cffal"
+    },
+    {
+      "name": "POST /api/products/:id/archive",
+      "ok": true,
+      "detail": "id=4e7f0b2b-e6ac-4eb9-a907-2822a4836746"
+    },
+    {
+      "name": "DELETE /api/products/:id/purge",
+      "ok": true,
+      "detail": "id=4e7f0b2b-e6ac-4eb9-a907-2822a4836746"
+    },
+    {
+      "name": "GET /api/products after purge",
+      "ok": true,
+      "detail": "purged product hidden"
+    },
+    {
+      "name": "GET /api/products/archived after purge",
+      "ok": true,
+      "detail": "purged product hidden"
+    },
+    {
+      "name": "GET /api/stock after purge",
+      "ok": true,
+      "detail": "stock rows removed"
+    },
+    {
+      "name": "GET /api/movements after purge",
+      "ok": true,
+      "detail": "count=1"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "products purge parity",
+      "ok": true,
+      "detail": "deleted=true"
+    },
+    {
+      "name": "stock purge parity",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "product_variants purge parity",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "price_history purge parity",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "metadata preservation parity",
+      "ok": true,
+      "detail": "count=4"
+    },
+    {
+      "name": "movements preservation parity",
+      "ok": true,
+      "detail": "count=1"
+    }
+  ],
+  "preservationChecks": [
+    {
+      "name": "products row kept",
+      "ok": true,
+      "detail": "row marked deleted, not physically removed"
+    },
+    {
+      "name": "product_catalog_metadata kept",
+      "ok": true,
+      "detail": "count=4"
+    },
+    {
+      "name": "movements kept",
+      "ok": true,
+      "detail": "count=1"
+    }
+  ],
+  "sqliteIsolationChecks": [
+    {
+      "name": "products unchanged in SQLite",
+      "ok": true,
+      "detail": "reference=PG-PURGE-MN3CFFAL"
+    },
+    {
+      "name": "metadata unchanged in SQLite",
+      "ok": true,
+      "detail": "values=4"
+    }
+  ],
+  "remainingRisks": [
+    "Les ecritures `stock` et `movements` completes restent sur SQLite; le domaine catalogue/stock ne doit donc toujours pas etre active en PostgreSQL en usage normal.",
+    "La prochaine tranche devra aligner `stock:setQty`, `stock:increment`, `stock:decrement`, `stock:applyMovement` et `movements:add`, car ce sont elles qui pilotent vraiment les quantites et l historique metier.",
+    "Le produit purgé reste physiquement present dans `products` avec `is_deleted=1`; cette semantique est preservee, mais elle suppose que les lectures continuent a filtrer correctement `is_deleted`."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-purge.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-purge.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-purge.2026-03-23T15-31-30-135Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-purge.2026-03-23T15-31-30-135Z.md"
+  }
+}

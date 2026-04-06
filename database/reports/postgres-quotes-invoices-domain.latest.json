@@ -1,0 +1,100 @@
+{
+  "startedAt": "2026-03-24T13:19:44.329Z",
+  "finishedAt": "2026-03-24T13:19:55.044Z",
+  "status": "failed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "sqliteCopyPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\tmp\\quotes-invoices-domain-audit.2026-03-24T13-19-43-919Z.sqlite",
+  "baseUrl": "http://127.0.0.1:62336",
+  "routing": {
+    "configuredDriver": "postgres",
+    "quotesReadOptInEnabled": true,
+    "quotesWriteOptInEnabled": true,
+    "invoicesReadOptInEnabled": true,
+    "invoicesWriteOptInEnabled": true,
+    "catalogReadOptInEnabled": false,
+    "productWriteOptInEnabled": false,
+    "stockWriteOptInEnabled": false,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read",
+      "quotes-write",
+      "quotes-convert-write",
+      "invoices-read",
+      "invoices-write",
+      "invoices-delete-write",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read",
+      "quotes-write",
+      "quotes-convert-write",
+      "invoices-read",
+      "invoices-write",
+      "invoices-delete-write"
+    ]
+  },
+  "activationDecision": "not-activable",
+  "validated": [],
+  "sequenceChecks": [
+    {
+      "name": "auth login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "create quote for delete scenario",
+      "ok": true,
+      "detail": "id=qid-delete-mn4n63m1"
+    },
+    {
+      "name": "update quote",
+      "ok": true,
+      "detail": "id=qid-delete-mn4n63m1"
+    },
+    {
+      "name": "create cycle quotes",
+      "ok": true,
+      "detail": "ids=qid-reopen-mn4n63m1, qid-redirect-mn4n63m1"
+    },
+    {
+      "name": "create standalone invoice",
+      "ok": true,
+      "detail": "id=iid-standalone-mn4n63m1"
+    },
+    {
+      "name": "update standalone invoice",
+      "ok": true,
+      "detail": "id=iid-standalone-mn4n63m1"
+    }
+  ],
+  "parityChecks": [],
+  "activationPlan": [],
+  "remainingRisks": [
+    "Global audit failed before full validation: quotes-read parity mismatch after setup."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-invoices-domain.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-invoices-domain.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-invoices-domain.2026-03-24T13-19-55-044Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-invoices-domain.2026-03-24T13-19-55-044Z.md"
+  }
+}

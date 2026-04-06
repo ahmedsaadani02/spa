@@ -38,11 +38,17 @@
         <div>Actions</div>
       </div>
       <div class="table-row" *ngFor="let invoice of group.items">
-        <div class="mono">{{ invoice.numero }}</div>
-        <div>{{ invoice.date | date:'dd/MM/yyyy' }}</div>
-        <div>{{ invoice.client.nom }}</div>
-        <div class="amount">{{ totalTTC(invoice) | number:'1.2-2' }} DT</div>
-        <div class="actions">
+        <div class="number-cell" data-label="Numero">
+          <div class="mono">{{ displayNumber(invoice) }}</div>
+          <div class="invoice-ref" *ngIf="showInternalNumber(invoice)">Ref. {{ invoice.numero }}</div>
+          <div class="status-badge" [ngClass]="paymentStatusClass(invoice)">
+            {{ paymentStatusLabel(invoice) }}
+          </div>
+        </div>
+        <div data-label="Date">{{ invoice.date | date:'dd/MM/yyyy' }}</div>
+        <div data-label="Client">{{ invoice.client.nom }}</div>
+        <div class="amount" data-label="Total TTC">{{ totalTTC(invoice) | number:'1.2-2' }} DT</div>
+        <div class="actions" data-label="Actions">
           <a
             class="icon-btn icon-btn--ghost"
             [routerLink]="['/invoices', invoice.id, 'preview']"
@@ -80,7 +86,7 @@
           <button
             class="icon-btn icon-btn--danger"
             type="button"
-            (click)="deleteInvoice(invoice)"
+            (click)="requestDeleteInvoice(invoice)"
             aria-label="Supprimer"
             title="Supprimer"
           >
@@ -103,6 +109,25 @@
 </section>
 
 <!-- ✅ Section impression identique aux devis -->
+<div class="confirm-backdrop no-print" *ngIf="deleteConfirm.open">
+  <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="invoice-delete-title">
+    <div class="confirm-header">
+      <h3 id="invoice-delete-title">Confirmer la suppression</h3>
+    </div>
+    <p class="confirm-text">
+      Voulez-vous vraiment supprimer cette facture ?
+    </p>
+    <div class="confirm-actions">
+      <button class="btn ghost" type="button" (click)="cancelDeleteInvoice()" [disabled]="deleteConfirm.submitting">
+        Annuler
+      </button>
+      <button class="btn danger" type="button" (click)="confirmDeleteInvoice()" [disabled]="deleteConfirm.submitting">
+        {{ deleteConfirm.submitting ? 'Suppression...' : 'Supprimer' }}
+      </button>
+    </div>
+  </div>
+</div>
+
 <section class="print-area" [class.print-only]="isPrintMode">
   <ng-container *ngIf="printInvoices$ | async as printedInvoices">
     <div class="print-header">
@@ -120,7 +145,7 @@
         <div>TOTAL TTC</div>
       </div>
       <div class="print-row" *ngFor="let invoice of printedInvoices">
-        <div class="mono">{{ invoice.numero }}</div>
+        <div class="mono">{{ displayNumber(invoice) }}</div>
         <div>{{ invoice.date | date:'dd/MM/yyyy' }}</div>
         <div>{{ invoice.client.nom }}</div>
         <div class="amount">{{ totalTTC(invoice) | number:'1.2-2' }} DT</div>

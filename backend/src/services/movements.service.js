@@ -1,19 +1,17 @@
 const { assertPermission } = require('./auth-session.service');
-const {
-  listMovements,
-  addMovement
-} = require('../legacy-ipc/movements.handlers');
+const { listMovements } = require('../repositories/movements-read.runtime.repository');
+const { addMovement } = require('../repositories/movements-write.runtime.repository');
 
 const createMovementsService = ({ getDb, resolveSessionUser, setCurrentUser, clearCurrentUser }) => {
-  const withAuthorizedUser = (token, operation) => {
-    const user = resolveSessionUser(token || '');
+  const withAuthorizedUser = async (token, operation) => {
+    const user = await resolveSessionUser(token || '');
     if (!user) {
       throw new Error('UNAUTHORIZED');
     }
 
     setCurrentUser(user);
     try {
-      return operation(user);
+      return await operation(user);
     } finally {
       clearCurrentUser();
     }
@@ -28,9 +26,9 @@ const createMovementsService = ({ getDb, resolveSessionUser, setCurrentUser, cle
     },
 
     async add(token, movement) {
-      return withAuthorizedUser(token, (user) => {
+      return withAuthorizedUser(token, async (user) => {
         assertPermission('manageStock');
-        return addMovement(getDb(), movement, user);
+        return await addMovement(getDb(), movement, user);
       });
     }
   };

@@ -1,0 +1,199 @@
+diff --git a/frontend/src/app/repositories/tasks.repository.ts b/frontend/src/app/repositories/tasks.repository.ts
+--- a/frontend/src/app/repositories/tasks.repository.ts
++++ b/frontend/src/app/repositories/tasks.repository.ts
+@@
+   constructor(private ipc: AppApiService) {}
+ 
+   async list(filters: TaskFilters = {}): Promise<TaskRecord[]> {
+-    if (this.isDefaultFilters(filters) && this.hasCachedDefaultList) {
+-      return [...this.cachedDefaultList];
+-    }
+-
+     const tasks = await this.ipc.tasksList(filters);
+     if (this.isDefaultFilters(filters)) {
+       this.cachedDefaultList = tasks;
+       this.hasCachedDefaultList = true;
+@@
+   async getById(id: string): Promise<TaskRecord | null> {
+-    const cached = this.cachedDefaultList.find((task) => task.id === id);
+-    if (cached) {
+-      return cached;
++    const task = await this.ipc.tasksGetById(id);
++    if (task) {
++      this.cachedDefaultList = this.cachedDefaultList.some((cachedTask) => cachedTask.id === id)
++        ? this.cachedDefaultList.map((cachedTask) => cachedTask.id === id ? task : cachedTask)
++        : [...this.cachedDefaultList, task];
++      this.hasCachedDefaultList = true;
++      return task;
+     }
+-    return this.ipc.tasksGetById(id);
++    return this.cachedDefaultList.find((cachedTask) => cachedTask.id === id) ?? null;
+   }
+@@
+   async listMine(filters: Omit<TaskFilters, 'employeeId'> = {}): Promise<TaskRecord[]> {
+-    if (this.isDefaultMineFilters(filters) && this.hasCachedMineDefaultList) {
+-      return [...this.cachedMineDefaultList];
+-    }
+-
+     const tasks = await this.ipc.myTasksList(filters);
+     if (this.isDefaultMineFilters(filters)) {
+       this.cachedMineDefaultList = tasks;
+       this.hasCachedMineDefaultList = true;
+
+diff --git a/frontend/src/app/components/tasks/task-list.component.ts b/frontend/src/app/components/tasks/task-list.component.ts
+--- a/frontend/src/app/components/tasks/task-list.component.ts
++++ b/frontend/src/app/components/tasks/task-list.component.ts
+@@
+   proofRequirementLabel(task: TaskRecord): string {
+     if (!task.requiresPhotoProof) {
+       return '';
+     }
+     return this.language.isArabic ? 'Photo requise à la fin' : 'Photo requise à la fin';
+   }
++
++  photoProofCountLabel(task: TaskRecord): string {
++    const total = task.photoProofs.length;
++    if (!total) {
++      return '';
++    }
++    return this.language.isArabic
++      ? `${total} ${total > 1 ? '???' : '????'}`
++      : `${total} ${total > 1 ? 'photos' : 'photo'}`;
++  }
++
++  photoProofPreview(task: TaskRecord): string | null {
++    return task.photoProofs[0]?.imageUrl || task.photoProofs[0]?.imageRef || null;
++  }
+ 
+   taskTitle(task: TaskRecord): string {
+
+diff --git a/frontend/src/app/components/tasks/task-list.component.html b/frontend/src/app/components/tasks/task-list.component.html
+--- a/frontend/src/app/components/tasks/task-list.component.html
++++ b/frontend/src/app/components/tasks/task-list.component.html
+@@
+         <div [attr.data-label]="ui.admin.task">
+           <div class="task-title">{{ taskTitle(task) }}</div>
+           <div class="task-description" *ngIf="taskDescription(task)">{{ taskDescription(task) }}</div>
+           <div class="task-update-meta" *ngIf="subtaskSummary(task)">{{ subtaskSummary(task) }}</div>
+           <div class="task-update-meta" *ngIf="proofRequirementLabel(task)">{{ proofRequirementLabel(task) }}</div>
++          <div class="task-photo-summary" *ngIf="photoProofCountLabel(task)">
++            <img *ngIf="photoProofPreview(task)" class="task-photo-thumb" [src]="photoProofPreview(task)!" alt="task-photo-proof" />
++            <span>{{ photoProofCountLabel(task) }}</span>
++          </div>
+           <div class="task-note" *ngIf="task.employeeNote">{{ ui.admin.employeeNote }} : {{ task.employeeNote }}</div>
+         </div>
+
+diff --git a/frontend/src/app/components/tasks/task-list.component.css b/frontend/src/app/components/tasks/task-list.component.css
+--- a/frontend/src/app/components/tasks/task-list.component.css
++++ b/frontend/src/app/components/tasks/task-list.component.css
+@@
+ .task-note,
+ .task-update-meta {
+   margin-top: 0.4rem;
+   color: #64748b;
+   font-size: 0.84rem;
+ }
++
++.task-photo-summary {
++  margin-top: 0.55rem;
++  display: inline-flex;
++  align-items: center;
++  gap: 0.65rem;
++  color: #475569;
++  font-size: 0.84rem;
++  font-weight: 600;
++}
++
++.task-photo-thumb {
++  width: 38px;
++  height: 38px;
++  object-fit: cover;
++  border-radius: 10px;
++  border: 1px solid rgba(15, 23, 42, 0.08);
++  background: #fff;
++}
+
+diff --git a/frontend/src/app/components/tasks/task-form.component.ts b/frontend/src/app/components/tasks/task-form.component.ts
+--- a/frontend/src/app/components/tasks/task-form.component.ts
++++ b/frontend/src/app/components/tasks/task-form.component.ts
+@@
+-  async ngOnInit(): Promise<void> {
++  get existingProofsTitle(): string {
++    return this.isArabic ? '??? ????????' : 'Photos d avancement';
++  }
++
++  get existingProofsHint(): string {
++    return this.isArabic
++      ? '????? ??????? ?? ?????? ???? ??? ????????.'
++      : 'Les photos ajoutees par l employe apparaissent ici pour le suivi.';
++  }
++
++  async ngOnInit(): Promise<void> {
+
+diff --git a/frontend/src/app/components/tasks/task-form.component.html b/frontend/src/app/components/tasks/task-form.component.html
+--- a/frontend/src/app/components/tasks/task-form.component.html
++++ b/frontend/src/app/components/tasks/task-form.component.html
+@@
+       <section class="subtasks-card">
+         <div class="subtasks-header">
+           <div>
+             <strong>{{ subtasksTitle }}</strong>
+             <p>{{ subtasksHint }}</p>
+@@
+         </div>
+       </section>
++
++      <section class="subtasks-card" *ngIf="task?.photoProofs?.length">
++        <div class="subtasks-header">
++          <div>
++            <strong>{{ existingProofsTitle }}</strong>
++            <p>{{ existingProofsHint }}</p>
++          </div>
++        </div>
++
++        <div class="proof-gallery">
++          <a class="proof-link" *ngFor="let photo of task?.photoProofs" [href]="photo.imageUrl || photo.imageRef" target="_blank" rel="noreferrer">
++            <img [src]="photo.imageUrl || photo.imageRef" [alt]="photo.fileName || 'preuve-photo'" />
++            <span>{{ photo.createdAt ? (photo.createdAt | date:'dd/MM/yyyy HH:mm') : '-' }}</span>
++          </a>
++        </div>
++      </section>
+ 
+       <div class="error" *ngIf="error">{{ error === 'TASK_TITLE_REQUIRED' ? activeTitleLabel : error }}</div>
+
+diff --git a/frontend/src/app/components/tasks/task-form.component.css b/frontend/src/app/components/tasks/task-form.component.css
+--- a/frontend/src/app/components/tasks/task-form.component.css
++++ b/frontend/src/app/components/tasks/task-form.component.css
+@@
+ .subtasks-list {
+   display: grid;
+   gap: 0.75rem;
+ }
++
++.proof-gallery {
++  display: grid;
++  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
++  gap: 0.75rem;
++}
++
++.proof-link {
++  display: grid;
++  gap: 0.45rem;
++  justify-items: start;
++  text-decoration: none;
++  color: #334155;
++}
++
++.proof-link img {
++  width: 100%;
++  aspect-ratio: 1 / 1;
++  object-fit: cover;
++  border-radius: 14px;
++  border: 1px solid rgba(15, 23, 42, 0.08);
++  background: #fff;
++}
+ 
+ .subtask-row {
+   display: grid;
+   grid-template-columns: minmax(0, 1fr) auto;
+   gap: 0.75rem;

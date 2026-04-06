@@ -26,6 +26,8 @@ const EMPTY_PERMISSIONS: PermissionSet = {
   manageInventory: false,
   viewHistory: false,
   manageSalary: false,
+  manageTasks: false,
+  receiveTasks: false,
   manageAll: false
 };
 
@@ -78,7 +80,7 @@ export class AuthService {
   }
 
   async refreshCurrentUser(): Promise<AppUser | null> {
-    const user = await this.authRepository.getCurrentUser();
+    const user = await this.authRepository.getCurrentUser(true);
     this.currentUserSubject.next(user);
     return user;
   }
@@ -120,16 +122,6 @@ export class AuthService {
 
   getDefaultRoute(): string {
     if (!this.isLoggedIn()) return '/login';
-    if (this.hasPermission('manageInvoices')) return '/invoices';
-    if (this.hasPermission('manageQuotes')) return '/quotes';
-    if (this.hasPermission('manageEstimations')) return '/estimation';
-    if (this.hasPermission('manageClients')) return '/clients';
-    if (this.hasPermission('manageArchives')) return '/stock/archives';
-    if (this.hasPermission('manageInventory')) return '/inventaire';
-    if (this.hasPermission('viewHistory')) return '/stock-history';
-    if (this.hasPermission('viewStock')) return '/stock';
-    if (this.hasPermission('manageEmployees')) return '/employees';
-    if (this.hasPermission('manageSalary')) return '/employees';
-    return '/access-denied';
+    return '/dashboard';
   }
 }

@@ -208,7 +208,7 @@ export class StockComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     console.log('[stock-page] load requested');
-    await this.auth.refreshCurrentUser();
+    await this.auth.ensureInitialized();
 
     this.store.items$
       .pipe(takeUntil(this.destroy$))
@@ -272,7 +272,7 @@ export class StockComponent implements OnInit, OnDestroy {
         this.mergeMetadataIntoOptions();
       });
 
-    await this.store.load();
+    void this.store.warmStockCatalog();
   }
 
   ngOnDestroy(): void {

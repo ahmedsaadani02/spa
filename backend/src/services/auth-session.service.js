@@ -15,6 +15,8 @@ const PERMISSION_KEYS = Object.freeze({
   manageInventory: 'can_manage_inventory',
   viewHistory: 'can_view_history',
   manageSalary: 'can_manage_salary',
+  manageTasks: 'can_manage_tasks',
+  receiveTasks: 'can_receive_tasks',
   manageAll: 'can_manage_all'
 });
 
@@ -40,6 +42,8 @@ const buildPermissionSet = (row) => ({
   manageInventory: toBool(row.can_manage_inventory),
   viewHistory: toBool(row.can_view_history),
   manageSalary: toBool(row.can_manage_salary),
+  manageTasks: toBool(row.can_manage_tasks),
+  receiveTasks: toBool(row.can_receive_tasks),
   manageAll: toBool(row.can_manage_all)
 });
 
@@ -83,6 +87,8 @@ const toAppUser = (row) => {
         manageInventory: true,
         viewHistory: true,
         manageSalary: true,
+        manageTasks: true,
+        receiveTasks: true,
         manageAll: true
       }
     };

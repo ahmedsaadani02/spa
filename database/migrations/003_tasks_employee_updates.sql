@@ -1,0 +1,9 @@
+BEGIN;
+
+ALTER TABLE tasks
+  ADD COLUMN IF NOT EXISTS employee_note TEXT;
+
+ALTER TABLE tasks
+  ADD COLUMN IF NOT EXISTS updated_by_employee_at TIMESTAMPTZ;
+
+COMMIT;

@@ -1,7 +1,16 @@
 const { randomUUID } = require('crypto');
-const { listProducts } = require('./products.handlers');
 const { assertPermission, getCurrentUser, hasPermission } = require('../services/auth-session.service');
 const { resolveProductImageUrl } = require('../utils/product-images');
+const { listProducts } = require('../repositories/sqlite/catalog-read.repository');
+const {
+  setStockQty: setStockQtyWrite,
+  incrementStockQty: incrementStockQtyWrite,
+  applyStockMovement: applyStockMovementWrite
+} = require('../repositories/stock-write.runtime.repository');
+const {
+  getStockRows: getStockRowsRead,
+  buildStockItems: buildStockItemsRead
+} = require('../repositories/catalog-read.runtime.repository');
 
 const getStockRows = (db) => db.prepare('SELECT product_id, color, qty FROM stock').all();
 
@@ -256,68 +265,68 @@ const applyStockMovement = (db, movement, currentUser) => {
 };
 
 const registerStockHandlers = (ipcMain, getDb) => {
-  ipcMain.handle('stock:getAll', () => {
+  ipcMain.handle('stock:getAll', async () => {
     try {
       assertPermission('viewStock');
-      return getStockRows(getDb());
+      return await getStockRowsRead(getDb());
     } catch (error) {
       console.error('[stock:getAll] error', error);
       return [];
     }
   });
 
-  ipcMain.handle('stock:items', () => {
+  ipcMain.handle('stock:items', async () => {
     try {
       assertPermission('viewStock');
-      return buildStockItems(getDb());
+      return await buildStockItemsRead(getDb());
     } catch (error) {
       console.error('[stock:items] error', error);
       return [];
     }
   });
 
-  ipcMain.handle('stock:setQty', (event, productId, color, qty) => {
+  ipcMain.handle('stock:setQty', async (event, productId, color, qty) => {
     try {
       assertAnyPermission(['adjustStock', 'manageStock']);
       if (!productId || !color) return false;
-      return setStockQty(getDb(), productId, color, qty);
+      return await setStockQtyWrite(getDb(), productId, color, qty);
     } catch (error) {
       console.error('[stock:setQty] error', error);
       return false;
     }
   });
 
-  ipcMain.handle('stock:increment', (event, productId, color, delta) => {
+  ipcMain.handle('stock:increment', async (event, productId, color, delta) => {
     try {
       assertAnyPermission(['addStock', 'manageStock']);
       if (!productId || !color) return false;
-      return incrementStockQty(getDb(), productId, color, delta);
+      return await incrementStockQtyWrite(getDb(), productId, color, delta);
     } catch (error) {
       console.error('[stock:increment] error', error);
       return false;
     }
   });
 
-  ipcMain.handle('stock:decrement', (event, productId, color, delta) => {
+  ipcMain.handle('stock:decrement', async (event, productId, color, delta) => {
     try {
       assertAnyPermission(['removeStock', 'manageStock']);
       if (!productId || !color) return false;
       const safeDelta = Math.abs(Number(delta) || 0);
-      return incrementStockQty(getDb(), productId, color, -safeDelta);
+      return await incrementStockQtyWrite(getDb(), productId, color, -safeDelta);
     } catch (error) {
       console.error('[stock:decrement] error', error);
       return false;
     }
   });
 
-  ipcMain.handle('stock:applyMovement', (event, movement) => {
+  ipcMain.handle('stock:applyMovement', async (event, movement) => {
     try {
       assertAnyPermission([inferMovementPermission(movement), 'manageStock']);
       const currentUser = getCurrentUser();
       if (!currentUser) {
         return false;
       }
-      return applyStockMovement(getDb(), movement, currentUser);
+      return await applyStockMovementWrite(getDb(), movement, currentUser);
     } catch (error) {
       console.error('[stock:applyMovement] error', error);
       return false;

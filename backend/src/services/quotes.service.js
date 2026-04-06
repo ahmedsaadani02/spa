@@ -1,15 +1,17 @@
 const {
-  listQuotes,
-  getQuoteById,
   putQuote,
-  deleteQuote,
-  convertQuoteToInvoice
-} = require('../legacy-ipc/quotes.handlers');
+  deleteQuote
+} = require('../repositories/quotes-write.runtime.repository');
+const { convertQuoteToInvoice } = require('../repositories/quotes-convert.runtime.repository');
+const {
+  listQuotes,
+  getQuoteById
+} = require('../repositories/quotes-read.runtime.repository');
 const { assertPermission } = require('./auth-session.service');
 
 const createQuotesService = ({ getDb, resolveSessionUser, setCurrentUser, clearCurrentUser }) => {
-  const withAuthorizedUser = (token, permissions, operation) => {
-    const user = resolveSessionUser(token || '');
+  const withAuthorizedUser = async (token, permissions, operation) => {
+    const user = await resolveSessionUser(token || '');
     if (!user) {
       throw new Error('UNAUTHORIZED');
     }

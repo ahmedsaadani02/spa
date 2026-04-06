@@ -9,6 +9,7 @@ import { SalaryBonusesRepository } from '../../repositories/salary-bonuses.repos
 import { SalaryOvertimesRepository } from '../../repositories/salary-overtimes.repository';
 import { AuthService } from '../../services/auth.service';
 import { SalarySummaryService } from '../../services/salary-summary.service';
+import { getEmployeeAccountPasswordError } from '../../utils/employee-password-policy';
 
 @Component({
   selector: 'app-employee-detail',
@@ -76,7 +77,7 @@ export class EmployeeDetailComponent implements OnInit {
   });
 
   resetPasswordForm = this.fb.group({
-    newPassword: ['', [Validators.required, Validators.minLength(10)]]
+    newPassword: ['', [Validators.required]]
   });
 
   constructor(
@@ -328,6 +329,15 @@ export class EmployeeDetailComponent implements OnInit {
     }
 
     const raw = this.resetPasswordForm.getRawValue();
+    const passwordError = getEmployeeAccountPasswordError(raw.newPassword, this.employee?.role, { optional: false });
+    if (passwordError) {
+      this.resetPasswordError = passwordError;
+      console.log('[salary:reset-password] ui updated', { success: false, reason: 'password-policy' });
+      this.resettingPassword = false;
+      this.triggerUiRender('salary:reset-password:policy-error');
+      return;
+    }
+
     try {
       console.log('[salary:reset-password] request sent', { employeeId: this.employeeId });
       const ok = await this.authService.resetPassword(this.employeeId, raw.newPassword ?? '');

@@ -3,6 +3,7 @@ import type { Invoice } from '../models/invoice';
 import type { Quote } from '../models/quote';
 import type { StockColor, StockItem } from '../models/stock-item';
 import type { StockMovement } from '../models/stock-movement';
+import type { MyTaskUpdateInput, TaskNotificationRecord, TaskRecord, TaskUpsertInput } from '../models/task.models';
 
 export interface SpaProductRow {
   id: string;
@@ -167,10 +168,11 @@ export interface SpaPrintResult {
 }
 
 export interface SpaDocumentRequest {
-  docType: 'invoice' | 'quote';
+  docType: 'invoice' | 'quote' | 'inventory';
   documentNumber?: string;
   html?: string;
   title?: string;
+  pageOrientation?: 'portrait' | 'landscape';
 }
 
 export interface SpaDocumentPdfResult {
@@ -232,6 +234,8 @@ export interface PermissionSet {
   manageInventory: boolean;
   viewHistory: boolean;
   manageSalary: boolean;
+  manageTasks: boolean;
+  receiveTasks: boolean;
   manageAll: boolean;
 }
 
@@ -300,6 +304,8 @@ export interface EmployeeRecord {
   canManageInventory: boolean;
   canViewHistory: boolean;
   canManageSalary: boolean;
+  canManageTasks: boolean;
+  canReceiveTasks: boolean;
   canManageAll: boolean;
   lastLoginAt: string | null;
   createdAt: string | null;
@@ -339,6 +345,8 @@ export interface EmployeeUpsertInput {
   canManageInventory?: boolean;
   canViewHistory?: boolean;
   canManageSalary?: boolean;
+  canManageTasks?: boolean;
+  canReceiveTasks?: boolean;
   canManageAll?: boolean;
 }
 
@@ -451,6 +459,23 @@ export interface SpaApi {
     update: (id: string, payload: EmployeeUpsertInput) => Promise<EmployeeRecord | null>;
     delete: (id: string) => Promise<boolean>;
     setActive: (id: string, actif: boolean) => Promise<boolean>;
+  };
+  tasks: {
+    list: (filters?: { employeeId?: string; status?: string; priority?: string }) => Promise<TaskRecord[]>;
+    getById: (id: string) => Promise<TaskRecord | null>;
+    create: (payload: TaskUpsertInput) => Promise<TaskRecord | null>;
+    update: (id: string, payload: TaskUpsertInput) => Promise<TaskRecord | null>;
+    delete: (id: string) => Promise<boolean>;
+  };
+  myTasks: {
+    list: (filters?: { status?: string; priority?: string }) => Promise<TaskRecord[]>;
+    getById: (id: string) => Promise<TaskRecord | null>;
+    update: (id: string, payload: MyTaskUpdateInput) => Promise<TaskRecord | null>;
+  };
+  taskNotifications: {
+    list: (limit?: number) => Promise<TaskNotificationRecord[]>;
+    markRead: (id: string) => Promise<TaskNotificationRecord | null>;
+    onMessage: (listener: (notification: TaskNotificationRecord) => void) => () => void;
   };
   salary: {
     advances: {

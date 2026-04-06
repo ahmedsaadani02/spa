@@ -41,6 +41,7 @@ import type { Invoice } from '../models/invoice';
 import type { Quote } from '../models/quote';
 import type { StockColor, StockItem } from '../models/stock-item';
 import type { StockMovement } from '../models/stock-movement';
+import type { MyTaskUpdateInput, TaskNotificationRecord, TaskRecord, TaskUpsertInput } from '../models/task.models';
 
 const WEB_TOKEN_KEY = 'spa:web-http-token';
 let webSpaApiSingleton: SpaApi | null = null;
@@ -57,6 +58,9 @@ const PRODUCTS_URL = '/api/products';
 const STOCK_URL = '/api/stock';
 const MOVEMENTS_URL = '/api/movements';
 const EMPLOYEES_URL = '/api/employees';
+const TASKS_URL = '/api/tasks';
+const MY_TASKS_URL = '/api/my-tasks';
+const TASK_NOTIFICATIONS_URL = '/api/task-notifications';
 const SALARY_URL = '/api/salary';
 const INVENTORY_URL = '/api/inventory';
 
@@ -86,6 +90,15 @@ const setToken = (token: string | null): void => {
   } catch {
     // ignore
   }
+};
+
+const buildAuthedEventSourceUrl = (url: string): string => {
+  const token = getToken();
+  if (!token) {
+    return url;
+  }
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}token=${encodeURIComponent(token)}`;
 };
 
 const stripTokenFromAuthResult = (result: AuthLikeResult): AuthBeginLoginResult => {
@@ -220,7 +233,11 @@ const sanitizeFileToken = (value: string): string => String(value || '')
   .replace(/(^-|-$)/g, '') || Date.now().toString();
 
 const buildPdfFilename = (options: SpaDocumentRequest): string => {
-  const prefix = options.docType === 'invoice' ? 'facture' : 'devis';
+  const prefix = options.docType === 'invoice'
+    ? 'facture'
+    : options.docType === 'quote'
+      ? 'devis'
+      : 'inventaire';
   const token = sanitizeFileToken(options.documentNumber || Date.now().toString());
   return `${prefix}-${token}.pdf`;
 };
@@ -384,6 +401,8 @@ const webExportDocument = async (options: SpaDocumentRequest): Promise<SpaDocume
   }
 
   try {
+    const orientation = options.pageOrientation === 'landscape' ? 'landscape' : 'portrait';
+    const pageWidth = orientation === 'landscape' ? '297mm' : '210mm';
     const html2pdfModule = await import('html2pdf.js');
     const html2pdfFactory = (html2pdfModule as unknown as { default?: any }).default ?? (html2pdfModule as unknown as any);
     if (typeof html2pdfFactory !== 'function') {
@@ -405,7 +424,7 @@ const webExportDocument = async (options: SpaDocumentRequest): Promise<SpaDocume
     stage.style.position = 'fixed';
     stage.style.left = '-10000px';
     stage.style.top = '0';
-    stage.style.width = '210mm';
+    stage.style.width = pageWidth;
     stage.style.background = '#ffffff';
     stage.style.zIndex = '-1';
     stage.innerHTML = iframeDoc.body.innerHTML;
@@ -437,7 +456,7 @@ const webExportDocument = async (options: SpaDocumentRequest): Promise<SpaDocume
           logging: false,
           backgroundColor: '#ffffff'
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation },
         pagebreak: { mode: ['css', 'legacy'] }
       })
       .from(sourceElement)
@@ -598,6 +617,83 @@ const createWebSpaApi = (): SpaApi => ({
       body: { actif },
       withAuth: true
     })
+  },
+  tasks: {
+    list: (filters?: { employeeId?: string; status?: string; priority?: string }) => {
+      const params = new URLSearchParams();
+      if (filters?.employeeId) params.set('employeeId', filters.employeeId);
+      if (filters?.status) params.set('status', filters.status);
+      if (filters?.priority) params.set('priority', filters.priority);
+      const query = params.toString();
+      const url = query ? `${TASKS_URL}?${query}` : TASKS_URL;
+      return invokeWebApiRequest<TaskRecord[]>(url, { method: 'GET', withAuth: true });
+    },
+    getById: (id: string) => invokeWebApiRequest<TaskRecord | null>(`${TASKS_URL}/${encodeURIComponent(id)}`, { method: 'GET', withAuth: true }),
+    create: (payload: TaskUpsertInput) => invokeWebApiRequest<TaskRecord | null>(TASKS_URL, {
+      method: 'POST',
+      body: payload,
+      withAuth: true
+    }),
+    update: (id: string, payload: TaskUpsertInput) => invokeWebApiRequest<TaskRecord | null>(`${TASKS_URL}/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: payload,
+      withAuth: true
+    }),
+    delete: (id: string) => invokeWebApiRequest<boolean>(`${TASKS_URL}/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      withAuth: true
+    })
+  },
+  myTasks: {
+    list: (filters?: { status?: string; priority?: string }) => {
+      const params = new URLSearchParams();
+      if (filters?.status) params.set('status', filters.status);
+      if (filters?.priority) params.set('priority', filters.priority);
+      const query = params.toString();
+      const url = query ? `${MY_TASKS_URL}?${query}` : MY_TASKS_URL;
+      return invokeWebApiRequest<TaskRecord[]>(url, { method: 'GET', withAuth: true });
+    },
+    getById: (id: string) => invokeWebApiRequest<TaskRecord | null>(`${MY_TASKS_URL}/${encodeURIComponent(id)}`, { method: 'GET', withAuth: true }),
+    update: (id: string, payload: MyTaskUpdateInput) => invokeWebApiRequest<TaskRecord | null>(`${MY_TASKS_URL}/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: payload,
+      withAuth: true
+    })
+  },
+  taskNotifications: {
+    list: (limit = 20) => invokeWebApiRequest<TaskNotificationRecord[]>(`${TASK_NOTIFICATIONS_URL}?limit=${encodeURIComponent(String(limit))}`, {
+      method: 'GET',
+      withAuth: true
+    }),
+    markRead: (id: string) => invokeWebApiRequest<TaskNotificationRecord | null>(`${TASK_NOTIFICATIONS_URL}/${encodeURIComponent(id)}/read`, {
+      method: 'PATCH',
+      withAuth: true
+    }),
+    onMessage: (listener: (notification: TaskNotificationRecord) => void) => {
+      if (!hasWindow() || typeof EventSource === 'undefined') {
+        return () => {};
+      }
+
+      const source = new EventSource(buildAuthedEventSourceUrl(`${TASK_NOTIFICATIONS_URL}/stream`));
+      const onNotification = (event: MessageEvent<string>) => {
+        try {
+          const payload = JSON.parse(event.data) as TaskNotificationRecord;
+          listener(payload);
+        } catch {
+          // ignore malformed payloads
+        }
+      };
+
+      source.addEventListener('task-notification', onNotification as EventListener);
+      source.onerror = () => {
+        // Let EventSource handle auto-reconnect.
+      };
+
+      return () => {
+        source.removeEventListener('task-notification', onNotification as EventListener);
+        source.close();
+      };
+    }
   },
   salary: {
     advances: {
@@ -796,3 +892,5 @@ export const getWebSpaApi = (): SpaApi => {
   }
   return webSpaApiSingleton;
 };
+
+export const getWebAppApi = getWebSpaApi;

@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Invoice } from '../../models/invoice';
-import { IpcService } from '../../services/ipc.service';
+import { AppApiService } from '../../services/app-api.service';
 import { InvoicesRepository } from '../invoices.repository';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InvoicesIpcRepository implements InvoicesRepository {
-  constructor(private ipc: IpcService) {}
+  constructor(private ipc: AppApiService) {}
 
   async getAll(): Promise<Invoice[]> {
     return this.ipc.invoicesGetAll();

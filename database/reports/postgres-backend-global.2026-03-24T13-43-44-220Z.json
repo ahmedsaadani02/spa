@@ -1,0 +1,227 @@
+{
+  "startedAt": "2026-03-24T13:41:29.875Z",
+  "finishedAt": "2026-03-24T13:43:44.219Z",
+  "status": "completed",
+  "activationDecision": "activable-in-controlled-environment",
+  "baseUrl": "http://127.0.0.1:60782",
+  "routing": {
+    "configuredDriver": "postgres",
+    "quotesReadOptInEnabled": true,
+    "quotesWriteOptInEnabled": true,
+    "invoicesReadOptInEnabled": true,
+    "invoicesWriteOptInEnabled": true,
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "stockWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read",
+      "quotes-write",
+      "quotes-convert-write",
+      "invoices-read",
+      "invoices-write",
+      "invoices-delete-write",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "quotes-read",
+      "quotes-write",
+      "quotes-convert-write",
+      "invoices-read",
+      "invoices-write",
+      "invoices-delete-write",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ]
+  },
+  "childAudits": [
+    {
+      "name": "Tranche 1 clients/employees/salary",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche1-validation.latest.json"
+    },
+    {
+      "name": "Tranche 2 auth/session",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-tranche2-auth-session.latest.json"
+    },
+    {
+      "name": "Domaine catalogue/stock",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.latest.json"
+    },
+    {
+      "name": "Quotes read",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-read.latest.json"
+    },
+    {
+      "name": "Quotes write",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-write.latest.json"
+    },
+    {
+      "name": "Invoices read",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-invoices-read.latest.json"
+    },
+    {
+      "name": "Invoices write",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-invoices-write.latest.json"
+    },
+    {
+      "name": "Quotes convertToInvoice",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-quotes-convert.latest.json"
+    },
+    {
+      "name": "Invoices delete",
+      "ok": true,
+      "detail": "exit=0; report=completed",
+      "reportPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-invoices-delete.latest.json"
+    }
+  ],
+  "integrationChecks": [
+    {
+      "name": "auth login",
+      "ok": true,
+      "detail": "token=7d3ea28b..."
+    },
+    {
+      "name": "GET /api/auth/me",
+      "ok": true,
+      "detail": "id=backend-global-owner-mn4o0san"
+    },
+    {
+      "name": "GET /api/auth/permissions/manageInvoices",
+      "ok": true,
+      "detail": "result=true"
+    },
+    {
+      "name": "GET /api/clients",
+      "ok": true,
+      "detail": "count=8"
+    },
+    {
+      "name": "GET /api/employees",
+      "ok": true,
+      "detail": "count=5"
+    },
+    {
+      "name": "GET /api/salary/summary",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "GET /api/products",
+      "ok": true,
+      "detail": "count=61"
+    },
+    {
+      "name": "GET /api/products/archived",
+      "ok": true,
+      "detail": "count=3"
+    },
+    {
+      "name": "GET /api/products/metadata",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "GET /api/stock",
+      "ok": true,
+      "detail": "count=178"
+    },
+    {
+      "name": "GET /api/stock/items",
+      "ok": true,
+      "detail": "count=61"
+    },
+    {
+      "name": "GET /api/inventory",
+      "ok": true,
+      "detail": "items=61"
+    },
+    {
+      "name": "GET /api/movements",
+      "ok": true,
+      "detail": "count=17"
+    },
+    {
+      "name": "GET /api/quotes",
+      "ok": true,
+      "detail": "count=4"
+    },
+    {
+      "name": "GET /api/invoices",
+      "ok": true,
+      "detail": "count=6"
+    }
+  ],
+  "validated": [
+    "Les audits profonds PostgreSQL deja disponibles ont tous repasse avec succes avant la synthese globale: auth/session, clients/employees/salary, catalogue/stock, puis quotes/invoices via les sous-flux prepares.",
+    "Sous un meme runtime `DB_DRIVER=postgres` avec tous les opt-ins domaines actives, une session autentifiee peut traverser sans erreur `auth/session`, `clients`, `employees`, `salary`, `products`, `stock`, `inventory`, `movements`, `quotes` et `invoices`.",
+    "Les sequences metier realistes restent couvertes par les audits de domaine specialises, et la passe d integration globale confirme qu elles coexistent correctement sous le meme backend PostgreSQL de validation."
+  ],
+  "activationPlan": [
+    "En environnement de validation, definir `DB_DRIVER=postgres`, `DB_ENABLE_POSTGRES_CATALOG_READ=1`, `DB_ENABLE_POSTGRES_PRODUCT_WRITES=1`, `DB_ENABLE_POSTGRES_STOCK_WRITES=1`, `DB_ENABLE_POSTGRES_QUOTES_READ=1`, `DB_ENABLE_POSTGRES_QUOTES_WRITES=1`, `DB_ENABLE_POSTGRES_INVOICES_READ=1` et `DB_ENABLE_POSTGRES_INVOICES_WRITES=1`.",
+    "Conserver SQLite et `DATABASE_PATH` pendant la premiere activation controlee pour garder un rollback simple vers le runtime historique.",
+    "Activer d abord sur une instance backend dediee de validation, rejouer `npm run db:pg:backend-global:audit`, puis seulement ouvrir les tests applicatifs ou utilisateurs cibles.",
+    "Surveiller en parallele les lectures/ecritures PostgreSQL, les journaux d auth/session et les flux documentaires pendant la premiere fenetre de validation avant toute bascule plus large."
+  ],
+  "remainingRisks": [
+    "Les valeurs par defaut du depot restent volontairement sur SQLite ou opt-in a `0`; l activation PostgreSQL doit rester une decision d environnement, pas une bascule code par defaut.",
+    "SQLite reste le plan de retour arriere le plus simple tant que la validation controlee n a pas ete observee dans votre environnement cible.",
+    "La session applicative reste stockee en memoire du process Node; cela reste a traiter a part si vous prevoyez plusieurs instances backend actives en meme temps."
+  ],
+  "cleanupRecommendations": [
+    "Ne supprimer aucun chemin SQLite ni `DATABASE_PATH` avant au moins une periode de burn-in en environnement controle avec PostgreSQL actif.",
+    "Quand la validation controlee sera stable, le nettoyage le plus sur sera d abord documentaire: retirer les mentions de mode audit-only devenues obsoletes, puis seulement ensuite envisager la simplification des branches SQLite devenues inutiles.",
+    "Conserver les scripts d audit globaux et de domaine meme apres activation; ils servent de filet de securite avant toute bascule finale ou refactor de nettoyage."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-backend-global.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-backend-global.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-backend-global.2026-03-24T13-43-44-220Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-backend-global.2026-03-24T13-43-44-220Z.md"
+  }
+}

@@ -11,7 +11,7 @@
 <form class="form-grid" [formGroup]="form" (ngSubmit)="save(false)">
   <section class="card">
     <h2>Informations devis</h2>
-    <div class="grid-3">
+    <div class="grid-2">
       <label class="field">
         <span>Numero</span>
         <input class="input" formControlName="numero" type="text">
@@ -21,6 +21,11 @@
       <label class="field">
         <span>Date</span>
         <input class="input" formControlName="date" type="date">
+      </label>
+
+      <label class="field">
+        <span>Bon de commande N°</span>
+        <input class="input" formControlName="purchaseOrderNumber" type="text" placeholder="1">
       </label>
 
       <div class="field">

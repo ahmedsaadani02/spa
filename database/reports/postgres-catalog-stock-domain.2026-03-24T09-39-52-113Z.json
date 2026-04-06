@@ -1,0 +1,287 @@
+{
+  "startedAt": "2026-03-24T09:39:28.627Z",
+  "finishedAt": "2026-03-24T09:39:51.587Z",
+  "status": "failed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:61286",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "stockWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ]
+  },
+  "activationDecision": "not-activable-yet",
+  "validated": [],
+  "sequenceChecks": [
+    {
+      "name": "auth login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "create product",
+      "ok": true,
+      "detail": "id=63db24ce-3fb9-4d62-afa0-cc9479c1578f"
+    },
+    {
+      "name": "update product",
+      "ok": true,
+      "detail": "id=63db24ce-3fb9-4d62-afa0-cc9479c1578f"
+    },
+    {
+      "name": "update price",
+      "ok": true,
+      "detail": "color=pg-audit-csd-color-a-mn4faub6"
+    },
+    {
+      "name": "restore price",
+      "ok": true,
+      "detail": "color=pg-audit-csd-color-a-mn4faub6"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "after create active product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create archived product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create metadata",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create stock rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create stock item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create inventory item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create inventory total value",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create price history",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create movements",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct lifecycle",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct variants",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct metadata rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct stock count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct price history count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after create direct movement count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update active product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update archived product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update metadata",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update stock rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update stock item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update inventory item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update inventory total value",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update price history",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update movements",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct lifecycle",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct variants",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct metadata rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct stock count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct price history count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after update direct movement count",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes active product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes archived product",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes metadata",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes stock rows",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes stock item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes inventory item",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    },
+    {
+      "name": "after price writes inventory total value",
+      "ok": true,
+      "detail": "matched SQLite reference"
+    }
+  ],
+  "activationPlan": [],
+  "remainingRisks": [
+    "after price writes parity mismatch for price history."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.2026-03-24T09-39-52-113Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-catalog-stock-domain.2026-03-24T09-39-52-113Z.md"
+  }
+}

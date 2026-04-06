@@ -1,0 +1,187 @@
+{
+  "startedAt": "2026-03-24T08:22:18.652Z",
+  "finishedAt": "2026-03-24T08:22:31.197Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:54910",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "stockWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write",
+      "products-price-write",
+      "products-purge-write",
+      "stock-set-qty-write",
+      "stock-delta-write",
+      "movements-write",
+      "stock-apply-movement-write"
+    ]
+  },
+  "writeCartography": [
+    "`stock:applyMovement` calcule `before` depuis le stock courant, derive `after` apres application du delta signe et clamp a `0` si necessaire.",
+    "`stock:applyMovement` met a jour `stock.qty`, synchronise `product_variants.stock`, met a jour `products.last_updated`, puis ecrit une ligne `movements` dans le meme flux logique.",
+    "La ligne `movements` conserve `reason`, `actor`, `employee_id`, `username` et les metadonnees produit (`reference`, `label`, `category`, `serie`) avec fallback sur le produit si elles ne sont pas fournies."
+  ],
+  "validated": [
+    "`stock:applyMovement` est compatible PostgreSQL pour la mutation combinee stock + historique, avec parite validee contre une execution de reference SQLite.",
+    "Les effets sur `stock`, `product_variants`, `products.last_updated`, `movements`, `before`, `after` et `delta applique` sont conformes a SQLite pour un mouvement positif puis un mouvement negatif avec clamp a `0`.",
+    "La `reason`, l `actor`, `employee_id`, `username` et les metadonnees produit (`reference`, `label`, `category`, `serie`) sont preserves comme en SQLite.",
+    "Cette sous-etape reste audit-only et exige `DB_DRIVER=postgres`, `DB_ENABLE_POSTGRES_CATALOG_READ=1`, `DB_ENABLE_POSTGRES_PRODUCT_WRITES=1` et `DB_ENABLE_POSTGRES_STOCK_WRITES=1`."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "POST /api/products",
+      "ok": true,
+      "detail": "id=147a36e9-3d41-47d4-9738-6d2507d7e140"
+    },
+    {
+      "name": "PATCH /api/stock/:productId/:color/set-qty",
+      "ok": true,
+      "detail": "setup qty=2"
+    },
+    {
+      "name": "POST /api/stock/movements positive",
+      "ok": true,
+      "detail": "id=a3a65027-4435-478b-952f-c9ba6a501378"
+    },
+    {
+      "name": "POST /api/stock/movements negative",
+      "ok": true,
+      "detail": "id=8f135ce8-19ab-4501-a4f0-095a50f66ef2"
+    },
+    {
+      "name": "GET /api/stock after movement sequence",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "GET /api/stock/items after movement sequence",
+      "ok": true,
+      "detail": "reference=PG-APPLY-MN4CJLSP"
+    },
+    {
+      "name": "GET /api/movements after movement sequence",
+      "ok": true,
+      "detail": "count=2"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "stock parity after positive movement",
+      "ok": true,
+      "detail": "qty=6"
+    },
+    {
+      "name": "product_variants parity after positive movement",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "movements parity after positive movement",
+      "ok": true,
+      "detail": "id=a3a65027-4435-478b-952f-c9ba6a501378"
+    },
+    {
+      "name": "stock parity after negative movement",
+      "ok": true,
+      "detail": "qty=0"
+    },
+    {
+      "name": "product_variants parity after negative movement",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "movements parity after negative movement",
+      "ok": true,
+      "detail": "count=2"
+    },
+    {
+      "name": "product semantic parity after movement sequence",
+      "ok": true,
+      "detail": "priceTtc=12.5"
+    }
+  ],
+  "sideEffects": [
+    {
+      "name": "products.last_updated updated",
+      "ok": true,
+      "detail": "changed after positive and negative movements"
+    },
+    {
+      "name": "product_variants.stock synchronized",
+      "ok": true,
+      "detail": "color=pg-audit-apply-color-a-mn4cjlsp positive=6 negative=0"
+    },
+    {
+      "name": "stock clamp preserved",
+      "ok": true,
+      "detail": "color=pg-audit-apply-color-a-mn4cjlsp qty=0 after negative movement"
+    },
+    {
+      "name": "before/after and applied delta preserved",
+      "ok": true,
+      "detail": "positive=2->6 delta=4; negative=6->0 delta=-6"
+    },
+    {
+      "name": "reason, actor and metadata preserved",
+      "ok": true,
+      "detail": "actor=Stock ApplyMovement Audit"
+    }
+  ],
+  "sqliteIsolationChecks": [
+    {
+      "name": "products unchanged in SQLite",
+      "ok": true,
+      "detail": "reference=PG-APPLY-MN4CJLSP"
+    },
+    {
+      "name": "metadata unchanged in SQLite",
+      "ok": true,
+      "detail": "values=4"
+    }
+  ],
+  "remainingRisks": [],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-apply-movement.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-apply-movement.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-apply-movement.2026-03-24T08-22-31-727Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-stock-apply-movement.2026-03-24T08-22-31-727Z.md"
+  }
+}

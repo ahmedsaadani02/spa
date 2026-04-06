@@ -1,0 +1,191 @@
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h1>{{ ui.admin.title }}</h1>
+      <p>{{ ui.admin.subtitle }}</p>
+    </div>
+    <div class="actions" *ngIf="canManageTasks">
+      <a class="btn primary" routerLink="/tasks/new">{{ ui.admin.newTask }}</a>
+    </div>
+  </div>
+
+  <section class="card task-overview">
+    <div class="task-overview-header">
+      <div>
+        <p class="section-eyebrow">{{ ui.admin.quickPilot }}</p>
+        <h2>{{ ui.admin.quickView }}</h2>
+      </div>
+      <a class="task-overview-link" routerLink="/tasks/new" *ngIf="canManageTasks">{{ ui.admin.newTask }}</a>
+    </div>
+
+    <div class="task-overview-loading" *ngIf="loading">
+      <span class="loading-dot"></span>
+      <div>
+        <strong>{{ ui.admin.loadingStrong }}</strong>
+        <p>{{ ui.admin.loadingText }}</p>
+      </div>
+    </div>
+
+    <div class="task-overview-error" *ngIf="!loading && error">{{ error }}</div>
+
+    <div class="task-metrics" *ngIf="!loading && !error">
+      <article class="task-metric" *ngFor="let metric of taskMetrics" [class]="'task-metric tone-' + metric.tone">
+        <span class="task-metric-value">{{ metric.value }}</span>
+        <span class="task-metric-label">{{ metric.label }}</span>
+      </article>
+    </div>
+
+    <div class="task-list-preview" *ngIf="!loading && !error && highlightedTasks.length > 0">
+      <article class="task-preview-row" *ngFor="let task of highlightedTasks; trackBy: trackByTask">
+        <div>
+          <strong>{{ taskTitle(task) }}</strong>
+          <p>{{ task.employeeName || ui.admin.unassigned }}</p>
+        </div>
+        <div class="task-preview-meta">
+          <span class="task-status">{{ statusLabel(task.status) }}</span>
+          <span>{{ task.progress }}%</span>
+          <span>{{ task.dueDate ? (task.dueDate | date:'dd/MM/yyyy') : ui.misc.noDueDate }}</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="filters">
+      <label class="field">
+        <span>{{ ui.admin.employee }}</span>
+        <select class="input" [formControl]="employeeControl">
+          <option value="all">{{ ui.admin.allEmployees }}</option>
+          <option *ngFor="let employee of employees" [value]="employee.id">
+            {{ employee.nom }}
+          </option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>{{ ui.admin.status }}</span>
+        <select class="input" [formControl]="statusControl">
+          <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>{{ ui.admin.priority }}</span>
+        <select class="input" [formControl]="priorityControl">
+          <option *ngFor="let option of priorityOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="error" *ngIf="error">{{ error }}</div>
+    <div class="loading-state" *ngIf="loading">
+      <span class="loading-dot"></span>
+      <div>
+        <strong>{{ ui.admin.loadingStrong }}</strong>
+        <p>{{ ui.admin.loadingListText }}</p>
+      </div>
+    </div>
+    <div class="empty" *ngIf="!loading && tasks.length === 0">{{ ui.admin.noTask }}</div>
+
+    <div class="table" *ngIf="tasks.length > 0">
+      <div class="row head">
+        <div>{{ ui.admin.task }}</div>
+        <div>{{ ui.admin.employee }}</div>
+        <div>{{ ui.admin.createdAt }}</div>
+        <div>{{ ui.admin.status }}</div>
+        <div>{{ ui.admin.priority }}</div>
+        <div>{{ ui.admin.dueDate }}</div>
+        <div>{{ ui.admin.progress }}</div>
+        <div>{{ ui.admin.actions }}</div>
+      </div>
+
+      <div class="row" *ngFor="let task of tasks; trackBy: trackByTask">
+        <div [attr.data-label]="ui.admin.task">
+          <div class="task-title">{{ taskTitle(task) }}</div>
+          <div class="task-description" *ngIf="taskDescription(task)">{{ taskDescription(task) }}</div>
+          <div class="task-update-meta" *ngIf="subtaskSummary(task)">{{ subtaskSummary(task) }}</div>
+          <div class="task-update-meta" *ngIf="proofRequirementLabel(task)">{{ proofRequirementLabel(task) }}</div>
+          <div class="task-photo-summary" *ngIf="photoProofCountLabel(task)">
+            <img *ngIf="photoProofPreview(task)" class="task-photo-thumb" [src]="photoProofPreview(task)!" alt="task-photo-proof" />
+            <span>{{ photoProofCountLabel(task) }}</span>
+          </div>
+          <div class="task-note" *ngIf="task.employeeNote">{{ ui.admin.employeeNote }} : {{ task.employeeNote }}</div>
+        </div>
+        <div [attr.data-label]="ui.admin.employee">{{ task.employeeName || ui.admin.unassigned }}</div>
+        <div [attr.data-label]="ui.admin.createdAt">
+          <div>{{ task.createdAt ? (task.createdAt | date:'dd/MM/yyyy HH:mm') : '-' }}</div>
+          <div class="task-update-meta">{{ ui.admin.createdBy }} : {{ taskCreatedBy(task) }}</div>
+        </div>
+        <div [attr.data-label]="ui.admin.status">
+          <span class="status-badge" [class]="'status-badge status-' + task.status">
+            {{ statusLabel(task.status) }}
+          </span>
+        </div>
+        <div [attr.data-label]="ui.admin.priority">
+          <span class="priority-tag" [class]="'priority-tag priority-' + task.priority">
+            {{ priorityLabel(task.priority) }}
+          </span>
+        </div>
+        <div [attr.data-label]="ui.admin.dueDate">{{ task.dueDate ? (task.dueDate | date:'dd/MM/yyyy') : '-' }}</div>
+        <div [attr.data-label]="ui.admin.progress">
+          <div class="progress-wrap">
+            <div class="progress-bar">
+              <span class="progress-fill" [style.width.%]="task.progress"></span>
+            </div>
+            <span class="progress-value">{{ task.progress }}%</span>
+          </div>
+          <div class="task-update-meta" *ngIf="task.updatedByEmployeeAt">
+            {{ ui.admin.updatedByEmployee }} : {{ task.updatedByEmployeeAt | date:'dd/MM/yyyy HH:mm' }}
+          </div>
+        </div>
+        <div class="row-actions" [attr.data-label]="ui.admin.actions">
+          <a
+            class="icon-btn icon-btn--outline"
+            [routerLink]="['/tasks', task.id, 'edit']"
+            [attr.aria-label]="ui.admin.edit"
+            [attr.title]="ui.admin.edit"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+            </svg>
+          </a>
+          <button
+            class="icon-btn icon-btn--danger"
+            type="button"
+            (click)="requestDelete(task)"
+            [attr.aria-label]="ui.admin.delete"
+            [attr.title]="ui.admin.delete"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 6h18" />
+              <path d="M8 6V4h8v2" />
+              <path d="M19 6l-1 14H6L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+
+<div class="confirm-backdrop" *ngIf="deleteConfirm.open">
+  <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="task-delete-title">
+    <div class="confirm-header">
+      <h3 id="task-delete-title">{{ ui.admin.deleteTitle }}</h3>
+    </div>
+    <p class="confirm-text">{{ ui.admin.deleteText }}</p>
+    <div class="confirm-actions">
+      <button class="btn ghost" type="button" (click)="cancelDelete()" [disabled]="deleteConfirm.submitting">
+        {{ ui.admin.cancel }}
+      </button>
+      <button class="btn danger" type="button" (click)="confirmDelete()" [disabled]="deleteConfirm.submitting">
+        {{ deleteConfirm.submitting ? ui.admin.deleting : ui.admin.delete }}
+      </button>
+    </div>
+  </div>
+</div>

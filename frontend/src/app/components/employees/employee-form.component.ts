@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Employee, EmployeeUpsertInput } from '../../models/employee.models';
 import { EmployeesRepository } from '../../repositories/employees.repository';
 import { AuthService } from '../../services/auth.service';
+import { getEmployeeAccountPasswordError } from '../../utils/employee-password-policy';
 
 type PermissionControlKey =
   | 'canViewStock'
@@ -22,6 +23,8 @@ type PermissionControlKey =
   | 'canManageInventory'
   | 'canViewHistory'
   | 'canManageSalary'
+  | 'canManageTasks'
+  | 'canReceiveTasks'
   | 'canManageEmployees'
   | 'canManageAll';
 
@@ -84,6 +87,13 @@ export class EmployeeFormComponent implements OnInit {
       ]
     },
     {
+      title: 'Taches',
+      items: [
+        { key: 'canManageTasks' as PermissionControlKey, label: 'Gerer taches' },
+        { key: 'canReceiveTasks' as PermissionControlKey, label: 'Recevoir / suivre mes taches' }
+      ]
+    },
+    {
       title: 'Global',
       items: [
         { key: 'canManageAll' as PermissionControlKey, label: 'G\u00e9rer tout' }
@@ -107,6 +117,8 @@ export class EmployeeFormComponent implements OnInit {
     'canManageInventory',
     'canViewHistory',
     'canManageSalary',
+    'canManageTasks',
+    'canReceiveTasks',
     'canManageEmployees',
     'canManageAll'
   ];
@@ -141,6 +153,8 @@ export class EmployeeFormComponent implements OnInit {
     canManageInventory: [false],
     canViewHistory: [false],
     canManageSalary: [false],
+    canManageTasks: [false],
+    canReceiveTasks: [false],
     canManageAll: [false]
   });
 
@@ -201,6 +215,8 @@ export class EmployeeFormComponent implements OnInit {
           canManageInventory: true,
           canViewHistory: true,
           canManageSalary: true,
+          canManageTasks: true,
+          canReceiveTasks: true,
           canManageAll: true
         });
       } else {
@@ -222,8 +238,16 @@ export class EmployeeFormComponent implements OnInit {
     }
 
     const raw = this.form.getRawValue();
-    if (raw.initialPassword && raw.initialPassword.length > 0 && raw.initialPassword.length < 10) {
-      this.error = 'Le mot de passe doit contenir au moins 10 caracteres.';
+    const targetRole = raw.role === 'developer'
+      ? 'developer'
+      : raw.role === 'owner'
+        ? 'owner'
+        : raw.role === 'admin'
+          ? 'admin'
+          : 'employee';
+    const passwordError = getEmployeeAccountPasswordError(raw.initialPassword, targetRole, { optional: true });
+    if (passwordError) {
+      this.error = passwordError;
       return;
     }
 
@@ -238,13 +262,7 @@ export class EmployeeFormComponent implements OnInit {
       actif: !!raw.actif,
       isActive: !!raw.isActive,
       username: raw.username?.trim().toLowerCase() ?? '',
-      role: raw.role === 'developer'
-        ? 'developer'
-        : raw.role === 'owner'
-          ? 'owner'
-          : raw.role === 'admin'
-            ? 'admin'
-            : 'employee',
+      role: targetRole,
       mustSetupPassword: !!raw.mustSetupPassword,
       canViewStock: !!raw.canViewStock,
       canAddStock: !!raw.canAddStock,
@@ -262,6 +280,8 @@ export class EmployeeFormComponent implements OnInit {
       canManageInventory: !!raw.canManageInventory,
       canViewHistory: !!raw.canViewHistory,
       canManageSalary: !!raw.canManageSalary,
+      canManageTasks: !!raw.canManageTasks,
+      canReceiveTasks: !!raw.canReceiveTasks,
       canManageAll: !!raw.canManageAll && this.canUseGlobalManageAll
     };
 
@@ -285,8 +305,10 @@ export class EmployeeFormComponent implements OnInit {
       }
 
       await this.router.navigate(['/employees']);
-    } catch {
-      this.error = 'Une erreur est survenue pendant lenregistrement.';
+    } catch (error) {
+      this.error = error instanceof Error && error.message
+        ? error.message
+        : 'Une erreur est survenue pendant lenregistrement.';
     } finally {
       this.saving = false;
     }
@@ -347,6 +369,8 @@ export class EmployeeFormComponent implements OnInit {
       canManageInventory: employee.canManageInventory,
       canViewHistory: employee.canViewHistory,
       canManageSalary: employee.canManageSalary,
+      canManageTasks: employee.canManageTasks,
+      canReceiveTasks: employee.canReceiveTasks,
       canManageAll: employee.canManageAll
     });
     this.syncPermissionDependencies();

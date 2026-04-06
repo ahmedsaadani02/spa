@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Quote } from '../../models/quote';
-import { IpcService } from '../../services/ipc.service';
+import { AppApiService } from '../../services/app-api.service';
 import type { SpaQuoteConvertResult } from '../../types/electron';
 import { QuotesRepository } from '../quotes.repository';
 
@@ -8,7 +8,7 @@ import { QuotesRepository } from '../quotes.repository';
   providedIn: 'root'
 })
 export class QuotesIpcRepository implements QuotesRepository {
-  constructor(private ipc: IpcService) {}
+  constructor(private ipc: AppApiService) {}
 
   async getAll(): Promise<Quote[]> {
     return this.ipc.quotesGetAll();

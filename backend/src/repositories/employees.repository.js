@@ -18,6 +18,19 @@ const normalizeRole = (value) => {
   return 'employee';
 };
 
+const ensureEmployeeTaskPermissionColumns = (db) => {
+  const columns = db.prepare('PRAGMA table_info(employees)').all();
+  const names = new Set(columns.map((column) => String(column.name)));
+
+  if (!names.has('can_manage_tasks')) {
+    db.prepare('ALTER TABLE employees ADD COLUMN can_manage_tasks INTEGER NOT NULL DEFAULT 0').run();
+  }
+
+  if (!names.has('can_receive_tasks')) {
+    db.prepare('ALTER TABLE employees ADD COLUMN can_receive_tasks INTEGER NOT NULL DEFAULT 0').run();
+  }
+};
+
 const rowToEmployee = (row) => {
   if (!row) return null;
 
@@ -53,6 +66,8 @@ const rowToEmployee = (row) => {
     canManageInventory: Number(row.can_manage_inventory) === 1,
     canViewHistory: Number(row.can_view_history) === 1,
     canManageSalary: Number(row.can_manage_salary) === 1,
+    canManageTasks: Number(row.can_manage_tasks) === 1,
+    canReceiveTasks: Number(row.can_receive_tasks) === 1,
     canManageAll: Number(row.can_manage_all) === 1,
     lastLoginAt: row.last_login_at ?? null,
     createdAt: row.created_at ?? null,
@@ -77,6 +92,8 @@ const applyPermissionParams = (payload = {}) => ({
   can_manage_inventory: toIntBool(payload.canManageInventory),
   can_view_history: toIntBool(payload.canViewHistory),
   can_manage_salary: toIntBool(payload.canManageSalary),
+  can_manage_tasks: toIntBool(payload.canManageTasks),
+  can_receive_tasks: toIntBool(payload.canReceiveTasks),
   can_manage_all: toIntBool(payload.canManageAll)
 });
 
@@ -150,6 +167,8 @@ const baseSelect = `
     can_manage_inventory,
     can_view_history,
     can_manage_salary,
+    can_manage_tasks,
+    can_receive_tasks,
     can_manage_all,
     last_login_at,
     created_at,
@@ -157,9 +176,13 @@ const baseSelect = `
   FROM employees
 `;
 
-const listEmployees = (db) => db.prepare(`${baseSelect} ORDER BY datetime(created_at) DESC`).all().map(rowToEmployee);
+const listEmployees = (db) => {
+  ensureEmployeeTaskPermissionColumns(db);
+  return db.prepare(`${baseSelect} ORDER BY datetime(created_at) DESC`).all().map(rowToEmployee);
+};
 
 const searchEmployees = (db, query = '') => {
+  ensureEmployeeTaskPermissionColumns(db);
   const q = `%${normalizeText(query).toLowerCase()}%`;
   return db.prepare(`
     ${baseSelect}
@@ -174,17 +197,20 @@ const searchEmployees = (db, query = '') => {
 };
 
 const getEmployeeById = (db, id) => {
+  ensureEmployeeTaskPermissionColumns(db);
   if (!id) return null;
   return rowToEmployee(db.prepare(`${baseSelect} WHERE id = ? LIMIT 1`).get(id));
 };
 
 const getEmployeeByEmailNormalized = (db, email) => {
+  ensureEmployeeTaskPermissionColumns(db);
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
   return rowToEmployee(db.prepare(`${baseSelect} WHERE email_normalized = ? LIMIT 1`).get(normalized));
 };
 
 const createEmployee = (db, payload) => {
+  ensureEmployeeTaskPermissionColumns(db);
   const mapped = mapPayloadForUpsert(payload, true);
   if (!mapped.nom) {
     throw new Error('Le nom est obligatoire.');
@@ -199,7 +225,7 @@ const createEmployee = (db, payload) => {
       can_edit_stock_product, can_archive_stock_product,
       can_manage_employees, can_manage_invoices, can_manage_quotes, can_manage_clients,
       can_manage_estimations, can_manage_archives, can_manage_inventory, can_view_history,
-      can_manage_salary, can_manage_all,
+      can_manage_salary, can_manage_tasks, can_receive_tasks, can_manage_all,
       created_at, updated_at
     ) VALUES (
       @id, @nom, @telephone, @adresse, @poste, @salaire_base, @date_embauche, @actif, @is_active,
@@ -209,7 +235,7 @@ const createEmployee = (db, payload) => {
       @can_edit_stock_product, @can_archive_stock_product,
       @can_manage_employees, @can_manage_invoices, @can_manage_quotes, @can_manage_clients,
       @can_manage_estimations, @can_manage_archives, @can_manage_inventory, @can_view_history,
-      @can_manage_salary, @can_manage_all,
+      @can_manage_salary, @can_manage_tasks, @can_receive_tasks, @can_manage_all,
       @created_at, @updated_at
     )
   `).run(mapped);
@@ -218,6 +244,7 @@ const createEmployee = (db, payload) => {
 };
 
 const updateEmployee = (db, id, payload) => {
+  ensureEmployeeTaskPermissionColumns(db);
   if (!id) return null;
 
   const existing = db.prepare(`
@@ -286,6 +313,8 @@ const updateEmployee = (db, id, payload) => {
       can_manage_inventory = @can_manage_inventory,
       can_view_history = @can_view_history,
       can_manage_salary = @can_manage_salary,
+      can_manage_tasks = @can_manage_tasks,
+      can_receive_tasks = @can_receive_tasks,
       can_manage_all = @can_manage_all,
       updated_at = @updated_at
     WHERE id = @id
@@ -295,12 +324,14 @@ const updateEmployee = (db, id, payload) => {
 };
 
 const deleteEmployee = (db, id) => {
+  ensureEmployeeTaskPermissionColumns(db);
   if (!id) return false;
   const result = db.prepare('DELETE FROM employees WHERE id = ?').run(id);
   return result.changes > 0;
 };
 
 const setEmployeeActive = (db, id, actif) => {
+  ensureEmployeeTaskPermissionColumns(db);
   if (!id) return false;
   const activeFlag = toIntBool(!!actif);
   const result = db.prepare('UPDATE employees SET actif = ?, is_active = ?, updated_at = ? WHERE id = ?')
@@ -309,6 +340,7 @@ const setEmployeeActive = (db, id, actif) => {
 };
 
 const findEmployeeForAuthIdentity = (db, identity) => {
+  ensureEmployeeTaskPermissionColumns(db);
   const normalizedUsername = normalizeUsername(identity);
   const normalizedEmail = normalizeEmail(identity);
   if (!normalizedUsername && !normalizedEmail) return null;
@@ -343,6 +375,8 @@ const findEmployeeForAuthIdentity = (db, identity) => {
       can_manage_inventory,
       can_view_history,
       can_manage_salary,
+      can_manage_tasks,
+      can_receive_tasks,
       can_manage_all
     FROM employees
     WHERE username = @username
@@ -357,6 +391,7 @@ const findEmployeeForAuthIdentity = (db, identity) => {
 const findEmployeeForAuthByUsername = (db, username) => findEmployeeForAuthIdentity(db, username);
 
 const getEmployeeAuthRowById = (db, id) => {
+  ensureEmployeeTaskPermissionColumns(db);
   if (!id) return null;
   return db.prepare(`
     SELECT
@@ -388,6 +423,8 @@ const getEmployeeAuthRowById = (db, id) => {
       can_manage_inventory,
       can_view_history,
       can_manage_salary,
+      can_manage_tasks,
+      can_receive_tasks,
       can_manage_all
     FROM employees
     WHERE id = ?

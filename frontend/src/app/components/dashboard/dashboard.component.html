@@ -1,0 +1,26 @@
+<section class="dashboard-shell">
+  <header class="dashboard-hero">
+    <div>
+      <p class="eyebrow">{{ roleLabel }}</p>
+      <h1>{{ ui.title }}</h1>
+      <p class="hero-copy">
+        {{ ui.hello }} {{ displayName }}, {{ ui.greeting }}
+      </p>
+    </div>
+  </header>
+
+  <section class="dashboard-grid" *ngIf="availableLinks.length; else emptyState">
+    <a class="dashboard-card" *ngFor="let item of availableLinks" [routerLink]="item.route">
+      <span class="card-label">{{ item.label }}</span>
+      <p>{{ item.description }}</p>
+      <span class="card-action">{{ ui.open }}</span>
+    </a>
+  </section>
+
+  <ng-template #emptyState>
+    <section class="dashboard-empty">
+      <h2>{{ ui.emptyTitle }}</h2>
+      <p>{{ ui.emptyText }}</p>
+    </section>
+  </ng-template>
+</section>

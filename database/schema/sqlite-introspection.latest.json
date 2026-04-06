@@ -1,0 +1,2300 @@
+{
+  "generatedAt": "2026-03-19T16:58:02.378Z",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "draftSchemaPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\schema\\001_postgres_initial_draft.sql",
+  "tablesCount": 15,
+  "tables": [
+    {
+      "name": "auth_challenges",
+      "sql": "CREATE TABLE auth_challenges (\n      id TEXT PRIMARY KEY,\n      user_id TEXT NOT NULL,\n      purpose TEXT NOT NULL,\n      code_hash TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      used_at TEXT,\n      attempts_count INTEGER NOT NULL DEFAULT 0,\n      max_attempts INTEGER NOT NULL DEFAULT 5,\n      created_at TEXT NOT NULL,\n      requested_ip TEXT,\n      requested_user_agent TEXT,\n      FOREIGN KEY (user_id) REFERENCES employees(id) ON DELETE CASCADE\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "user_id",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "purpose",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "code_hash",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "expires_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 5,
+          "name": "used_at",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 6,
+          "name": "attempts_count",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 7,
+          "name": "max_attempts",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "5",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 8,
+          "name": "created_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 9,
+          "name": "requested_ip",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 10,
+          "name": "requested_user_agent",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "employees",
+          "from": "user_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "CASCADE",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_auth_challenges_expires_at",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 4,
+              "name": "expires_at"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_auth_challenges_expires_at\" ON \"auth_challenges\"(\"expires_at\")"
+        },
+        {
+          "name": "idx_auth_challenges_purpose",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 2,
+              "name": "purpose"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_auth_challenges_purpose\" ON \"auth_challenges\"(\"purpose\")"
+        },
+        {
+          "name": "idx_auth_challenges_user_id",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "user_id"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_auth_challenges_user_id\" ON \"auth_challenges\"(\"user_id\")"
+        },
+        {
+          "name": "sqlite_autoindex_auth_challenges_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "clients",
+      "sql": "CREATE TABLE clients (\n      id TEXT PRIMARY KEY,\n      nom TEXT NOT NULL,\n      telephone TEXT,\n      adresse TEXT,\n      mf TEXT,\n      email TEXT,\n      created_at TEXT NOT NULL,\n      updated_at TEXT NOT NULL\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "nom",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "telephone",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "adresse",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "mf",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 5,
+          "name": "email",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 6,
+          "name": "created_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 7,
+          "name": "updated_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [],
+      "indexes": [
+        {
+          "name": "idx_clients_mf",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 4,
+              "name": "mf"
+            }
+          ],
+          "sql": "CREATE INDEX idx_clients_mf ON clients(mf)"
+        },
+        {
+          "name": "idx_clients_email",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 5,
+              "name": "email"
+            }
+          ],
+          "sql": "CREATE INDEX idx_clients_email ON clients(email)"
+        },
+        {
+          "name": "idx_clients_telephone",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 2,
+              "name": "telephone"
+            }
+          ],
+          "sql": "CREATE INDEX idx_clients_telephone ON clients(telephone)"
+        },
+        {
+          "name": "idx_clients_nom",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "nom"
+            }
+          ],
+          "sql": "CREATE INDEX idx_clients_nom ON clients(nom)"
+        },
+        {
+          "name": "sqlite_autoindex_clients_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "employees",
+      "sql": "CREATE TABLE employees (\n      id TEXT PRIMARY KEY,\n      nom TEXT NOT NULL,\n      telephone TEXT,\n      adresse TEXT,\n      poste TEXT,\n      salaire_base REAL NOT NULL DEFAULT 0,\n      date_embauche TEXT,\n      actif INTEGER NOT NULL DEFAULT 1,\n      is_active INTEGER NOT NULL DEFAULT 1,\n      username TEXT UNIQUE,\n      email TEXT,\n      email_normalized TEXT,\n      password_hash TEXT,\n      role TEXT NOT NULL DEFAULT 'employee',\n      is_protected_account INTEGER NOT NULL DEFAULT 0,\n      requires_email_2fa INTEGER NOT NULL DEFAULT 0,\n      must_setup_password INTEGER NOT NULL DEFAULT 0,\n      can_view_stock INTEGER NOT NULL DEFAULT 0,\n      can_manage_stock INTEGER NOT NULL DEFAULT 0,\n      can_manage_employees INTEGER NOT NULL DEFAULT 0,\n      can_manage_invoices INTEGER NOT NULL DEFAULT 0,\n      can_manage_quotes INTEGER NOT NULL DEFAULT 0,\n      can_manage_clients INTEGER NOT NULL DEFAULT 0,\n      can_manage_salary INTEGER NOT NULL DEFAULT 0,\n      last_login_at TEXT,\n      created_at TEXT NOT NULL,\n      updated_at TEXT NOT NULL\n    , can_add_stock INTEGER NOT NULL DEFAULT 0, can_remove_stock INTEGER NOT NULL DEFAULT 0, can_adjust_stock INTEGER NOT NULL DEFAULT 0, can_manage_estimations INTEGER NOT NULL DEFAULT 0, can_manage_archives INTEGER NOT NULL DEFAULT 0, can_manage_inventory INTEGER NOT NULL DEFAULT 0, can_view_history INTEGER NOT NULL DEFAULT 0, can_manage_all INTEGER NOT NULL DEFAULT 0, can_edit_stock_product INTEGER NOT NULL DEFAULT 0, can_archive_stock_product INTEGER NOT NULL DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "nom",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "telephone",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "adresse",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "poste",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 5,
+          "name": "salaire_base",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 6,
+          "name": "date_embauche",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 7,
+          "name": "actif",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "1",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 8,
+          "name": "is_active",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "1",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 9,
+          "name": "username",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 10,
+          "name": "email",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 11,
+          "name": "email_normalized",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 12,
+          "name": "password_hash",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 13,
+          "name": "role",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": "'employee'",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 14,
+          "name": "is_protected_account",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 15,
+          "name": "requires_email_2fa",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 16,
+          "name": "must_setup_password",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 17,
+          "name": "can_view_stock",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 18,
+          "name": "can_manage_stock",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 19,
+          "name": "can_manage_employees",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 20,
+          "name": "can_manage_invoices",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 21,
+          "name": "can_manage_quotes",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 22,
+          "name": "can_manage_clients",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 23,
+          "name": "can_manage_salary",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 24,
+          "name": "last_login_at",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 25,
+          "name": "created_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 26,
+          "name": "updated_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 27,
+          "name": "can_add_stock",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 28,
+          "name": "can_remove_stock",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 29,
+          "name": "can_adjust_stock",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 30,
+          "name": "can_manage_estimations",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 31,
+          "name": "can_manage_archives",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 32,
+          "name": "can_manage_inventory",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 33,
+          "name": "can_view_history",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 34,
+          "name": "can_manage_all",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 35,
+          "name": "can_edit_stock_product",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 36,
+          "name": "can_archive_stock_product",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [],
+      "indexes": [
+        {
+          "name": "idx_employees_email_unique",
+          "unique": true,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 11,
+              "name": "email_normalized"
+            }
+          ],
+          "sql": "CREATE UNIQUE INDEX \"idx_employees_email_unique\" ON \"employees\"(\"email_normalized\")"
+        },
+        {
+          "name": "idx_employees_email",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 11,
+              "name": "email_normalized"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_employees_email\" ON \"employees\"(\"email_normalized\")"
+        },
+        {
+          "name": "idx_employees_username_unique",
+          "unique": true,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 9,
+              "name": "username"
+            }
+          ],
+          "sql": "CREATE UNIQUE INDEX \"idx_employees_username_unique\" ON \"employees\"(\"username\")"
+        },
+        {
+          "name": "idx_employees_username",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 9,
+              "name": "username"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_employees_username\" ON \"employees\"(\"username\")"
+        },
+        {
+          "name": "sqlite_autoindex_employees_2",
+          "unique": true,
+          "origin": "u",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 9,
+              "name": "username"
+            }
+          ],
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_employees_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "invoices",
+      "sql": "CREATE TABLE invoices (\n      id TEXT PRIMARY KEY,\n      payload TEXT NOT NULL,\n      client_id TEXT REFERENCES clients(id) ON DELETE SET NULL,\n      updated_at TEXT\n    , quote_id TEXT)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "payload",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "client_id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "updated_at",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "quote_id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "clients",
+          "from": "client_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "SET NULL",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_invoices_quote_id",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 4,
+              "name": "quote_id"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_invoices_quote_id\" ON \"invoices\"(\"quote_id\")"
+        },
+        {
+          "name": "idx_invoices_client_id",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 2,
+              "name": "client_id"
+            }
+          ],
+          "sql": "CREATE INDEX idx_invoices_client_id ON invoices(client_id)"
+        },
+        {
+          "name": "sqlite_autoindex_invoices_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "movements",
+      "sql": "CREATE TABLE movements (\n      id TEXT PRIMARY KEY,\n      product_id TEXT NOT NULL,\n      reference TEXT,\n      label TEXT,\n      category TEXT,\n      serie TEXT,\n      color TEXT NOT NULL,\n      type TEXT NOT NULL,\n      delta REAL NOT NULL,\n      before REAL NOT NULL,\n      after REAL NOT NULL,\n      reason TEXT,\n      actor TEXT,\n      at TEXT NOT NULL, employee_id TEXT, employee_name TEXT, username TEXT,\n      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "product_id",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "reference",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "label",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "category",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 5,
+          "name": "serie",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 6,
+          "name": "color",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 7,
+          "name": "type",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 8,
+          "name": "delta",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 9,
+          "name": "before",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 10,
+          "name": "after",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 11,
+          "name": "reason",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 12,
+          "name": "actor",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 13,
+          "name": "at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 14,
+          "name": "employee_id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 15,
+          "name": "employee_name",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 16,
+          "name": "username",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "products",
+          "from": "product_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "CASCADE",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_movements_username",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 16,
+              "name": "username"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_movements_username\" ON \"movements\"(\"username\")"
+        },
+        {
+          "name": "idx_movements_employee_id",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 14,
+              "name": "employee_id"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_movements_employee_id\" ON \"movements\"(\"employee_id\")"
+        },
+        {
+          "name": "idx_movements_at",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 13,
+              "name": "at"
+            }
+          ],
+          "sql": "CREATE INDEX idx_movements_at ON movements(at)"
+        },
+        {
+          "name": "idx_movements_product",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "product_id"
+            }
+          ],
+          "sql": "CREATE INDEX idx_movements_product ON movements(product_id)"
+        },
+        {
+          "name": "sqlite_autoindex_movements_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "price_history",
+      "sql": "CREATE TABLE price_history (\n      id TEXT PRIMARY KEY,\n      product_id TEXT NOT NULL,\n      color TEXT NOT NULL,\n      old_price REAL NOT NULL,\n      new_price REAL NOT NULL,\n      changed_at TEXT NOT NULL,\n      changed_by TEXT NOT NULL,\n      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "product_id",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "color",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "old_price",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "new_price",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 5,
+          "name": "changed_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 6,
+          "name": "changed_by",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "products",
+          "from": "product_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "CASCADE",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_price_history_product_color",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "product_id"
+            },
+            {
+              "seqno": 1,
+              "cid": 2,
+              "name": "color"
+            }
+          ],
+          "sql": "CREATE INDEX idx_price_history_product_color ON price_history(product_id, color)"
+        },
+        {
+          "name": "idx_price_history_changed_at",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 5,
+              "name": "changed_at"
+            }
+          ],
+          "sql": "CREATE INDEX idx_price_history_changed_at ON price_history(changed_at)"
+        },
+        {
+          "name": "idx_price_history_product_id",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "product_id"
+            }
+          ],
+          "sql": "CREATE INDEX idx_price_history_product_id ON price_history(product_id)"
+        },
+        {
+          "name": "sqlite_autoindex_price_history_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "product_catalog_metadata",
+      "sql": "CREATE TABLE product_catalog_metadata (\n      kind TEXT NOT NULL,\n      value TEXT NOT NULL,\n      created_at TEXT NOT NULL,\n      updated_at TEXT NOT NULL,\n      PRIMARY KEY (kind, value)\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "kind",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "value",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 2
+        },
+        {
+          "cid": 2,
+          "name": "created_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "updated_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [],
+      "indexes": [
+        {
+          "name": "idx_product_catalog_metadata_value",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "value"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_product_catalog_metadata_value\" ON \"product_catalog_metadata\"(\"value\")"
+        },
+        {
+          "name": "idx_product_catalog_metadata_kind",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "kind"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_product_catalog_metadata_kind\" ON \"product_catalog_metadata\"(\"kind\")"
+        },
+        {
+          "name": "sqlite_autoindex_product_catalog_metadata_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "kind"
+            },
+            {
+              "seqno": 1,
+              "cid": 1,
+              "name": "value"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "product_variants",
+      "sql": "CREATE TABLE product_variants (\n      id TEXT PRIMARY KEY,\n      product_id TEXT NOT NULL,\n      color TEXT NOT NULL,\n      price REAL NOT NULL DEFAULT 0,\n      stock REAL NOT NULL DEFAULT 0,\n      updated_at TEXT NOT NULL,\n      UNIQUE (product_id, color),\n      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "product_id",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "color",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "price",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "stock",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 5,
+          "name": "updated_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "products",
+          "from": "product_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "CASCADE",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_product_variants_product_color",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "product_id"
+            },
+            {
+              "seqno": 1,
+              "cid": 2,
+              "name": "color"
+            }
+          ],
+          "sql": "CREATE INDEX idx_product_variants_product_color ON product_variants(product_id, color)"
+        },
+        {
+          "name": "sqlite_autoindex_product_variants_2",
+          "unique": true,
+          "origin": "u",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "product_id"
+            },
+            {
+              "seqno": 1,
+              "cid": 2,
+              "name": "color"
+            }
+          ],
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_product_variants_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "products",
+      "sql": "CREATE TABLE products (\n      id TEXT PRIMARY KEY,\n      reference TEXT NOT NULL,\n      label TEXT NOT NULL,\n      category TEXT NOT NULL,\n      serie TEXT NOT NULL,\n      unit TEXT NOT NULL,\n      image_url TEXT,\n      low_stock_threshold INTEGER NOT NULL DEFAULT 0,\n      last_updated TEXT,\n      price_ttc REAL\n    , description TEXT, is_archived INTEGER NOT NULL DEFAULT 0, archived_at TEXT, is_deleted INTEGER NOT NULL DEFAULT 0, deleted_at TEXT)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "reference",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "label",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "category",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "serie",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 5,
+          "name": "unit",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 6,
+          "name": "image_url",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 7,
+          "name": "low_stock_threshold",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 8,
+          "name": "last_updated",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 9,
+          "name": "price_ttc",
+          "declaredType": "REAL",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 10,
+          "name": "description",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 11,
+          "name": "is_archived",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 12,
+          "name": "archived_at",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 13,
+          "name": "is_deleted",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 14,
+          "name": "deleted_at",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [],
+      "indexes": [
+        {
+          "name": "idx_products_is_archived",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 11,
+              "name": "is_archived"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_products_is_archived\" ON \"products\"(\"is_archived\")"
+        },
+        {
+          "name": "idx_products_label",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 2,
+              "name": "label"
+            }
+          ],
+          "sql": "CREATE INDEX idx_products_label ON products(label)"
+        },
+        {
+          "name": "idx_products_reference",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "reference"
+            }
+          ],
+          "sql": "CREATE INDEX idx_products_reference ON products(reference)"
+        },
+        {
+          "name": "sqlite_autoindex_products_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "quotes",
+      "sql": "CREATE TABLE quotes (\n      id TEXT PRIMARY KEY,\n      payload TEXT NOT NULL,\n      client_id TEXT REFERENCES clients(id) ON DELETE SET NULL,\n      updated_at TEXT\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "payload",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "client_id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "updated_at",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "clients",
+          "from": "client_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "SET NULL",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_quotes_client_id",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 2,
+              "name": "client_id"
+            }
+          ],
+          "sql": "CREATE INDEX idx_quotes_client_id ON quotes(client_id)"
+        },
+        {
+          "name": "sqlite_autoindex_quotes_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "salary_advances",
+      "sql": "CREATE TABLE salary_advances (\n      id TEXT PRIMARY KEY,\n      employee_id TEXT NOT NULL,\n      montant REAL NOT NULL,\n      note TEXT,\n      date_avance TEXT NOT NULL,\n      mois_reference INTEGER NOT NULL,\n      annee_reference INTEGER NOT NULL,\n      created_at TEXT NOT NULL,\n      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "employee_id",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "montant",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "note",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "date_avance",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 5,
+          "name": "mois_reference",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 6,
+          "name": "annee_reference",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 7,
+          "name": "created_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "employees",
+          "from": "employee_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "CASCADE",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_salary_advances_month_year",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 5,
+              "name": "mois_reference"
+            },
+            {
+              "seqno": 1,
+              "cid": 6,
+              "name": "annee_reference"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_salary_advances_month_year\" ON \"salary_advances\"(\"mois_reference\", \"annee_reference\")"
+        },
+        {
+          "name": "idx_salary_advances_employee_id",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "employee_id"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_salary_advances_employee_id\" ON \"salary_advances\"(\"employee_id\")"
+        },
+        {
+          "name": "sqlite_autoindex_salary_advances_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "salary_bonuses",
+      "sql": "CREATE TABLE salary_bonuses (\n      id TEXT PRIMARY KEY,\n      employee_id TEXT NOT NULL,\n      montant REAL NOT NULL,\n      motif TEXT,\n      date_prime TEXT NOT NULL,\n      mois_reference INTEGER NOT NULL,\n      annee_reference INTEGER NOT NULL,\n      created_at TEXT NOT NULL,\n      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "employee_id",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "montant",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "motif",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "date_prime",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 5,
+          "name": "mois_reference",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 6,
+          "name": "annee_reference",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 7,
+          "name": "created_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "employees",
+          "from": "employee_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "CASCADE",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_salary_bonuses_month_year",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 5,
+              "name": "mois_reference"
+            },
+            {
+              "seqno": 1,
+              "cid": 6,
+              "name": "annee_reference"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_salary_bonuses_month_year\" ON \"salary_bonuses\"(\"mois_reference\", \"annee_reference\")"
+        },
+        {
+          "name": "idx_salary_bonuses_employee_id",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "employee_id"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_salary_bonuses_employee_id\" ON \"salary_bonuses\"(\"employee_id\")"
+        },
+        {
+          "name": "sqlite_autoindex_salary_bonuses_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "salary_overtimes",
+      "sql": "CREATE TABLE salary_overtimes (\n    id TEXT PRIMARY KEY,\n    employee_id TEXT NOT NULL,\n    hours REAL NOT NULL,\n    hourly_rate REAL NOT NULL,\n    amount REAL NOT NULL,\n    note TEXT,\n    overtime_date TEXT NOT NULL,\n    mois_reference INTEGER NOT NULL,\n    annee_reference INTEGER NOT NULL,\n    created_at TEXT NOT NULL\n  )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "employee_id",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "hours",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "hourly_rate",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "amount",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 5,
+          "name": "note",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 6,
+          "name": "overtime_date",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 7,
+          "name": "mois_reference",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 8,
+          "name": "annee_reference",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 9,
+          "name": "created_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [],
+      "indexes": [
+        {
+          "name": "idx_salary_overtimes_month_year",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 7,
+              "name": "mois_reference"
+            },
+            {
+              "seqno": 1,
+              "cid": 8,
+              "name": "annee_reference"
+            }
+          ],
+          "sql": "CREATE INDEX idx_salary_overtimes_month_year ON salary_overtimes(mois_reference, annee_reference)"
+        },
+        {
+          "name": "idx_salary_overtimes_employee_id",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "employee_id"
+            }
+          ],
+          "sql": "CREATE INDEX idx_salary_overtimes_employee_id ON salary_overtimes(employee_id)"
+        },
+        {
+          "name": "sqlite_autoindex_salary_overtimes_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "security_audit_log",
+      "sql": "CREATE TABLE security_audit_log (\n      id TEXT PRIMARY KEY,\n      user_id TEXT,\n      event_type TEXT NOT NULL,\n      email_attempted TEXT,\n      success INTEGER NOT NULL,\n      ip TEXT,\n      user_agent TEXT,\n      details TEXT,\n      created_at TEXT NOT NULL,\n      FOREIGN KEY (user_id) REFERENCES employees(id) ON DELETE SET NULL\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "user_id",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 2,
+          "name": "event_type",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 3,
+          "name": "email_attempted",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 4,
+          "name": "success",
+          "declaredType": "INTEGER",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 5,
+          "name": "ip",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 6,
+          "name": "user_agent",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 7,
+          "name": "details",
+          "declaredType": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        },
+        {
+          "cid": 8,
+          "name": "created_at",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "employees",
+          "from": "user_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "SET NULL",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_security_audit_email",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 3,
+              "name": "email_attempted"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_security_audit_email\" ON \"security_audit_log\"(\"email_attempted\")"
+        },
+        {
+          "name": "idx_security_audit_created_at",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 8,
+              "name": "created_at"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_security_audit_created_at\" ON \"security_audit_log\"(\"created_at\")"
+        },
+        {
+          "name": "idx_security_audit_event",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 2,
+              "name": "event_type"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_security_audit_event\" ON \"security_audit_log\"(\"event_type\")"
+        },
+        {
+          "name": "idx_security_audit_user_id",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 1,
+              "name": "user_id"
+            }
+          ],
+          "sql": "CREATE INDEX \"idx_security_audit_user_id\" ON \"security_audit_log\"(\"user_id\")"
+        },
+        {
+          "name": "sqlite_autoindex_security_audit_log_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "id"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    },
+    {
+      "name": "stock",
+      "sql": "CREATE TABLE stock (\n      product_id TEXT NOT NULL,\n      color TEXT NOT NULL,\n      qty REAL NOT NULL DEFAULT 0,\n      PRIMARY KEY (product_id, color),\n      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE\n    )",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "product_id",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 1
+        },
+        {
+          "cid": 1,
+          "name": "color",
+          "declaredType": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKeyOrder": 2
+        },
+        {
+          "cid": 2,
+          "name": "qty",
+          "declaredType": "REAL",
+          "notNull": true,
+          "defaultValue": "0",
+          "primaryKeyOrder": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "products",
+          "from": "product_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "CASCADE",
+          "match": "NONE"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_stock_product",
+          "unique": false,
+          "origin": "c",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "product_id"
+            }
+          ],
+          "sql": "CREATE INDEX idx_stock_product ON stock(product_id)"
+        },
+        {
+          "name": "sqlite_autoindex_stock_1",
+          "unique": true,
+          "origin": "pk",
+          "partial": false,
+          "columns": [
+            {
+              "seqno": 0,
+              "cid": 0,
+              "name": "product_id"
+            },
+            {
+              "seqno": 1,
+              "cid": 1,
+              "name": "color"
+            }
+          ],
+          "sql": null
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "actualOnlyTables": [],
+    "draftOnlyTables": [],
+    "sharedTables": [
+      "auth_challenges",
+      "clients",
+      "employees",
+      "invoices",
+      "movements",
+      "price_history",
+      "product_catalog_metadata",
+      "product_variants",
+      "products",
+      "quotes",
+      "salary_advances",
+      "salary_bonuses",
+      "salary_overtimes",
+      "security_audit_log",
+      "stock"
+    ]
+  }
+}

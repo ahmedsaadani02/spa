@@ -5,8 +5,9 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./database');
 const { registerBackendRoutes } = require('./src/app');
-const { setCurrentUser, clearCurrentUser, toAppUser, hasPermission } = require('./src/services/auth-session.service');
-const { getEmployeeAuthRowById } = require('./src/repositories/employees.repository');
+const { getDatabaseRoutingSummary } = require('./src/config/database');
+const { setCurrentUser, clearCurrentUser, hasPermission } = require('./src/services/auth-session.service');
+const { createSessionResolver } = require('./src/services/session-resolver');
 const { registerAuthHandlers } = require('./src/legacy-ipc/auth.handlers');
 const { registerClientsHandlers } = require('./src/legacy-ipc/clients.handlers');
 const { registerInvoicesHandlers } = require('./src/legacy-ipc/invoices.handlers');
@@ -18,6 +19,7 @@ const { registerInventoryHandlers } = require('./src/legacy-ipc/inventory.handle
 const { registerEmployeesHandlers } = require('./src/legacy-ipc/employees.handlers');
 const { registerSalaryHandlers } = require('./src/legacy-ipc/salary.handlers');
 const { resolveProductImageUrl, getProductsImagesDirectory } = require('./src/utils/product-images');
+const { getTaskProofImagesDirectory } = require('./src/utils/task-proof-images');
 
 let httpServer = null;
 const sessions = new Map();
@@ -143,26 +145,12 @@ const createIpcBridge = () => {
   };
 };
 
-const resolveSessionUser = (token) => {
-  if (!token) return null;
-  const session = sessions.get(token);
-  if (!session?.userId) {
-    return null;
-  }
+const resolveSessionUser = createSessionResolver({ sessions, getDb: () => db });
 
-  const row = getEmployeeAuthRowById(db, session.userId);
-  const user = toAppUser(row);
-  if (!user || !user.isActive) {
-    sessions.delete(token);
-    return null;
-  }
-  return user;
-};
-
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   const header = req.headers.authorization ?? '';
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
-  const user = resolveSessionUser(token);
+  const user = await resolveSessionUser(token);
   if (!user) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
@@ -190,7 +178,9 @@ function createApp() {
   app.use((req, _res, next) => { console.log('[server]', req.method, req.url); next(); });
   const ipcBridge = createIpcBridge();
   const productsImagesDir = getProductsImagesDirectory();
+  const taskProofImagesDir = getTaskProofImagesDirectory();
   fs.mkdirSync(productsImagesDir, { recursive: true });
+  fs.mkdirSync(taskProofImagesDir, { recursive: true });
 
   app.use(cors());
   app.use(express.json({ limit: '25mb' }));
@@ -209,6 +199,11 @@ function createApp() {
     etag: true,
     maxAge: '7d'
   }));
+  app.use('/api/task-proof-images', express.static(taskProofImagesDir, {
+    fallthrough: false,
+    etag: true,
+    maxAge: '7d'
+  }));
 
   app.get('/api/ping', (_req, res) => {
     res.json({ success: true, message: 'SPA SERVER OK', mode: 'http-ipc-bridge' });
@@ -219,7 +214,7 @@ function createApp() {
     const args = Array.isArray(req.body?.args) ? req.body.args : [];
     const header = req.headers.authorization ?? '';
     const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
-    const user = resolveSessionUser(token);
+    const user = await resolveSessionUser(token);
     const publicChannels = new Set([
       'auth:beginLogin',
       'auth:setupProtectedPassword',
@@ -429,7 +424,18 @@ function startServer(port = Number(process.env.PORT) || 3000, host = process.env
   const app = createApp();
 
   httpServer = app.listen(port, host, () => {
+    const routing = getDatabaseRoutingSummary();
     console.log(`SPA SERVER running on http://${host}:${port}`);
+    console.log('[db-driver] configured driver:', routing.configuredDriver);
+    console.log('[db-driver] quotes read opt-in:', routing.quotesReadOptInEnabled ? 'enabled' : 'disabled');
+    console.log('[db-driver] quotes write opt-in:', routing.quotesWriteOptInEnabled ? 'enabled' : 'disabled');
+    console.log('[db-driver] invoices read opt-in:', routing.invoicesReadOptInEnabled ? 'enabled' : 'disabled');
+    console.log('[db-driver] invoices write opt-in:', routing.invoicesWriteOptInEnabled ? 'enabled' : 'disabled');
+    console.log('[db-driver] catalog read opt-in:', routing.catalogReadOptInEnabled ? 'enabled' : 'disabled');
+    console.log('[db-driver] product write opt-in:', routing.productWriteOptInEnabled ? 'enabled' : 'disabled');
+    console.log('[db-driver] stock write opt-in:', routing.stockWriteOptInEnabled ? 'enabled' : 'disabled');
+    console.log('[db-driver] postgres-ready scopes:', routing.postgresReadyScopes.join(', '));
+    console.log('[db-driver] active postgres scopes:', routing.activePostgresScopes.length ? routing.activePostgresScopes.join(', ') : 'none');
     console.log('Server started');
   });
 

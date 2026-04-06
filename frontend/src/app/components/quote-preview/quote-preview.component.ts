@@ -6,7 +6,7 @@ import { QuoteCalcService, QuoteTotals } from '../../services/quote-calc.service
 import { InvoiceStoreService } from '../../services/invoice-store.service';
 import { QuoteStoreService } from '../../services/quote-store.service';
 import { AuthService } from '../../services/auth.service';
-import { ElectronService } from '../../services/electron.service';
+import { DocumentsService } from '../../services/documents.service';
 import { buildMasterDocumentHtml } from '../../utils/master-document-render';
 
 @Component({
@@ -54,7 +54,7 @@ export class QuotePreviewComponent implements OnInit {
     private invoices: InvoiceStoreService,
     private auth: AuthService,
     public calc: QuoteCalcService,
-    public electron: ElectronService,
+    public electron: DocumentsService,
     private cdr: ChangeDetectorRef
   ) {}
 

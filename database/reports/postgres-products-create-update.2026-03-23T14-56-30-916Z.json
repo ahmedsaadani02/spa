@@ -1,0 +1,182 @@
+{
+  "startedAt": "2026-03-23T14:56:08.841Z",
+  "finishedAt": "2026-03-23T14:56:30.201Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:55530",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "productWriteOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read",
+      "price-history-read",
+      "products-metadata-write",
+      "products-core-write",
+      "products-structure-write"
+    ]
+  },
+  "writeCartography": [
+    "`products:create` ecrit `products`, ajoute les metadata `category/serie/color`, puis cree les lignes `stock` a `qty=0` et `product_variants` a `stock=0` avec le `price_ttc` initial.",
+    "`products:update` met a jour `products`, upsert les metadata `category/serie/color`, ajoute les couleurs nouvelles dans `stock` et `product_variants`, et supprime seulement les couleurs retirees quand `stock.qty` vaut encore `0`.",
+    "Cette tranche ne doit pas creer de `movements` ni de `price_history`, et ne couvre toujours pas `updatePrice`, `restorePrice` ni les ecritures stock/movements completes."
+  ],
+  "validated": [
+    "`products:create` est compatible PostgreSQL pour les ecritures minimales necessaires sur `products`, `stock` et `product_variants`, avec parite validee contre une execution de reference SQLite.",
+    "`products:update` est compatible PostgreSQL pour la mise a jour du produit, l ajout et le retrait de couleurs sans stock, et l upsert des metadata associees, avec parite validee contre SQLite.",
+    "Les routes REST et handlers IPC restent inchanges; le routage PostgreSQL de cette tranche reste audit-only et exige `DB_DRIVER=postgres`, `DB_ENABLE_POSTGRES_CATALOG_READ=1` et `DB_ENABLE_POSTGRES_PRODUCT_WRITES=1`."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "owner audit session created"
+    },
+    {
+      "name": "POST /api/products",
+      "ok": true,
+      "detail": "id=5552de4b-182f-4cb0-9d0e-63bc7da538a3"
+    },
+    {
+      "name": "GET /api/products after create",
+      "ok": true,
+      "detail": "reference=PG-CREATE-MN3B68AW"
+    },
+    {
+      "name": "GET /api/stock after create",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "GET /api/stock/items after create",
+      "ok": true,
+      "detail": "reference=PG-CREATE-MN3B68AW"
+    },
+    {
+      "name": "PUT /api/products/:id",
+      "ok": true,
+      "detail": "added=pg-audit-color-c-mn3b68aw removed=pg-audit-color-a-mn3b68aw"
+    },
+    {
+      "name": "GET /api/products after update",
+      "ok": true,
+      "detail": "reference=PG-UPDATE-MN3B68AW"
+    },
+    {
+      "name": "GET /api/products/metadata after update",
+      "ok": true,
+      "detail": "generated metadata values visible"
+    },
+    {
+      "name": "GET /api/stock after update",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "GET /api/stock/items after update",
+      "ok": true,
+      "detail": "reference=PG-UPDATE-MN3B68AW"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "create product parity",
+      "ok": true,
+      "detail": "reference=PG-CREATE-MN3B68AW"
+    },
+    {
+      "name": "create stock rows parity",
+      "ok": true,
+      "detail": "colors=2"
+    },
+    {
+      "name": "create product_variants parity",
+      "ok": true,
+      "detail": "colors=2"
+    },
+    {
+      "name": "create metadata parity",
+      "ok": true,
+      "detail": "values=4"
+    },
+    {
+      "name": "update product parity",
+      "ok": true,
+      "detail": "reference=PG-UPDATE-MN3B68AW"
+    },
+    {
+      "name": "update stock rows parity",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "update product_variants parity",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "update metadata parity",
+      "ok": true,
+      "detail": "values=7"
+    }
+  ],
+  "minimalSideEffects": [
+    {
+      "name": "price_history untouched",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "movements untouched",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "stock qty remains zero",
+      "ok": true,
+      "detail": "rows=2"
+    }
+  ],
+  "sqliteIsolationChecks": [
+    {
+      "name": "products unchanged in SQLite",
+      "ok": true,
+      "detail": "references absent"
+    },
+    {
+      "name": "metadata unchanged in SQLite",
+      "ok": true,
+      "detail": "values=7"
+    }
+  ],
+  "remainingRisks": [
+    "`products:updatePrice` et `products:restorePrice` restent sur SQLite car ils ouvrent `price_history` et la gestion fine des prix par couleur.",
+    "Les ecritures `stock` et `movements` completes restent sur SQLite; le domaine catalogue/stock ne doit donc toujours pas etre active en PostgreSQL en usage normal.",
+    "Le comportement actuel conserve les prix existants des variantes deja presentes lors de `products:update`; seule une couleur nouvellement ajoutee prend le nouveau `priceTtc`. Cette parite SQLite est preservee mais devra etre revue avant la tranche prix."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-create-update.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-create-update.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-create-update.2026-03-23T14-56-30-916Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-products-create-update.2026-03-23T14-56-30-916Z.md"
+  }
+}

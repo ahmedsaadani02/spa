@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import type { SpaDbBackupEntry, SpaUpdateStatusPayload, SpaUpdateStatusType } from '../types/electron';
-import { IpcService } from '../services/ipc.service';
+import { AppApiService } from '../services/app-api.service';
 
 @Component({
   selector: 'app-settings',
@@ -27,7 +27,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private unsubscribeUpdateStatus: (() => void) | null = null;
 
   constructor(
-    private readonly ipc: IpcService,
+    private readonly ipc: AppApiService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 

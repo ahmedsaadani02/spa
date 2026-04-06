@@ -1,14 +1,18 @@
 const {
   listInvoices,
-  getInvoiceById,
-  putInvoice,
+  getInvoiceById
+} = require('../repositories/invoices-read.runtime.repository');
+const {
+  putInvoice
+} = require('../repositories/invoices-write.runtime.repository');
+const {
   deleteInvoice
-} = require('../legacy-ipc/invoices.handlers');
+} = require('../repositories/invoices-delete.runtime.repository');
 const { assertPermission } = require('./auth-session.service');
 
 const createInvoicesService = ({ getDb, resolveSessionUser, setCurrentUser, clearCurrentUser }) => {
-  const withAuthorizedUser = (token, operation) => {
-    const user = resolveSessionUser(token || '');
+  const withAuthorizedUser = async (token, operation) => {
+    const user = await resolveSessionUser(token || '');
     if (!user) {
       throw new Error('UNAUTHORIZED');
     }

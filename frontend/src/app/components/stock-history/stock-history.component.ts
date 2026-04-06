@@ -75,7 +75,7 @@ export class StockHistoryComponent implements OnInit, OnDestroy {
         console.log('[stock-history-page] empty state condition:', this.movements.length === 0);
       });
 
-    void this.store.load();
+    void this.store.warmMovements();
   }
 
   ngOnDestroy(): void {

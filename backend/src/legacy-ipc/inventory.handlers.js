@@ -1,5 +1,6 @@
 const { assertPermission } = require('../services/auth-session.service');
 const { resolveProductImageUrl } = require('../utils/product-images');
+const { getInventoryResponse: getInventoryResponseRead } = require('../repositories/catalog-read.runtime.repository');
 
 const hasTable = (db, tableName) => !!db.prepare(`
   SELECT 1
@@ -147,10 +148,10 @@ const getInventoryResponse = (db) => {
 };
 
 const registerInventoryHandlers = (ipcMain, getDb) => {
-  ipcMain.handle('inventaire:get', () => {
+  ipcMain.handle('inventaire:get', async () => {
     try {
       assertPermission('manageInventory');
-      return getInventoryResponse(getDb());
+      return await getInventoryResponseRead(getDb());
     } catch (error) {
       console.error('[inventaire:get] error', error);
       return { items: [], totalValue: 0 };

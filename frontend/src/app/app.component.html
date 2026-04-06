@@ -1,51 +1,101 @@
 <header class="app-header" *ngIf="!isLoginRoute">
+  <div class="route-loading-bar" *ngIf="navigationLoading">
+    <span></span>
+  </div>
   <div class="header-inner">
     <div class="brand">
       <div class="brand-mark">
         <img src="assets/logospa.png" alt="SPA - Societe d'Aluminium" class="brand-logo" />
       </div>
       <div class="brand-text">
-        <h1 class="brand-title">SPA - Societe d'Aluminium</h1>
-        <span class="brand-subtitle">Facturation | Vente &amp; Fabrication</span>
+        <h1 class="brand-title">{{ shellText.appTitle }}</h1>
+        <span class="brand-subtitle">{{ shellText.appSubtitle }}</span>
       </div>
     </div>
 
     <nav class="nav" *ngIf="isLoggedIn">
-      <a *ngIf="canManageInvoices" routerLink="/invoices" routerLinkActive="active">
-        <span class="nav-icon">FC</span> Factures
-      </a>
-      <a *ngIf="canManageQuotes" routerLink="/quotes" routerLinkActive="active">
-        <span class="nav-icon">DV</span> Devis
-      </a>
-      <a *ngIf="canManageClients" routerLink="/clients" routerLinkActive="active">
-        <span class="nav-icon">CL</span> Clients
-      </a>
-      <a
-        *ngIf="canViewStock"
-        routerLink="/stock"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
-        <span class="nav-icon">ST</span> Stock
-      </a>
-      <a *ngIf="canOpenStockArchives" routerLink="/stock/archives" routerLinkActive="active">
-        <span class="nav-icon">AR</span> ST Archives
-      </a>
-      <a *ngIf="canManageInventory" routerLink="/inventaire" routerLinkActive="active">
-        <span class="nav-icon">IN</span> Inventaire
-      </a>
-      <a *ngIf="canViewHistory" routerLink="/stock-history" routerLinkActive="active">
-        <span class="nav-icon">HS</span> Historique
-      </a>
-      <a *ngIf="canManageEstimations" routerLink="/estimation" routerLinkActive="active">
-        <span class="nav-icon">ES</span> Estimation
-      </a>
-      <a *ngIf="canOpenEmployees" routerLink="/employees" routerLinkActive="active">
-        <span class="nav-icon">RH</span> Salaries
-      </a>
+      <div class="nav-track" [class.nav-track--compact]="isStandardEmployeeNavigation">
+        <a
+          *ngFor="let item of navItems; trackBy: trackByNavRoute"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+        >
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      </div>
     </nav>
 
     <div class="actions" *ngIf="isLoggedIn">
+      <div class="lang-switcher" role="group" aria-label="Language switcher">
+        <button
+          class="lang-option"
+          type="button"
+          [class.active]="currentLanguage === 'fr'"
+          (click)="setLanguage('fr')"
+        >
+          {{ shellText.language.fr }}
+        </button>
+        <button
+          class="lang-option"
+          type="button"
+          [class.active]="currentLanguage === 'ar'"
+          (click)="setLanguage('ar')"
+        >
+          {{ shellText.language.ar }}
+        </button>
+      </div>
+
+      <div class="notifications-menu" [class.open]="notificationsOpen">
+        <button
+          class="notifications-pill"
+          type="button"
+          (click)="toggleNotifications()"
+          [attr.aria-label]="shellText.notifications.title"
+          [attr.title]="shellText.notifications.title"
+        >
+          <span class="notifications-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
+              <path d="M10 17a2 2 0 0 0 4 0" />
+            </svg>
+          </span>
+          <span class="sr-only">{{ shellText.notifications.title }}</span>
+          <span class="notifications-count" *ngIf="unreadNotificationsCount > 0">{{ unreadNotificationsCount }}</span>
+        </button>
+
+        <div class="dropdown notifications-dropdown" *ngIf="notificationsOpen">
+          <div class="dropdown-header notifications-header">
+            <div class="dropdown-user-info">
+              <span class="dropdown-name">{{ shellText.notifications.title }}</span>
+            </div>
+          </div>
+
+          <div class="dropdown-divider"></div>
+
+          <div class="notifications-list" *ngIf="notifications.length > 0; else notificationsEmpty">
+            <button
+              class="notification-item"
+              type="button"
+              *ngFor="let notification of notifications"
+              [class.unread]="!notification.isRead"
+              (click)="markNotificationRead(notification)"
+            >
+              <div class="notification-item-head">
+                <strong>{{ notificationTitle(notification) }}</strong>
+                <span>{{ notification.createdAt | date:'dd/MM HH:mm' }}</span>
+              </div>
+              <div class="notification-item-body">{{ notificationMessage(notification) }}</div>
+              <div class="notification-item-task">{{ notificationTaskLabel(notification) }}</div>
+            </button>
+          </div>
+
+          <ng-template #notificationsEmpty>
+            <div class="notifications-empty">{{ shellText.notifications.empty }}</div>
+          </ng-template>
+        </div>
+      </div>
+
       <div class="user-menu" [class.open]="dropdownOpen">
         <button class="user-pill" type="button" (click)="toggleDropdown()">
           <div class="avatar">
@@ -74,20 +124,27 @@
           <div class="dropdown-divider"></div>
 
           <div class="dropdown-section">
-            <button class="dropdown-item" type="button" disabled>
+            <button class="dropdown-item" type="button" (click)="openAccount()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
-              Mon profil
-              <span class="dropdown-badge-soon">Bientot</span>
+              {{ shellText.account }}
             </button>
             <button class="dropdown-item" type="button" (click)="openSettings()" *ngIf="canOpenSettings">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
                 <circle cx="12" cy="12" r="3" />
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
-              Parametres
+              {{ shellText.settings }}
+            </button>
+            <button class="dropdown-item" type="button" (click)="openHistory()" *ngIf="canOpenHistory">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 3-6.708" />
+                <path d="M3 3v6h6" />
+                <path d="M12 7v5l3 3" />
+              </svg>
+              {{ historyNavLabel }}
             </button>
           </div>
 
@@ -100,7 +157,7 @@
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              Se deconnecter
+              {{ shellText.logout }}
             </button>
           </div>
         </div>
@@ -109,10 +166,20 @@
   </div>
 </header>
 
-<main class="app-main">
+<main class="app-main" [class.app-main--login]="isLoginRoute">
   <router-outlet></router-outlet>
 </main>
 
 <footer class="app-footer" *ngIf="!isLoginRoute">
-  SPA - Societe d'Aluminium | Merci pour votre confiance
+  {{ shellText.footer }}
 </footer>
+
+<div class="toast-stack" *ngIf="notificationToasts.length > 0">
+  <article class="toast-card" *ngFor="let toast of notificationToasts">
+    <div class="toast-card-head">
+      <strong>{{ toast.title }}</strong>
+      <button class="toast-close" type="button" (click)="dismissToast(toast.id)">×</button>
+    </div>
+    <p>{{ toast.message }}</p>
+  </article>
+</div>

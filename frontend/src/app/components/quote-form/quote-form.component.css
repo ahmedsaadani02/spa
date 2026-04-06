@@ -74,11 +74,24 @@ app-client-autocomplete {
 }
 
 @media (max-width: 980px) {
+  .form-header,
+  .section-head,
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .line-row {
     grid-template-columns: 1fr;
   }
 
   .totals-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .form-actions .btn {
+    width: 100%;
   }
 }

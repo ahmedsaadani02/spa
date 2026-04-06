@@ -1,0 +1,67 @@
+{
+  "startedAt": "2026-03-23T13:20:58.986Z",
+  "finishedAt": "2026-03-23T13:21:02.185Z",
+  "status": "completed",
+  "sqlitePath": "C:\\Users\\Ahmed Saadani\\AppData\\Roaming\\spa-invoice-desktop\\spa.db",
+  "baseUrl": "http://127.0.0.1:60532",
+  "routing": {
+    "configuredDriver": "postgres",
+    "catalogReadOptInEnabled": true,
+    "postgresReadyScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read"
+    ],
+    "activePostgresScopes": [
+      "clients",
+      "employees",
+      "salary",
+      "auth-security",
+      "products-read",
+      "stock-read",
+      "movements-read"
+    ]
+  },
+  "validated": [
+    "La lecture `movements:list` est compatible PostgreSQL et restitue le meme historique que SQLite.",
+    "Le chemin REST `/api/movements` et le handler IPC conservent le meme contrat, avec un routage PostgreSQL lecture seule seulement sous opt-in audit."
+  ],
+  "httpChecks": [
+    {
+      "name": "POST /api/auth/login",
+      "ok": true,
+      "detail": "token=f1347d21..."
+    },
+    {
+      "name": "GET /api/movements",
+      "ok": true,
+      "detail": "count=17"
+    }
+  ],
+  "parityChecks": [
+    {
+      "name": "movements list parity",
+      "ok": true,
+      "detail": "count=17"
+    },
+    {
+      "name": "movements count parity",
+      "ok": true,
+      "detail": "count=17"
+    }
+  ],
+  "remainingRisks": [
+    "Les ecritures `movements:add` et `stock:applyMovement` restent sur SQLite; `movements:list` PostgreSQL doit donc rester desactive en usage normal tant que ces mutations ne sont pas migrees.",
+    "Le domaine catalogue/stock doit continuer a utiliser `DB_ENABLE_POSTGRES_CATALOG_READ=0` par defaut pour eviter une divergence visible."
+  ],
+  "artifacts": {
+    "jsonLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-read.latest.json",
+    "markdownLatestPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-read.latest.md",
+    "jsonPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-read.2026-03-23T13-21-02-186Z.json",
+    "markdownPath": "C:\\Users\\Ahmed Saadani\\Desktop\\spa-test\\database\\reports\\postgres-movements-read.2026-03-23T13-21-02-186Z.md"
+  }
+}
