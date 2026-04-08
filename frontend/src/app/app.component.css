@@ -547,6 +547,23 @@
 
 .notifications-header {
   padding-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notifications-mark-all {
+  border: none;
+  background: transparent;
+  color: #1a56db;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.notifications-mark-all:hover {
+  color: #163f9a;
 }
 
 .notifications-list {
@@ -559,11 +576,25 @@
 }
 
 .notification-item {
-  width: 100%;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #ffffff;
-  padding: 10px 12px;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 6px;
+}
+
+.notification-item.unread {
+  background: #f8fbff;
+  border-color: #bfd2f8;
+}
+
+.notification-item-main {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 4px 6px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -571,9 +602,26 @@
   cursor: pointer;
 }
 
-.notification-item.unread {
-  background: #f8fbff;
-  border-color: #bfd2f8;
+.notification-read-action {
+  align-self: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #1a56db;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.notification-item-main:hover {
+  opacity: 0.9;
+}
+
+.notification-read-action:hover {
+  background: #dce9ff;
 }
 
 .notification-item-head {
@@ -814,6 +862,10 @@ html[dir='rtl'] .notifications-dropdown {
 
 html[dir='rtl'] .notification-item,
 html[dir='rtl'] .dropdown-item {
+  text-align: right;
+}
+
+html[dir='rtl'] .notification-item-main {
   text-align: right;
 }
 

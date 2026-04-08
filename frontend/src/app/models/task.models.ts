@@ -103,11 +103,20 @@ export interface MyTaskUpdateInput {
 export interface TaskNotificationRecord {
   id: string;
   employeeId: string;
+  recipientUserId?: string;
   taskId: string | null;
-  kind: 'task_assigned';
+  actorId?: string | null;
+  actorRole?: string | null;
+  kind: string;
   actorName: string | null;
+  title?: string | null;
+  message?: string | null;
+  entityType?: string | null;
+  entityId?: string | null;
+  route?: string | null;
   taskTitleFr: string | null;
   taskTitleAr: string | null;
+  metadata?: Record<string, unknown>;
   createdAt: string | null;
   readAt: string | null;
   isRead: boolean;

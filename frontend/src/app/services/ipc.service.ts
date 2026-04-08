@@ -266,19 +266,19 @@ export class IpcService {
   }
 
   async stockApplyMovement(movement: StockMovement): Promise<boolean> {
-    return this.invoke('stock.applyMovement', false, (api) => api.stock.applyMovement(movement));
+    return this.invokeOrThrow('stock.applyMovement', (api) => api.stock.applyMovement(movement));
   }
 
   async stockSetQty(productId: string, color: string, qty: number): Promise<boolean> {
-    return this.invoke('stock.setQty', false, (api) => api.stock.setQty(productId, color, qty));
+    return this.invokeOrThrow('stock.setQty', (api) => api.stock.setQty(productId, color, qty));
   }
 
   async stockIncrement(productId: string, color: string, delta: number): Promise<boolean> {
-    return this.invoke('stock.increment', false, (api) => api.stock.increment(productId, color, delta));
+    return this.invokeOrThrow('stock.increment', (api) => api.stock.increment(productId, color, delta));
   }
 
   async stockDecrement(productId: string, color: string, delta: number): Promise<boolean> {
-    return this.invoke('stock.decrement', false, (api) => api.stock.decrement(productId, color, delta));
+    return this.invokeOrThrow('stock.decrement', (api) => api.stock.decrement(productId, color, delta));
   }
 
   async movementsList(): Promise<StockMovement[]> {
@@ -452,6 +452,10 @@ export class IpcService {
 
   async taskNotificationsMarkRead(id: string): Promise<TaskNotificationRecord | null> {
     return this.invoke('taskNotifications.markRead', null, (api) => api.taskNotifications.markRead(id));
+  }
+
+  async taskNotificationsMarkAllRead(): Promise<number> {
+    return this.invoke('taskNotifications.markAllRead', 0, (api) => api.taskNotifications.markAllRead());
   }
 
   taskNotificationsOnMessage(listener: (notification: TaskNotificationRecord) => void): () => void {

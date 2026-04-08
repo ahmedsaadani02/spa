@@ -77,22 +77,47 @@ export class TaskNotificationsService {
     );
   }
 
+  async markAllRead(): Promise<void> {
+    const updatedCount = await this.ipc.taskNotificationsMarkAllRead();
+    if (updatedCount <= 0) {
+      return;
+    }
+
+    this.notificationsSubject.next(
+      this.notifications.map((notification) => notification.isRead
+        ? notification
+        : { ...notification, isRead: true, readAt: new Date().toISOString() })
+    );
+  }
+
   dismissToast(id: string): void {
     this.toastsSubject.next(this.toastsSubject.value.filter((toast) => toast.id !== id));
   }
 
   taskLabel(notification: TaskNotificationRecord): string {
+    const metadata = notification.metadata ?? {};
+    const taskTitle = typeof metadata['taskTitle'] === 'string' ? metadata['taskTitle'] : '';
+    const productLabel = typeof metadata['productLabel'] === 'string' ? metadata['productLabel'] : '';
+    if (taskTitle) {
+      return taskTitle;
+    }
+    if (productLabel) {
+      return productLabel;
+    }
     if (this.language.isArabic) {
       return notification.taskTitleAr || notification.taskTitleFr || '...';
     }
     return notification.taskTitleFr || notification.taskTitleAr || '...';
   }
 
-  notificationTitle(_notification: TaskNotificationRecord): string {
-    return SHELL_I18N[this.language.currentLanguage].notifications.assignedTitle;
+  notificationTitle(notification: TaskNotificationRecord): string {
+    return notification.title || SHELL_I18N[this.language.currentLanguage].notifications.assignedTitle;
   }
 
   notificationMessage(notification: TaskNotificationRecord): string {
+    if (notification.message) {
+      return notification.message;
+    }
     const taskTitle = this.taskLabel(notification);
     const actorName = notification.actorName || SHELL_I18N[this.language.currentLanguage].notifications.assignedTitle;
     return SHELL_I18N[this.language.currentLanguage].notifications.assignedMessage(taskTitle, actorName);
@@ -147,11 +172,7 @@ export class TaskNotificationsService {
   }
 
   private announceUnreadNotificationsOnce(userId: string, notifications: TaskNotificationRecord[]): void {
-    const latestUnread = notifications.find((notification) =>
-      !notification.isRead
-      && notification.kind === 'task_assigned'
-      && this.shouldHandleNotificationForCurrentUser(notification, userId)
-    );
+    const latestUnread = notifications.find((notification) => !notification.isRead && this.shouldHandleNotificationForCurrentUser(notification, userId));
     if (!latestUnread) {
       return;
     }

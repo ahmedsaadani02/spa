@@ -69,25 +69,45 @@
             <div class="dropdown-user-info">
               <span class="dropdown-name">{{ shellText.notifications.title }}</span>
             </div>
+            <button
+              class="notifications-mark-all"
+              type="button"
+              *ngIf="unreadNotificationsCount > 0"
+              (click)="markAllNotificationsRead()"
+            >
+              {{ shellText.notifications.markAllRead }}
+            </button>
           </div>
 
           <div class="dropdown-divider"></div>
 
           <div class="notifications-list" *ngIf="notifications.length > 0; else notificationsEmpty">
-            <button
+            <div
               class="notification-item"
-              type="button"
               *ngFor="let notification of notifications"
               [class.unread]="!notification.isRead"
-              (click)="markNotificationRead(notification)"
             >
-              <div class="notification-item-head">
-                <strong>{{ notificationTitle(notification) }}</strong>
-                <span>{{ notification.createdAt | date:'dd/MM HH:mm' }}</span>
-              </div>
-              <div class="notification-item-body">{{ notificationMessage(notification) }}</div>
-              <div class="notification-item-task">{{ notificationTaskLabel(notification) }}</div>
-            </button>
+              <button class="notification-item-main" type="button" (click)="openNotification(notification)">
+                <div class="notification-item-head">
+                  <strong>{{ notificationTitle(notification) }}</strong>
+                  <span>{{ notification.createdAt | date:'dd/MM HH:mm' }}</span>
+                </div>
+                <div class="notification-item-body">{{ notificationMessage(notification) }}</div>
+                <div class="notification-item-task">{{ notificationTaskLabel(notification) }}</div>
+              </button>
+              <button
+                class="notification-read-action"
+                type="button"
+                *ngIf="!notification.isRead"
+                (click)="markNotificationRead(notification)"
+                [attr.aria-label]="shellText.notifications.markRead"
+                [attr.title]="shellText.notifications.markRead"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <ng-template #notificationsEmpty>
@@ -145,6 +165,14 @@
                 <path d="M12 7v5l3 3" />
               </svg>
               {{ historyNavLabel }}
+            </button>
+            <button class="dropdown-item" type="button" (click)="openArchives()" *ngIf="canOpenStockArchives">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 8v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8" />
+                <path d="M1 3h22v5H1z" />
+                <path d="M10 12h4" />
+              </svg>
+              {{ shellText.nav.archives }}
             </button>
           </div>
 

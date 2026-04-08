@@ -393,6 +393,16 @@
   gap: 12px;
 }
 
+.form-error {
+  border-radius: 10px;
+  border: 1px solid rgba(180, 35, 24, 0.18);
+  background: #fff5f5;
+  color: #b42318;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -21,11 +21,14 @@ const {
   assertCanArchiveStockProduct
 } = require('../legacy-ipc/products.handlers');
 const { normalizeStoredProductImageRef } = require('../utils/product-images');
+const { getUserDisplayName, notifyPrivilegedUsers } = require('./internal-notifications.service');
 
 const normalizeProductRow = (row) => ({
   ...row,
   image_url: normalizeStoredProductImageRef(row.image_url) || row.image_url || null
 });
+
+const normalizeText = (value) => String(value ?? '').trim();
 
 const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clearCurrentUser }) => {
   const withAuthorizedUser = async (token, operation) => {
@@ -72,16 +75,52 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
     },
 
     async create(token, payload) {
-      return withAuthorizedUser(token, async () => {
+      return withAuthorizedUser(token, async (user) => {
         assertProductCatalogPermission();
-        return await createProduct(getDb(), payload);
+        const result = await createProduct(getDb(), payload);
+        if (result?.ok) {
+          const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
+          await notifyPrivilegedUsers(getDb, user, [{
+            kind: 'stock_product_created',
+            title: 'Produit ajoute',
+            message: `${getUserDisplayName(user)} a ajoute le produit "${productLabel}".`,
+            entityType: 'product',
+            entityId: result.id,
+            route: '/stock',
+            metadata: {
+              productLabel,
+              reference: normalizeText(payload?.reference) || null,
+              category: normalizeText(payload?.category) || null,
+              serie: normalizeText(payload?.serie) || null
+            }
+          }]);
+        }
+        return result;
       });
     },
 
     async update(token, id, payload) {
-      return withAuthorizedUser(token, async () => {
+      return withAuthorizedUser(token, async (user) => {
         assertCanEditStockProduct();
-        return await updateProduct(getDb(), id, payload);
+        const result = await updateProduct(getDb(), id, payload);
+        if (result?.ok) {
+          const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
+          await notifyPrivilegedUsers(getDb, user, [{
+            kind: 'stock_product_updated',
+            title: 'Produit modifie',
+            message: `${getUserDisplayName(user)} a modifie le produit "${productLabel}".`,
+            entityType: 'product',
+            entityId: id,
+            route: '/stock',
+            metadata: {
+              productLabel,
+              reference: normalizeText(payload?.reference) || null,
+              addedColors: result.addedColors ?? [],
+              removedColors: result.removedColors ?? []
+            }
+          }]);
+        }
+        return result;
       });
     },
 
@@ -100,9 +139,23 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
     },
 
     async archive(token, id) {
-      return withAuthorizedUser(token, async () => {
+      return withAuthorizedUser(token, async (user) => {
         assertCanArchiveStockProduct();
-        return await archiveProduct(getDb(), id);
+        const result = await archiveProduct(getDb(), id);
+        if (result?.ok) {
+          await notifyPrivilegedUsers(getDb, user, [{
+            kind: 'stock_product_archived',
+            title: 'Produit archive',
+            message: `${getUserDisplayName(user)} a archive un produit du stock.`,
+            entityType: 'product',
+            entityId: id,
+            route: '/archives',
+            metadata: {
+              productId: id
+            }
+          }]);
+        }
+        return result;
       });
     },
 

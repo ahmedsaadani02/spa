@@ -39,6 +39,7 @@ export class MyTasksComponent implements OnInit, OnDestroy {
   loading = true;
   saving = false;
   error = '';
+  updateError = '';
   selectedProofPhotos: Array<{ fileName: string; dataUrl: string }> = [];
 
   updateModal = {
@@ -235,6 +236,7 @@ export class MyTasksComponent implements OnInit, OnDestroy {
         open: true,
         task: detailedTask
       };
+      this.updateError = '';
       this.updateForm.patchValue({
         status: detailedTask.status,
         priorityReadonly: this.priorityLabel(detailedTask.priority),
@@ -258,6 +260,7 @@ export class MyTasksComponent implements OnInit, OnDestroy {
         open: false,
         task: null
       };
+      this.updateError = '';
       this.updateFormSubtasks.clear();
       this.selectedProofPhotos = [];
     });
@@ -320,7 +323,7 @@ export class MyTasksComponent implements OnInit, OnDestroy {
 
     this.syncView(() => {
       this.saving = true;
-      this.error = '';
+      this.updateError = '';
     });
     const raw = this.updateForm.getRawValue();
     const trimmedEmployeeNote = raw.employeeNote?.trim() ?? '';
@@ -345,19 +348,17 @@ export class MyTasksComponent implements OnInit, OnDestroy {
 
       if (!result) {
         this.syncView(() => {
-          this.error = 'Mise a jour impossible.';
+          this.updateError = 'Mise a jour impossible.';
         });
         return;
       }
 
+      this.applyUpdatedTask(result);
       this.closeUpdate(true);
-      await this.loadTasks();
     } catch (error) {
       const message = error instanceof Error ? error.message.trim() : '';
       this.syncView(() => {
-        this.error = message === 'TASK_PROOF_REQUIRED'
-          ? 'Une photo de preuve est requise pour terminer cette tache.'
-          : message || 'Mise a jour impossible.';
+        this.updateError = this.resolveTaskUpdateError(message);
       });
     } finally {
       this.syncView(() => {
@@ -413,5 +414,118 @@ export class MyTasksComponent implements OnInit, OnDestroy {
       update();
       this.cdr.detectChanges();
     });
+  }
+
+  private applyUpdatedTask(updatedTask: TaskRecord): void {
+    const matchesFilters = this.matchesActiveFilters(updatedTask);
+    const existingIndex = this.tasks.findIndex((task) => task.id === updatedTask.id);
+
+    if (!matchesFilters) {
+      if (existingIndex !== -1) {
+        this.tasks = this.tasks.filter((task) => task.id !== updatedTask.id);
+      }
+      if (this.updateModal.task?.id === updatedTask.id) {
+        this.updateModal = {
+          ...this.updateModal,
+          task: updatedTask
+        };
+      }
+      return;
+    }
+
+    if (existingIndex === -1) {
+      this.tasks = this.sortTasksForDisplay([updatedTask, ...this.tasks]);
+    } else {
+      const nextTasks = [...this.tasks];
+      nextTasks[existingIndex] = updatedTask;
+      this.tasks = this.sortTasksForDisplay(nextTasks);
+    }
+
+    if (this.updateModal.task?.id === updatedTask.id) {
+      this.updateModal = {
+        ...this.updateModal,
+        task: updatedTask
+      };
+    }
+  }
+
+  private matchesActiveFilters(task: TaskRecord): boolean {
+    const selectedStatus = this.statusControl.value;
+    if (selectedStatus !== 'all' && task.status !== selectedStatus) {
+      return false;
+    }
+
+    const selectedPriority = this.priorityControl.value;
+    if (selectedPriority !== 'all' && task.priority !== selectedPriority) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private sortTasksForDisplay(tasks: TaskRecord[]): TaskRecord[] {
+    return [...tasks].sort((left, right) => {
+      const statusOrder = this.compareStatus(left.status, right.status);
+      if (statusOrder !== 0) {
+        return statusOrder;
+      }
+
+      const priorityOrder = this.comparePriority(left.priority, right.priority);
+      if (priorityOrder !== 0) {
+        return priorityOrder;
+      }
+
+      const leftDueTime = left.dueDate ? new Date(left.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      const rightDueTime = right.dueDate ? new Date(right.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      if (leftDueTime !== rightDueTime) {
+        return leftDueTime - rightDueTime;
+      }
+
+      const leftUpdatedTime = left.updatedAt ? new Date(left.updatedAt).getTime() : 0;
+      const rightUpdatedTime = right.updatedAt ? new Date(right.updatedAt).getTime() : 0;
+      return rightUpdatedTime - leftUpdatedTime;
+    });
+  }
+
+  private compareStatus(left: TaskStatus, right: TaskStatus): number {
+    const order: Record<TaskStatus, number> = {
+      blocked: 0,
+      in_progress: 1,
+      todo: 2,
+      done: 3
+    };
+    return order[left] - order[right];
+  }
+
+  private comparePriority(left: TaskPriority, right: TaskPriority): number {
+    const order: Record<TaskPriority, number> = {
+      urgent: 0,
+      high: 1,
+      medium: 2,
+      low: 3
+    };
+    return order[left] - order[right];
+  }
+
+  private resolveTaskUpdateError(message: string): string {
+    if (!message) {
+      return 'Mise a jour impossible.';
+    }
+    if (message === 'TASK_PROOF_REQUIRED') {
+      return 'Une photo de preuve est requise pour terminer cette tache.';
+    }
+    if (message.includes('FORBIDDEN')) {
+      return 'Acces refuse pour cette tache.';
+    }
+    if (message.includes('NOT_AUTHENTICATED') || message.includes('UNAUTHORIZED')) {
+      return 'Session invalide. Reconnectez-vous puis reessayez.';
+    }
+    if (message.includes('TASK_NOT_FOUND')) {
+      return 'Tache introuvable.';
+    }
+    if (message.includes('getDb is not a function') || message.includes('TypeError') || message.includes('[IpcService] Timeout')) {
+      return 'La mise a jour de la tache a echoue. Reessayez dans un instant.';
+    }
+    return message;
   }
 }

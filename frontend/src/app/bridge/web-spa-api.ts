@@ -669,6 +669,10 @@ const createWebSpaApi = (): SpaApi => ({
       method: 'PATCH',
       withAuth: true
     }),
+    markAllRead: () => invokeWebApiRequest<number>(`${TASK_NOTIFICATIONS_URL}/read-all`, {
+      method: 'PATCH',
+      withAuth: true
+    }),
     onMessage: (listener: (notification: TaskNotificationRecord) => void) => {
       if (!hasWindow() || typeof EventSource === 'undefined') {
         return () => {};

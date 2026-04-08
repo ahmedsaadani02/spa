@@ -94,7 +94,7 @@ export class StockComponent implements OnInit, OnDestroy {
     color: ['blanc' as StockColor],
     delta: [1, [Validators.required, Validators.min(1)]],
     adjustSign: ['+' as '+' | '-'],
-    reason: ['', Validators.required]
+    reason: ['']
   });
 
   productForm = this.fb.group({
@@ -123,6 +123,8 @@ export class StockComponent implements OnInit, OnDestroy {
     type: 'IN',
     availableColors: ['blanc', 'gris', 'noir']
   };
+  submittingMovement = false;
+  movementError = '';
 
   productModalOpen = false;
   productModalMode: ProductModalMode = 'create';
@@ -297,6 +299,8 @@ export class StockComponent implements OnInit, OnDestroy {
     console.log(`[stock:${action}] handler entered`, { itemId: item.id });
     this.runStockUiUpdate(`stock:${action}`, () => {
       this.modal = { open: true, item, type, availableColors: colors };
+      this.submittingMovement = false;
+      this.movementError = '';
       this.movementForm.reset({
         color: colors[0] ?? 'noir',
         delta: 1,
@@ -307,6 +311,11 @@ export class StockComponent implements OnInit, OnDestroy {
   }
 
   closeModal(): void {
+    if (this.submittingMovement) {
+      return;
+    }
+    this.movementError = '';
+    this.submittingMovement = false;
     this.modal = { open: false, item: null, type: 'IN', availableColors: ['blanc', 'gris', 'noir'] };
   }
 
@@ -329,6 +338,11 @@ export class StockComponent implements OnInit, OnDestroy {
       ? (raw.adjustSign === '-' ? -delta : delta)
       : delta;
 
+    this.runStockUiUpdate(`stock:${action}`, () => {
+      this.submittingMovement = true;
+      this.movementError = '';
+    });
+
     try {
       console.log(`[stock:${action}] request sent`, {
         itemId: this.modal.item.id,
@@ -347,6 +361,8 @@ export class StockComponent implements OnInit, OnDestroy {
       const message = this.resolveMovementError(error);
       console.log(`[stock:${action}] response received`, { ok: false, message });
       this.runStockUiUpdate(`stock:${action}`, () => {
+        this.submittingMovement = false;
+        this.movementError = message;
         this.showToast('error', message);
       });
       return;
@@ -360,6 +376,7 @@ export class StockComponent implements OnInit, OnDestroy {
         : this.t.stockAjuste;
 
     this.runStockUiUpdate(`stock:${action}`, () => {
+      this.submittingMovement = false;
       this.closeModal();
       this.showToast(toastType, toastMessage);
     });
@@ -1133,7 +1150,7 @@ export class StockComponent implements OnInit, OnDestroy {
   private resolveMovementError(error: unknown): string {
     const message = error instanceof Error ? error.message : '';
     if (!message) {
-      return this.t.erreur;
+      return 'Impossible de mettre a jour le stock pour le moment.';
     }
     if (message.includes('FORBIDDEN')) {
       return 'Acces refuse: permission de modification du stock requise.';
@@ -1141,8 +1158,29 @@ export class StockComponent implements OnInit, OnDestroy {
     if (message.includes('NOT_AUTHENTICATED')) {
       return 'Session invalide. Reconnectez-vous puis reessayez.';
     }
-    if (message.includes('stock:applyMovement')) {
-      return 'Service stock indisponible. Redemarrez l application.';
+    if (message.includes('INSUFFICIENT_STOCK') || message.includes('NEGATIVE_STOCK')) {
+      return 'Quantite insuffisante pour cette operation.';
+    }
+    if (message.includes('PRODUCT_NOT_FOUND')) {
+      return 'Produit introuvable.';
+    }
+    if (message.includes('INVALID_COLOR')) {
+      return 'Couleur introuvable pour ce produit.';
+    }
+    if (message.includes('MOVEMENT_DELTA_REQUIRED')) {
+      return 'La quantite du mouvement est invalide.';
+    }
+    if (message.includes('stock.applyMovement') || message.includes('stock:applyMovement') || message.includes('STOCK_MOVEMENT_REJECTED')) {
+      return 'Impossible de mettre a jour le stock pour le moment.';
+    }
+    if (message.includes('IPC_HANDLER_NOT_REGISTERED') || message.includes('API_UNAVAILABLE')) {
+      return 'Le service stock est actuellement indisponible.';
+    }
+    if (message.includes('[IpcService] Timeout')) {
+      return 'Le service stock met trop de temps a repondre. Reessayez.';
+    }
+    if (message.includes('getDb is not a function')) {
+      return 'Une erreur interne a empeche la mise a jour du stock.';
     }
     return message;
   }

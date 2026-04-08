@@ -35,19 +35,12 @@ export class StockIpcRepository implements StockRepository {
   }
 
   async applyMovement(item: StockItem, movement: StockMovement): Promise<void> {
+    void item;
     const ok = await this.ipc.stockApplyMovement(movement);
     if (ok) {
       return;
     }
-
-    // Compatibility fallback when the main process is older and does not expose stock:applyMovement yet.
-    const targetQty = Number(item.quantities[movement.color] ?? movement.after ?? 0);
-    const qtyUpdated = await this.ipc.stockSetQty(movement.itemId, movement.color, targetQty);
-    const movementAdded = qtyUpdated ? await this.ipc.movementsAdd(movement) : false;
-
-    if (!qtyUpdated || !movementAdded) {
-      throw new Error('Stock operation failed (stock:applyMovement unavailable or rejected).');
-    }
+    throw new Error('STOCK_MOVEMENT_REJECTED');
   }
 
   async createProduct(payload: NewStockProductInput): Promise<boolean> {

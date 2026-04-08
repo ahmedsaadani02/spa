@@ -9,6 +9,7 @@ const createTaskNotificationsRouter = (deps) => {
 
   router.get('/', (req, res) => taskNotificationsController.listMine(req, res));
   router.get('/stream', (req, res) => taskNotificationsController.stream(req, res));
+  router.patch('/read-all', (req, res) => taskNotificationsController.markAllRead(req, res));
   router.patch('/:id/read', (req, res) => taskNotificationsController.markRead(req, res));
 
   return router;

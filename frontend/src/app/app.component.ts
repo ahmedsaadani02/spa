@@ -335,8 +335,40 @@ export class AppComponent implements OnInit, OnDestroy {
     void this.router.navigateByUrl('/movements');
   }
 
+  openArchives(): void {
+    if (!this.canOpenStockArchives) {
+      return;
+    }
+    this.dropdownOpen = false;
+    void this.router.navigateByUrl('/archives');
+  }
+
   async markNotificationRead(notification: TaskNotificationRecord): Promise<void> {
     await this.taskNotifications.markRead(notification.id);
+  }
+
+  async markAllNotificationsRead(): Promise<void> {
+    await this.taskNotifications.markAllRead();
+  }
+
+  async openNotification(notification: TaskNotificationRecord): Promise<void> {
+    await this.markNotificationRead(notification);
+    this.notificationsOpen = false;
+
+    const route = typeof notification.route === 'string' ? notification.route.trim() : '';
+    if (route) {
+      void this.router.navigateByUrl(route);
+      return;
+    }
+
+    if (notification.taskId) {
+      void this.router.navigateByUrl(this.canManageTasksPermission ? '/tasks' : '/my-tasks');
+      return;
+    }
+
+    if (notification.entityType === 'product') {
+      void this.router.navigateByUrl('/stock');
+    }
   }
 
   dismissToast(id: string): void {
@@ -366,8 +398,7 @@ export class AppComponent implements OnInit, OnDestroy {
       { label: this.shellText.nav.clients, route: '/clients', visible: this.canManageClients },
       { label: this.shellText.nav.stock, route: '/stock', visible: this.canViewStock, exact: true },
       { label: this.shellText.nav.inventory, route: '/inventaire', visible: this.canOpenInventory },
-      { label: this.shellText.nav.employees, route: '/employees', visible: this.canOpenEmployees },
-      { label: this.shellText.nav.archives, route: '/archives', visible: this.canOpenStockArchives }
+      { label: this.shellText.nav.employees, route: '/employees', visible: this.canOpenEmployees }
     ];
   }
 
@@ -451,6 +482,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
     if (this.canOpenHistory) {
       preloadKeys.add('movements');
+    }
+
+    if (this.canOpenStockArchives) {
+      preloadKeys.add('archives');
     }
 
     for (const key of preloadKeys) {

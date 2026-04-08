@@ -11,6 +11,7 @@ const {
   getStockRows: getStockRowsRead,
   buildStockItems: buildStockItemsRead
 } = require('../repositories/catalog-read.runtime.repository');
+const normalizeMovementReason = (reason) => (typeof reason === 'string' ? reason.trim() : '');
 
 const getStockRows = (db) => db.prepare('SELECT product_id, color, qty FROM stock').all();
 
@@ -255,7 +256,7 @@ const applyStockMovement = (db, movement, currentUser) => {
       delta: appliedDelta,
       before: beforeQty,
       after: afterQty,
-      reason: movement.reason ?? 'stock:update',
+      reason: normalizeMovementReason(movement.reason),
       at: movement.at ?? new Date().toISOString()
     }, currentUser);
   });

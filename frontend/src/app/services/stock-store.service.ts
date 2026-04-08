@@ -202,14 +202,17 @@ export class StockStoreService {
   async moveStock(input: MoveStockInput): Promise<void> {
     const items = this.itemsSubject.value;
     const item = items.find((entry) => entry.id === input.itemId);
-    if (!item) return;
+    if (!item) {
+      throw new Error('PRODUCT_NOT_FOUND');
+    }
 
     const reason = input.reason.trim();
-    if (!reason) return;
 
     const before = this.getQuantity(item, input.color);
     const rawDelta = Number.isFinite(input.delta) ? input.delta : 0;
-    if (rawDelta === 0) return;
+    if (rawDelta === 0) {
+      throw new Error('MOVEMENT_DELTA_REQUIRED');
+    }
 
     let appliedDelta = 0;
     if (input.type === 'IN') {
@@ -247,7 +250,7 @@ export class StockStoreService {
       delta: actualDelta,
       before,
       after,
-      reason: reason,
+      reason,
       actor: 'session-user',
       at: new Date().toISOString()
     };

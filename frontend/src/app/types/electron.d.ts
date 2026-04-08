@@ -475,6 +475,7 @@ export interface SpaApi {
   taskNotifications: {
     list: (limit?: number) => Promise<TaskNotificationRecord[]>;
     markRead: (id: string) => Promise<TaskNotificationRecord | null>;
+    markAllRead: () => Promise<number>;
     onMessage: (listener: (notification: TaskNotificationRecord) => void) => () => void;
   };
   salary: {

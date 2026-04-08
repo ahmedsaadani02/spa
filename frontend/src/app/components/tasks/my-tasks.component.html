@@ -27,7 +27,7 @@
 
   <section class="tasks-grid">
     <div class="error card" *ngIf="error">{{ error }}</div>
-    <div class="loading-state card" *ngIf="loading">
+    <div class="loading-state card" *ngIf="loading && tasks.length === 0">
       <span class="loading-dot"></span>
       <div>
         <strong>{{ ui.mine.loadingStrong }}</strong>
@@ -173,6 +173,8 @@
             </div>
           </div>
         </section>
+
+        <div class="error card" *ngIf="updateError">{{ updateError }}</div>
       </div>
 
       <div class="confirm-actions modal-footer">

@@ -2,6 +2,7 @@ const { randomUUID } = require('crypto');
 const { withClient } = require('../../db/postgres');
 
 const toSafeQty = (qty) => Math.max(0, Number(qty) || 0);
+const normalizeMovementReason = (reason) => (typeof reason === 'string' ? reason.trim() : '');
 
 const withStockWriteTransaction = async (productId, color, resolveNextQty) => {
   return withClient(async (client) => {
@@ -243,7 +244,7 @@ const applyStockMovement = async (_db, movement, currentUser) => {
           appliedDelta,
           beforeQty,
           afterQty,
-          movement.reason ?? 'stock:update',
+          normalizeMovementReason(movement.reason),
           actorName,
           currentUser?.id ?? null,
           actorName,

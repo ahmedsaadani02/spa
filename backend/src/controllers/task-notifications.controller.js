@@ -45,6 +45,16 @@ const createTaskNotificationsController = ({ taskNotificationsService }) => ({
     }
   },
 
+  async markAllRead(req, res) {
+    try {
+      const result = await taskNotificationsService.markAllRead(getBearerToken(req));
+      return res.json({ success: true, result });
+    } catch (error) {
+      const failure = toHttpFailure(error, 'TASK_NOTIFICATIONS_MARK_ALL_READ_FAILED');
+      return res.status(failure.status).json({ success: false, message: failure.message });
+    }
+  },
+
   async stream(req, res) {
     let unsubscribe = () => {};
     let keepAlive = null;

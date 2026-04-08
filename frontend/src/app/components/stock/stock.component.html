@@ -152,7 +152,7 @@
   <div class="modal-card modal-card--compact" role="dialog" aria-modal="true" [dir]="isAr ? 'rtl' : 'ltr'">
     <div class="modal-header">
       <h2>{{ modal.type === 'IN' ? t.modalAjouter : modal.type === 'OUT' ? t.modalRetirer : t.modalAjuster }}</h2>
-      <button class="btn ghost" type="button" (click)="closeModal()">{{ t.fermer }}</button>
+      <button class="btn ghost" type="button" (click)="closeModal()" [disabled]="submittingMovement">{{ t.fermer }}</button>
     </div>
 
     <div class="modal-content-scroll modal-body" *ngIf="modal.item as item">
@@ -191,18 +191,20 @@
           <span>{{ t.raison }}</span>
           <input class="input" type="text" formControlName="reason" [placeholder]="t.raisonPlaceholder" />
         </label>
+
+        <div class="form-error" *ngIf="movementError">{{ movementError }}</div>
       </form>
     </div>
 
     <div class="modal-actions">
-      <button class="btn ghost" type="button" (click)="closeModal()">{{ t.annuler }}</button>
+      <button class="btn ghost" type="button" (click)="closeModal()" [disabled]="submittingMovement">{{ t.annuler }}</button>
       <button
         class="btn primary"
         type="button"
         (click)="submitMovement()"
-        [disabled]="!modal.item || (modal.type === 'IN' && !canAddStock) || (modal.type === 'OUT' && !canRemoveStock) || (modal.type === 'ADJUST' && !canAdjustStock)"
+        [disabled]="submittingMovement || !modal.item || (modal.type === 'IN' && !canAddStock) || (modal.type === 'OUT' && !canRemoveStock) || (modal.type === 'ADJUST' && !canAdjustStock)"
       >
-        {{ t.valider }}
+        {{ submittingMovement ? 'Validation...' : t.valider }}
       </button>
     </div>
   </div>

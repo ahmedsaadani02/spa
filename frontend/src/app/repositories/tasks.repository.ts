@@ -131,7 +131,13 @@ export class TasksRepository {
   async updateMine(id: string, payload: MyTaskUpdateInput): Promise<TaskRecord | null> {
     const updated = await this.ipc.myTasksUpdate(id, payload);
     this.invalidateAdminCache();
-    this.invalidateMineCache();
+    if (updated && this.hasCachedMineDefaultList) {
+      this.cachedMineDefaultList = this.cachedMineDefaultList.some((task) => task.id === id)
+        ? this.cachedMineDefaultList.map((task) => task.id === id ? updated : task)
+        : [...this.cachedMineDefaultList, updated];
+    } else {
+      this.invalidateMineCache();
+    }
     return updated;
   }
 

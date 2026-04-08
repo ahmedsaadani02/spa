@@ -23,6 +23,7 @@ export const SHELL_I18N = {
       title: 'Notifications',
       empty: 'Aucune notification recente',
       markRead: 'Marquer comme lue',
+      markAllRead: 'Tout marquer comme lu',
       assignedTitle: 'Nouvelle tache assignee',
       assignedMessage: (taskTitle: string, actorName: string) =>
         `${actorName} vous a assigne la tache "${taskTitle}".`
@@ -54,6 +55,7 @@ export const SHELL_I18N = {
       title: 'الإشعارات',
       empty: 'لا توجد إشعارات حديثة',
       markRead: 'تحديد كمقروءة',
+      markAllRead: 'تحديد الكل كمقروء',
       assignedTitle: 'مهمة جديدة',
       assignedMessage: (taskTitle: string, actorName: string) =>
         `${actorName} قام بإسناد المهمة "${taskTitle}" إليك.`

@@ -1,6 +1,7 @@
 const { randomUUID } = require('crypto');
 
 const toSafeQty = (qty) => Math.max(0, Number(qty) || 0);
+const normalizeMovementReason = (reason) => (typeof reason === 'string' ? reason.trim() : '');
 
 const getActiveProduct = (db, productId) => db.prepare(`
   SELECT id
@@ -212,7 +213,7 @@ const applyStockMovement = (db, movement, currentUser) => {
       delta: appliedDelta,
       before: beforeQty,
       after: afterQty,
-      reason: movement.reason ?? 'stock:update',
+      reason: normalizeMovementReason(movement.reason),
       at: movement.at ?? new Date().toISOString()
     }, currentUser);
   });

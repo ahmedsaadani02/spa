@@ -1,7 +1,7 @@
-const { hasPermission } = require('./auth-session.service');
 const {
   listNotificationsByEmployee,
-  markNotificationRead
+  markNotificationRead,
+  markAllNotificationsRead
 } = require('../repositories/postgres/task-notifications.repository');
 const { subscribeTaskNotifications } = require('./task-notification-stream.service');
 
@@ -14,10 +14,6 @@ const createTaskNotificationsService = ({ resolveSessionUser, setCurrentUser, cl
 
     setCurrentUser(user);
     try {
-      const allowed = hasPermission('receiveTasks') || hasPermission('manageTasks');
-      if (!allowed) {
-        throw new Error('FORBIDDEN');
-      }
       return await operation(user);
     } finally {
       clearCurrentUser();
@@ -31,6 +27,10 @@ const createTaskNotificationsService = ({ resolveSessionUser, setCurrentUser, cl
 
     async markRead(token, id) {
       return withNotificationUser(token, (user) => markNotificationRead(id, user.id));
+    },
+
+    async markAllRead(token) {
+      return withNotificationUser(token, (user) => markAllNotificationsRead(user.id));
     },
 
     async subscribe(token, listener) {
