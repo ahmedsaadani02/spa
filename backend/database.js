@@ -7,6 +7,22 @@ try {
   // dotenv is optional here; process env can still be provided externally.
 }
 
+const isPostgresOnly = () => {
+  const driver = (process.env.DB_DRIVER || '').trim().toLowerCase();
+  return driver === 'postgres';
+};
+
+if (isPostgresOnly()) {
+  console.log('[backend-db] DB_DRIVER=postgres — skipping SQLite initialization');
+  const nullDb = {
+    prepare: () => ({ run: () => {}, get: () => null, all: () => [] }),
+    exec: () => {},
+    pragma: () => {},
+    close: () => {}
+  };
+  module.exports = nullDb;
+  return;
+}
 let Database;
 const localBackendBetterSqlitePath = path.join(__dirname, 'node_modules', 'better-sqlite3');
 const rootBetterSqlitePath = path.join(__dirname, '..', 'node_modules', 'better-sqlite3');

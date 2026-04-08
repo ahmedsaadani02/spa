@@ -182,7 +182,14 @@ function createApp() {
   fs.mkdirSync(productsImagesDir, { recursive: true });
   fs.mkdirSync(taskProofImagesDir, { recursive: true });
 
-  app.use(cors());
+  app.use(cors({
+    origin: process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+      : true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }));
   app.use(express.json({ limit: '25mb' }));
   registerBackendRoutes(app, {
     getDb: () => db,
