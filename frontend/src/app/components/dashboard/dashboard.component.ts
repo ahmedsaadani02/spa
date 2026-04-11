@@ -78,6 +78,12 @@ export class DashboardComponent {
         visible: this.auth.hasPermission('manageClients')
       },
       {
+        label: this.ui.links.estimation,
+        route: '/estimation',
+        description: this.ui.links.estimationDesc,
+        visible: this.auth.hasPermission('manageEstimations')
+      },
+      {
         label: this.ui.links.stock,
         route: '/stock',
         description: this.ui.links.stockDesc,

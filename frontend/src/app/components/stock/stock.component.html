@@ -71,12 +71,12 @@
       </div>
 
       <div class="stock-grid">
-        <article class="stock-card" *ngFor="let item of group.items; trackBy: trackById" [class.low-stock]="isItemFullyOut(item)">
+        <article class="stock-card" *ngFor="let item of group.items; let i = index; trackBy: trackById" [class.low-stock]="isItemFullyOut(item)">
           <div class="stock-image" [class.is-missing]="isImageMissing(item)">
             <img
               [src]="getImageSrc(item)"
               [attr.alt]="item.label"
-              loading="lazy"
+              [attr.loading]="i < 20 ? 'eager' : 'lazy'"
               decoding="async"
               (error)="onImageError($event, item)"
             />
