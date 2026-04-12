@@ -145,6 +145,13 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
           });
           throw error;
         }
+        if (!result?.ok) {
+          console.error('[PRODUCT_SERVICE_CREATE_VALIDATION_ERROR]', {
+            message: result?.message || 'Unknown validation error',
+            payload: JSON.stringify(payload, null, 2)
+          });
+          throw new Error(result?.message || 'PRODUCT_CREATE_VALIDATION_FAILED');
+        }
         if (result?.ok) {
           const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
           try {
@@ -179,6 +186,14 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
       return withAuthorizedUser(token, async (user) => {
         assertCanEditStockProduct();
         const result = await updateProduct(getDb(), id, payload);
+        if (!result?.ok) {
+          console.error('[PRODUCT_SERVICE_UPDATE_VALIDATION_ERROR]', {
+            message: result?.message || 'Unknown validation error',
+            productId: id,
+            payload: JSON.stringify(payload, null, 2)
+          });
+          throw new Error(result?.message || 'PRODUCT_UPDATE_VALIDATION_FAILED');
+        }
         if (result?.ok) {
           const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
           await notifyPrivilegedUsers(getDb, user, [{

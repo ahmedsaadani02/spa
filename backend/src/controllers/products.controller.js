@@ -11,6 +11,15 @@ const toHttpFailure = (error, fallback) => {
   if (message === 'FORBIDDEN') {
     return { status: 403, message: 'Forbidden' };
   }
+  if (message === 'PRODUCT_REFERENCE_ALREADY_EXISTS') {
+    return { status: 409, message: 'Reference already exists' };
+  }
+  if (message === 'PRODUCT_IMAGE_URL_INVALID') {
+    return { status: 400, message: 'Invalid image URL format' };
+  }
+  if (message === 'PRODUCT_LABEL_REQUIRED' || message === 'PRODUCT_COLORS_REQUIRED' || message === 'INVALID_PAYLOAD') {
+    return { status: 400, message: message.replace(/_/g, ' ').toLowerCase() };
+  }
   return { status: 500, message };
 };
 
