@@ -17,7 +17,7 @@ const toHttpFailure = (error, fallback) => {
   if (message === 'PRODUCT_IMAGE_URL_INVALID') {
     return { status: 400, message: 'Invalid image URL format' };
   }
-  if (message === 'PRODUCT_LABEL_REQUIRED' || message === 'PRODUCT_COLORS_REQUIRED' || message === 'INVALID_PAYLOAD') {
+  if (message === 'PRODUCT_LABEL_REQUIRED' || message === 'PRODUCT_COLORS_REQUIRED' || message === 'PRODUCT_CATEGORY_REQUIRED' || message === 'PRODUCT_SERIE_REQUIRED' || message === 'PRODUCT_UNIT_REQUIRED' || message === 'PRODUCT_REFERENCE_REQUIRED' || message === 'INVALID_PAYLOAD') {
     return { status: 400, message: message.replace(/_/g, ' ').toLowerCase() };
   }
   // Handle common database errors

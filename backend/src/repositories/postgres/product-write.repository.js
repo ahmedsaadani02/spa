@@ -285,25 +285,37 @@ const createProduct = async (_db, payload) => {
     throw new Error('INVALID_PAYLOAD');
   }
 
+  // Validate required fields
   const label = normalizeText(payload.label);
   if (!label) {
     throw new Error('PRODUCT_LABEL_REQUIRED');
   }
 
-  const category = normalizeTag(payload.category, 'accessoire') || 'accessoire';
-  const serie = normalizeTag(payload.serie, '40') || '40';
-  const unit = normalizeText(payload.unit, 'piece');
+  const category = normalizeTag(payload.category);
+  if (!category) {
+    throw new Error('PRODUCT_CATEGORY_REQUIRED');
+  }
+
+  const serie = normalizeTag(payload.serie);
+  if (!serie) {
+    throw new Error('PRODUCT_SERIE_REQUIRED');
+  }
+
+  const unit = normalizeText(payload.unit);
+  if (!unit) {
+    throw new Error('PRODUCT_UNIT_REQUIRED');
+  }
+
   const reference = normalizeText(payload.reference, label);
+  if (!reference) {
+    throw new Error('PRODUCT_REFERENCE_REQUIRED');
+  }
+
   const description = normalizeText(payload.description ?? '', '');
   const colors = normalizeColorArray(payload.colors);
 
   if (!colors.length) {
     throw new Error('PRODUCT_COLORS_REQUIRED');
-  }
-
-  // Ensure reference is not empty
-  if (!reference) {
-    throw new Error('PRODUCT_LABEL_REQUIRED');
   }
 
   const lowStockThreshold = Math.max(0, Number(payload.lowStockThreshold ?? 0) || 0);
@@ -324,7 +336,7 @@ const createProduct = async (_db, payload) => {
   const normalizedImageRef = sanitizedImageUrl ? normalizeStoredProductImageRef(sanitizedImageUrl) : null;
 
   console.log('[CREATE_PRODUCT_IMAGE_DEBUG]', {
-    productId: id,
+    productId: 'pending',
     original_image_url: payload.image_url,
     original_imageRef: payload.imageRef,
     sanitized: sanitizedImageUrl,
