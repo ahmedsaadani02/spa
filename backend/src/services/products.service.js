@@ -24,14 +24,11 @@ const { resolveProductImageUrl, normalizeImage } = require('../utils/product-ima
 const { getUserDisplayName, notifyPrivilegedUsers } = require('./internal-notifications.service');
 
 const normalizeProductRow = (row) => {
-  const imageMeta = normalizeImage(row.image_url);
-  const imageUrl = resolveProductImageUrl(row.image_url);
+  const imageUrl = normalizeImage(row.image_url);
 
   return {
     ...row,
-    image: imageMeta?.filename ?? null,
-    imageUrl,
-    image_url: imageUrl
+    imageUrl
   };
 };
 
