@@ -36,6 +36,7 @@ const isHttpUrl = (value) => /^https?:\/\//i.test(value);
 const isDataUrl = (value) => /^data:/i.test(value);
 const isFileUrl = (value) => /^file:\/\//i.test(value);
 const isApiProductImagesPath = (value) => /^\/?api\/product-images\//i.test(value);
+const isFullProductImageUrl = (value) => typeof value === 'string' && /^https?:\/\/[^/]+\/api\/product-images\//i.test(value);
 const isAbsoluteFsPath = (value) => /^[a-z]:[\\/]/i.test(value) || /^\/[^/]/.test(value) || /^\\\\/.test(value);
 const looksLikeLegacyFsPath = (value) => /[\\/]/.test(value);
 const looksLikeImageFileName = (value) => /^[^\\/]+\.(png|jpe?g|webp|gif|bmp)$/i.test(value);
@@ -86,7 +87,13 @@ const normalizeStoredProductImageRef = (value) => {
   const trimmed = value.trim();
   if (!trimmed) return null;
 
-  // Clean corrupted localhost/127.0.0.1 URLs from old data
+  // Clean full /api/product-images/ URLs from old data, including localhost or any host
+  const fullApiImageMatch = trimmed.match(/^https?:\/\/[^/]+\/api\/product-images\/(.+)$/i);
+  if (fullApiImageMatch) {
+    const fileName = fullApiImageMatch[1].split(/[?#]/)[0];
+    if (fileName) return `product-images/${decodeURIComponent(fileName)}`;
+  }
+
   const localhostMatch = trimmed.match(/^https?:\/\/(127\.0\.0\.1|0\.0\.0\.0|localhost)(:\d+)?\/api\/product-images\/(.+)$/i);
   if (localhostMatch) {
     const fileName = localhostMatch[3];
@@ -126,6 +133,36 @@ const toFileUrl = (sourcePath) => {
 
 const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || `http://127.0.0.1:${Number(process.env.PORT) || 3001}`;
 const toProductImagesApiUrl = (fileName) => `${BACKEND_BASE_URL}/api/product-images/${encodeURIComponent(fileName)}`;
+
+const normalizeImage = (value) => {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+
+  const fullApiImageMatch = trimmed.match(/^https?:\/\/[^/]+\/api\/product-images\/(.+)$/i);
+  if (fullApiImageMatch) {
+    const fileName = fullApiImageMatch[1].split(/[?#]/)[0];
+    if (!fileName) return null;
+    const normalizedFileName = decodeURIComponent(fileName);
+    return {
+      filename: normalizedFileName,
+      url: toProductImagesApiUrl(normalizedFileName)
+    };
+  }
+
+  const apiPathMatch = trimmed.match(/^\/?api\/product-images\/(.+)$/i);
+  const storedPathMatch = trimmed.match(/^product-images\/(.+)$/i);
+  const fileNameOnly = trimmed.match(/^[^\/]+\.(png|jpe?g|webp|gif|bmp)$/i);
+  const fileName = apiPathMatch?.[1] || storedPathMatch?.[1] || fileNameOnly?.[0];
+
+  if (!fileName) return null;
+
+  const normalizedFileName = decodeURIComponent(fileName.split(/[?#]/)[0]);
+  return {
+    filename: normalizedFileName,
+    url: toProductImagesApiUrl(normalizedFileName)
+  };
+};
 
 const resolveLegacyImageSourcePath = (value) => {
   const direct = tryResolveLegacySourcePath(value);
@@ -292,6 +329,8 @@ const migrateLegacyProductImageRef = (value, preferredName = 'product') => {
 module.exports = {
   PLACEHOLDER_IMAGE,
   normalizeStoredProductImageRef,
+  normalizeImage,
+  isFullProductImageUrl,
   resolveProductImageUrl,
   copyProductImageToStore,
   migrateLegacyProductImageRef,
