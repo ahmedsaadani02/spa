@@ -149,26 +149,18 @@ const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || `http://127.0.0.1:${Num
 const toProductImagesApiUrl = (fileName) => `${BACKEND_BASE_URL}/api/product-images/${encodeURIComponent(fileName)}`;
 
 const normalizeImage = (value) => {
-  if (!value) return null;
+  return safeBuildProductImageUrl(value, BACKEND_BASE_URL);
+};
+
+const safeBuildProductImageUrl = (imageUrl, baseUrl) => {
+  if (!imageUrl || typeof imageUrl !== 'string') return null;
 
   try {
-    const trimmed = String(value).trim();
-    if (!trimmed) return null;
-
-    const filename = trimmed.replace(/^https?:\/\/[^/]+\/api\/product-images\//, '');
-    if (filename !== trimmed) {
-      // It was a full URL, extract filename and rebuild URL
-      return `${BACKEND_BASE_URL}/api/product-images/${filename}`;
-    }
-
-    // For relative paths or filenames, just ensure they have the full URL
-    if (filename.includes('/')) {
-      return `${BACKEND_BASE_URL}/api/product-images/${path.basename(filename)}`;
-    }
-
-    return `${BACKEND_BASE_URL}/api/product-images/${filename}`;
+    const filename = imageUrl.replace(/^https?:\/\/[^/]+\/api\/product-images\//, '').trim();
+    if (!filename) return null;
+    return `${baseUrl}/api/product-images/${filename}`;
   } catch (error) {
-    console.error('normalizeImage error:', error, 'value:', value);
+    console.error('[PRODUCT_IMAGE_URL_ERROR]', { imageUrl, error: error?.message });
     return null;
   }
 };
@@ -363,6 +355,7 @@ module.exports = {
   copyProductImageToStore,
   migrateLegacyProductImageRef,
   sanitizeImageInput,
+  safeBuildProductImageUrl,
   getProductsImagesDirectory,
   ensureProductsImagesDirectory
 };

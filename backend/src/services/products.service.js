@@ -24,10 +24,23 @@ const { resolveProductImageUrl, normalizeImage } = require('../utils/product-ima
 const { getUserDisplayName, notifyPrivilegedUsers } = require('./internal-notifications.service');
 
 const normalizeProductRow = (row) => {
-  const imageUrl = normalizeImage(row.image_url);
+  let imageUrl;
+  try {
+    imageUrl = normalizeImage(row.image_url);
+  } catch (error) {
+    console.error('[PRODUCT_ROW_NORMALIZE_ERROR]', {
+      productId: row.id,
+      reference: row.reference,
+      image_url: row.image_url,
+      error: error.message,
+      stack: error.stack
+    });
+    imageUrl = null;
+  }
 
   console.log('[PRODUCT_ROW_NORMALIZE_DEBUG]', {
     productId: row.id,
+    reference: row.reference,
     db_image_url: row.image_url,
     normalized_imageUrl: imageUrl
   });
@@ -59,14 +72,48 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
     async list(token) {
       return withAuthorizedUser(token, async () => {
         assertPermission('viewStock');
-        return (await listProducts(getDb())).map(normalizeProductRow);
+        const rawProducts = await listProducts(getDb());
+        return rawProducts.map((row) => {
+          try {
+            return normalizeProductRow(row);
+          } catch (error) {
+            console.error('[SERVICE_PRODUCT_ROW_NORMALIZE_ERROR]', {
+              productId: row.id,
+              reference: row.reference,
+              error: error.message,
+              stack: error.stack
+            });
+            // Return row with imageUrl: null
+            return {
+              ...row,
+              imageUrl: null
+            };
+          }
+        });
       });
     },
 
     async listArchived(token) {
       return withAuthorizedUser(token, async () => {
         assertProductCatalogPermission();
-        return (await listArchivedProducts(getDb())).map(normalizeProductRow);
+        const rawProducts = await listArchivedProducts(getDb());
+        return rawProducts.map((row) => {
+          try {
+            return normalizeProductRow(row);
+          } catch (error) {
+            console.error('[SERVICE_PRODUCT_ROW_NORMALIZE_ERROR]', {
+              productId: row.id,
+              reference: row.reference,
+              error: error.message,
+              stack: error.stack
+            });
+            // Return row with imageUrl: null
+            return {
+              ...row,
+              imageUrl: null
+            };
+          }
+        });
       });
     },
 

@@ -66,7 +66,26 @@ const listProducts = async () => {
     ORDER BY reference
   `);
 
-  return rows.map(normalizeProductRow);
+  return rows.map((row) => {
+    try {
+      return normalizeProductRow(row);
+    } catch (error) {
+      console.error('[REPO_PRODUCT_ROW_NORMALIZE_ERROR]', {
+        productId: row.id,
+        reference: row.reference,
+        error: error.message,
+        stack: error.stack
+      });
+      // Return row with safe defaults
+      return {
+        ...row,
+        low_stock_threshold: 0,
+        price_ttc: null,
+        archived_at: null,
+        last_updated: null
+      };
+    }
+  });
 };
 
 const listArchivedProducts = async () => {
@@ -111,10 +130,31 @@ const listArchivedProducts = async () => {
     colorsByProduct.set(row.product_id, list);
   });
 
-  return products.map((row) => ({
-    ...normalizeProductRow(row),
-    colors: sortColors(Array.from(new Set(colorsByProduct.get(row.id) ?? [])))
-  }));
+  return products.map((row) => {
+    let normalizedRow;
+    try {
+      normalizedRow = normalizeProductRow(row);
+    } catch (error) {
+      console.error('[REPO_ARCHIVED_PRODUCT_ROW_NORMALIZE_ERROR]', {
+        productId: row.id,
+        reference: row.reference,
+        error: error.message,
+        stack: error.stack
+      });
+      // Return row with safe defaults
+      normalizedRow = {
+        ...row,
+        low_stock_threshold: 0,
+        price_ttc: null,
+        archived_at: row.archived_at ?? null,
+        last_updated: row.last_updated ?? null
+      };
+    }
+    return {
+      ...normalizedRow,
+      colors: sortColors(Array.from(new Set(colorsByProduct.get(row.id) ?? [])))
+    };
+  });
 };
 
 const getProductMetadata = async () => {
