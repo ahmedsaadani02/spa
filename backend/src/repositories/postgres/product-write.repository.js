@@ -282,12 +282,12 @@ const updateVariantPriceWithHistory = async (_db, productId, colorInput, nextPri
 
 const createProduct = async (_db, payload) => {
   if (!payload || typeof payload !== 'object') {
-    return { ok: false, message: 'INVALID_PAYLOAD' };
+    throw new Error('INVALID_PAYLOAD');
   }
 
   const label = normalizeText(payload.label);
   if (!label) {
-    return { ok: false, message: 'PRODUCT_LABEL_REQUIRED' };
+    throw new Error('PRODUCT_LABEL_REQUIRED');
   }
 
   const category = normalizeTag(payload.category, 'accessoire') || 'accessoire';
@@ -298,7 +298,7 @@ const createProduct = async (_db, payload) => {
   const colors = normalizeColorArray(payload.colors);
 
   if (!colors.length) {
-    return { ok: false, message: 'PRODUCT_COLORS_REQUIRED' };
+    throw new Error('PRODUCT_COLORS_REQUIRED');
   }
 
   const lowStockThreshold = Math.max(0, Number(payload.lowStockThreshold ?? 0) || 0);
@@ -313,7 +313,7 @@ const createProduct = async (_db, payload) => {
       message: error.message,
       payload: JSON.stringify(payload, null, 2)
     });
-    return { ok: false, message: 'PRODUCT_IMAGE_URL_INVALID' };
+    throw new Error('PRODUCT_IMAGE_URL_INVALID');
   }
 
   const normalizedImageRef = normalizeStoredProductImageRef(sanitizedImageUrl) || PLACEHOLDER_IMAGE;
@@ -340,7 +340,7 @@ const createProduct = async (_db, payload) => {
     [reference]
   );
   if (existingReference.rows.length > 0) {
-    return { ok: false, message: 'PRODUCT_REFERENCE_ALREADY_EXISTS' };
+    throw new Error('PRODUCT_REFERENCE_ALREADY_EXISTS');
   }
 
   await withClient(async (client) => {
@@ -395,11 +395,11 @@ const createProduct = async (_db, payload) => {
 
 const updateProduct = async (_db, productId, payload) => {
   if (!productId || typeof productId !== 'string') {
-    return { ok: false, message: 'PRODUCT_ID_REQUIRED' };
+    throw new Error('PRODUCT_ID_REQUIRED');
   }
 
   if (!payload || typeof payload !== 'object') {
-    return { ok: false, message: 'INVALID_PAYLOAD' };
+    throw new Error('INVALID_PAYLOAD');
   }
 
   const existingResult = await query(
@@ -415,12 +415,12 @@ const updateProduct = async (_db, productId, payload) => {
   );
   const existing = existingResult.rows[0];
   if (!existing) {
-    return { ok: false, message: 'PRODUCT_NOT_FOUND' };
+    throw new Error('PRODUCT_NOT_FOUND');
   }
 
   const label = normalizeText(payload.label ?? existing.label);
   if (!label) {
-    return { ok: false, message: 'PRODUCT_LABEL_REQUIRED' };
+    throw new Error('PRODUCT_LABEL_REQUIRED');
   }
 
   const reference = normalizeText(payload.reference ?? existing.reference, label);
@@ -436,7 +436,7 @@ const updateProduct = async (_db, productId, payload) => {
     [reference, productId]
   );
   if (duplicate.rows.length > 0) {
-    return { ok: false, message: 'PRODUCT_REFERENCE_ALREADY_EXISTS' };
+    throw new Error('PRODUCT_REFERENCE_ALREADY_EXISTS');
   }
 
   const category = normalizeTag(payload.category ?? existing.category, 'accessoire') || 'accessoire';
@@ -455,7 +455,7 @@ const updateProduct = async (_db, productId, payload) => {
       productId,
       payload: JSON.stringify(payload, null, 2)
     });
-    return { ok: false, message: 'PRODUCT_IMAGE_URL_INVALID' };
+    throw new Error('PRODUCT_IMAGE_URL_INVALID');
   }
 
   const imageRef = normalizeStoredProductImageRef(sanitizedImageUrl) || PLACEHOLDER_IMAGE;

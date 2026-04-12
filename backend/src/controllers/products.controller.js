@@ -73,12 +73,20 @@ const createProductsController = ({ productsService }) => ({
   async create(req, res) {
     const payload = req.body;
     if (!payload || typeof payload !== 'object') {
-      return res.status(400).json({ success: false, message: 'product payload is required' });
+      return res.status(400).json({ ok: false, mode: 'create', message: 'product payload is required' });
     }
 
     try {
       const result = await productsService.create(getBearerToken(req), payload);
-      return res.json({ success: true, result });
+      if (result?.ok === false) {
+        console.error('[PRODUCT_CREATE_VALIDATION_ERROR]', {
+          message: result.message,
+          payload: JSON.stringify(payload, null, 2)
+        });
+        const failure = toHttpFailure(new Error(result.message), 'PRODUCT_CREATE_FAILED');
+        return res.status(failure.status).json({ ok: false, mode: 'create', message: failure.message });
+      }
+      return res.json({ ok: true, result });
     } catch (error) {
       console.error('[PRODUCT_CREATE_ERROR]', {
         message: error.message,
@@ -87,7 +95,7 @@ const createProductsController = ({ productsService }) => ({
         token: getBearerToken(req) ? '[PRESENT]' : '[MISSING]'
       });
       const failure = toHttpFailure(error, 'PRODUCT_CREATE_FAILED');
-      return res.status(failure.status).json({ success: false, message: failure.message });
+      return res.status(failure.status).json({ ok: false, mode: 'create', message: failure.message });
     }
   },
 
@@ -95,30 +103,48 @@ const createProductsController = ({ productsService }) => ({
     const id = typeof req.params?.id === 'string' ? req.params.id : '';
     const payload = req.body;
     if (!id.trim() || !payload || typeof payload !== 'object') {
-      return res.status(400).json({ success: false, message: 'id and product payload are required' });
+      return res.status(400).json({ ok: false, mode: 'update', message: 'id and product payload are required' });
     }
 
     try {
       const result = await productsService.update(getBearerToken(req), id, payload);
-      return res.json({ success: true, result });
+      if (result?.ok === false) {
+        console.error('[PRODUCT_UPDATE_VALIDATION_ERROR]', {
+          message: result.message,
+          productId: id,
+          payload: JSON.stringify(payload, null, 2)
+        });
+        const failure = toHttpFailure(new Error(result.message), 'PRODUCT_UPDATE_FAILED');
+        return res.status(failure.status).json({ ok: false, mode: 'update', message: failure.message });
+      }
+      return res.json({ ok: true, result });
     } catch (error) {
       const failure = toHttpFailure(error, 'PRODUCT_UPDATE_FAILED');
-      return res.status(failure.status).json({ success: false, message: failure.message });
+      return res.status(failure.status).json({ ok: false, mode: 'update', message: failure.message });
     }
   },
 
   async upsert(req, res) {
     const product = req.body;
     if (!product || typeof product !== 'object') {
-      return res.status(400).json({ success: false, message: 'product payload is required' });
+      return res.status(400).json({ ok: false, mode: 'upsert', message: 'product payload is required' });
     }
 
     try {
       const result = await productsService.upsert(getBearerToken(req), product);
-      return res.json({ success: true, result });
+      if (result?.ok === false) {
+        console.error('[PRODUCT_UPSERT_VALIDATION_ERROR]', {
+          message: result.message,
+          productId: product.id,
+          payload: JSON.stringify(product, null, 2)
+        });
+        const failure = toHttpFailure(new Error(result.message), 'PRODUCT_UPSERT_FAILED');
+        return res.status(failure.status).json({ ok: false, mode: 'upsert', message: failure.message });
+      }
+      return res.json({ ok: true, result });
     } catch (error) {
       const failure = toHttpFailure(error, 'PRODUCT_UPSERT_FAILED');
-      return res.status(failure.status).json({ success: false, message: failure.message });
+      return res.status(failure.status).json({ ok: false, mode: 'upsert', message: failure.message });
     }
   },
 

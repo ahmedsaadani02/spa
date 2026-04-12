@@ -134,49 +134,30 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
     async create(token, payload) {
       return withAuthorizedUser(token, async (user) => {
         assertProductCatalogPermission();
-        let result;
+        const result = await createProduct(getDb(), payload);
+        const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
         try {
-          result = await createProduct(getDb(), payload);
-        } catch (error) {
-          console.error('[PRODUCT_SERVICE_CREATE_ERROR]', {
-            message: error.message,
-            stack: error.stack,
-            payload: JSON.stringify(payload, null, 2)
+          await notifyPrivilegedUsers(getDb, user, [{
+            kind: 'stock_product_created',
+            title: 'Produit ajoute',
+            message: `${getUserDisplayName(user)} a ajoute le produit "${productLabel}".`,
+            entityType: 'product',
+            entityId: result.id,
+            route: '/stock',
+            metadata: {
+              productLabel,
+              reference: normalizeText(payload?.reference) || null,
+              category: normalizeText(payload?.category) || null,
+              serie: normalizeText(payload?.serie) || null
+            }
+          }]);
+        } catch (notificationError) {
+          console.error('[PRODUCT_CREATE_NOTIFICATION_ERROR]', {
+            message: notificationError.message,
+            stack: notificationError.stack,
+            productId: result.id
           });
-          throw error;
-        }
-        if (!result?.ok) {
-          console.error('[PRODUCT_SERVICE_CREATE_VALIDATION_ERROR]', {
-            message: result?.message || 'Unknown validation error',
-            payload: JSON.stringify(payload, null, 2)
-          });
-          throw new Error(result?.message || 'PRODUCT_CREATE_VALIDATION_FAILED');
-        }
-        if (result?.ok) {
-          const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
-          try {
-            await notifyPrivilegedUsers(getDb, user, [{
-              kind: 'stock_product_created',
-              title: 'Produit ajoute',
-              message: `${getUserDisplayName(user)} a ajoute le produit "${productLabel}".`,
-              entityType: 'product',
-              entityId: result.id,
-              route: '/stock',
-              metadata: {
-                productLabel,
-                reference: normalizeText(payload?.reference) || null,
-                category: normalizeText(payload?.category) || null,
-                serie: normalizeText(payload?.serie) || null
-              }
-            }]);
-          } catch (notificationError) {
-            console.error('[PRODUCT_CREATE_NOTIFICATION_ERROR]', {
-              message: notificationError.message,
-              stack: notificationError.stack,
-              productId: result.id
-            });
-            // Don't fail the creation if notification fails
-          }
+          // Don't fail the creation if notification fails
         }
         return result;
       });
@@ -186,31 +167,21 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
       return withAuthorizedUser(token, async (user) => {
         assertCanEditStockProduct();
         const result = await updateProduct(getDb(), id, payload);
-        if (!result?.ok) {
-          console.error('[PRODUCT_SERVICE_UPDATE_VALIDATION_ERROR]', {
-            message: result?.message || 'Unknown validation error',
-            productId: id,
-            payload: JSON.stringify(payload, null, 2)
-          });
-          throw new Error(result?.message || 'PRODUCT_UPDATE_VALIDATION_FAILED');
-        }
-        if (result?.ok) {
-          const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
-          await notifyPrivilegedUsers(getDb, user, [{
-            kind: 'stock_product_updated',
-            title: 'Produit modifie',
-            message: `${getUserDisplayName(user)} a modifie le produit "${productLabel}".`,
-            entityType: 'product',
-            entityId: id,
-            route: '/stock',
-            metadata: {
-              productLabel,
-              reference: normalizeText(payload?.reference) || null,
-              addedColors: result.addedColors ?? [],
-              removedColors: result.removedColors ?? []
-            }
-          }]);
-        }
+        const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
+        await notifyPrivilegedUsers(getDb, user, [{
+          kind: 'stock_product_updated',
+          title: 'Produit modifie',
+          message: `${getUserDisplayName(user)} a modifie le produit "${productLabel}".`,
+          entityType: 'product',
+          entityId: id,
+          route: '/stock',
+          metadata: {
+            productLabel,
+            reference: normalizeText(payload?.reference) || null,
+            addedColors: result.addedColors ?? [],
+            removedColors: result.removedColors ?? []
+          }
+        }]);
         return result;
       });
     },
