@@ -340,6 +340,20 @@ const migrateLegacyProductImageRef = (value, preferredName = 'product') => {
   }
 };
 
+const sanitizeImageInput = (imageUrl) => {
+  if (!imageUrl) return null;
+  if (typeof imageUrl !== 'string') return null;
+
+  const trimmed = imageUrl.trim();
+  if (!trimmed) return null;
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    throw new Error('Full image URLs are not allowed in image_url');
+  }
+
+  return trimmed;
+};
+
 module.exports = {
   PLACEHOLDER_IMAGE,
   normalizeStoredProductImageRef,
@@ -348,6 +362,7 @@ module.exports = {
   resolveProductImageUrl,
   copyProductImageToStore,
   migrateLegacyProductImageRef,
+  sanitizeImageInput,
   getProductsImagesDirectory,
   ensureProductsImagesDirectory
 };

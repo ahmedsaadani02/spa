@@ -71,6 +71,12 @@ const createProductsController = ({ productsService }) => ({
       const result = await productsService.create(getBearerToken(req), payload);
       return res.json({ success: true, result });
     } catch (error) {
+      console.error('[PRODUCT_CREATE_ERROR]', {
+        message: error.message,
+        stack: error.stack,
+        payload: JSON.stringify(payload, null, 2),
+        token: getBearerToken(req) ? '[PRESENT]' : '[MISSING]'
+      });
       const failure = toHttpFailure(error, 'PRODUCT_CREATE_FAILED');
       return res.status(failure.status).json({ success: false, message: failure.message });
     }

@@ -81,23 +81,42 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
     async create(token, payload) {
       return withAuthorizedUser(token, async (user) => {
         assertProductCatalogPermission();
-        const result = await createProduct(getDb(), payload);
+        let result;
+        try {
+          result = await createProduct(getDb(), payload);
+        } catch (error) {
+          console.error('[PRODUCT_SERVICE_CREATE_ERROR]', {
+            message: error.message,
+            stack: error.stack,
+            payload: JSON.stringify(payload, null, 2)
+          });
+          throw error;
+        }
         if (result?.ok) {
           const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
-          await notifyPrivilegedUsers(getDb, user, [{
-            kind: 'stock_product_created',
-            title: 'Produit ajoute',
-            message: `${getUserDisplayName(user)} a ajoute le produit "${productLabel}".`,
-            entityType: 'product',
-            entityId: result.id,
-            route: '/stock',
-            metadata: {
-              productLabel,
-              reference: normalizeText(payload?.reference) || null,
-              category: normalizeText(payload?.category) || null,
-              serie: normalizeText(payload?.serie) || null
-            }
-          }]);
+          try {
+            await notifyPrivilegedUsers(getDb, user, [{
+              kind: 'stock_product_created',
+              title: 'Produit ajoute',
+              message: `${getUserDisplayName(user)} a ajoute le produit "${productLabel}".`,
+              entityType: 'product',
+              entityId: result.id,
+              route: '/stock',
+              metadata: {
+                productLabel,
+                reference: normalizeText(payload?.reference) || null,
+                category: normalizeText(payload?.category) || null,
+                serie: normalizeText(payload?.serie) || null
+              }
+            }]);
+          } catch (notificationError) {
+            console.error('[PRODUCT_CREATE_NOTIFICATION_ERROR]', {
+              message: notificationError.message,
+              stack: notificationError.stack,
+              productId: result.id
+            });
+            // Don't fail the creation if notification fails
+          }
         }
         return result;
       });

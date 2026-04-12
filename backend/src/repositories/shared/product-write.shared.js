@@ -1,7 +1,8 @@
 const {
   PLACEHOLDER_IMAGE,
   normalizeStoredProductImageRef,
-  isFullProductImageUrl
+  isFullProductImageUrl,
+  sanitizeImageInput
 } = require('../../utils/product-images');
 
 const PRODUCT_METADATA_KINDS = new Set(['category', 'serie', 'color']);
@@ -73,6 +74,7 @@ module.exports = {
   DEFAULT_COLORS,
   PLACEHOLDER_IMAGE,
   normalizeStoredProductImageRef,
+  sanitizeImageInput,
   normalizeText,
   normalizeTag,
   normalizeMetadataKind,

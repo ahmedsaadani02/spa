@@ -4,6 +4,7 @@ const {
   PLACEHOLDER_IMAGE,
   normalizeStoredProductImageRef,
   isFullProductImageUrl,
+  sanitizeImageInput,
   normalizeText,
   normalizeTag,
   normalizeMetadataKind,
@@ -278,11 +279,20 @@ const createProduct = async (_db, payload) => {
 
   const lowStockThreshold = Math.max(0, Number(payload.lowStockThreshold ?? 0) || 0);
   const priceTtc = Number.isFinite(Number(payload.priceTtc)) ? Number(payload.priceTtc) : 0;
-  if (isFullProductImageUrl(payload.image_url) || isFullProductImageUrl(payload.imageRef)) {
+
+  // Sanitize image input - throws error if full URL
+  let sanitizedImageUrl;
+  try {
+    sanitizedImageUrl = sanitizeImageInput(payload.image_url) || sanitizeImageInput(payload.imageRef);
+  } catch (error) {
+    console.error('[CREATE_PRODUCT_IMAGE_SANITIZE_ERROR]', {
+      message: error.message,
+      payload: JSON.stringify(payload, null, 2)
+    });
     return { ok: false, message: 'PRODUCT_IMAGE_URL_INVALID' };
   }
 
-  const normalizedImageRef = normalizeStoredProductImageRef(payload.imageRef ?? payload.image_url) || PLACEHOLDER_IMAGE;
+  const normalizedImageRef = normalizeStoredProductImageRef(sanitizedImageUrl) || PLACEHOLDER_IMAGE;
   const now = new Date().toISOString();
   const id = randomUUID();
 
@@ -401,13 +411,21 @@ const updateProduct = async (_db, productId, payload) => {
   const unit = normalizeText(payload.unit ?? existing.unit, 'piece');
   const description = normalizeText(payload.description ?? existing.description ?? '', '');
   const lowStockThreshold = Math.max(0, Number(payload.lowStockThreshold ?? existing.low_stock_threshold ?? 0) || 0);
-  if (isFullProductImageUrl(payload.image_url) || isFullProductImageUrl(payload.imageRef)) {
+
+  // Sanitize image input - throws error if full URL
+  let sanitizedImageUrl;
+  try {
+    sanitizedImageUrl = sanitizeImageInput(payload.image_url) || sanitizeImageInput(payload.imageRef) || existing.image_url;
+  } catch (error) {
+    console.error('[UPDATE_PRODUCT_IMAGE_SANITIZE_ERROR]', {
+      message: error.message,
+      productId,
+      payload: JSON.stringify(payload, null, 2)
+    });
     return { ok: false, message: 'PRODUCT_IMAGE_URL_INVALID' };
   }
 
-  const imageRef = normalizeStoredProductImageRef(
-    payload.imageRef ?? payload.image_url ?? existing.image_url
-  ) || PLACEHOLDER_IMAGE;
+  const imageRef = normalizeStoredProductImageRef(sanitizedImageUrl) || PLACEHOLDER_IMAGE;
   const priceTtc = Number.isFinite(Number(payload.priceTtc))
     ? Number(payload.priceTtc)
     : (Number(existing.price_ttc ?? 0) || 0);
