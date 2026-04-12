@@ -117,9 +117,8 @@ const toFileUrl = (sourcePath) => {
   return `file:///${encodeURI(normalized)}`;
 };
 
-const BACKEND_IMAGE_HOST = '127.0.0.1';
-const BACKEND_IMAGE_PORT = Number(process.env.PORT) || 3001;
-const toProductImagesApiUrl = (fileName) => `http://${BACKEND_IMAGE_HOST}:${BACKEND_IMAGE_PORT}/api/product-images/${encodeURIComponent(fileName)}`;
+const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || `http://127.0.0.1:${Number(process.env.PORT) || 3001}`;
+const toProductImagesApiUrl = (fileName) => `${BACKEND_BASE_URL}/api/product-images/${encodeURIComponent(fileName)}`;
 
 const resolveLegacyImageSourcePath = (value) => {
   const direct = tryResolveLegacySourcePath(value);

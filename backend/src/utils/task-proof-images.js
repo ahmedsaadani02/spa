@@ -48,7 +48,8 @@ const resolveTaskProofUrl = (value) => {
   }
   if (/^task-proof-images\//i.test(normalized)) {
     const fileName = path.basename(normalized.slice('task-proof-images/'.length));
-    return `http://127.0.0.1:3000/api/task-proof-images/${encodeURIComponent(fileName)}`;
+    const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || `http://127.0.0.1:${Number(process.env.PORT) || 3001}`;
+    return `${BACKEND_BASE_URL}/api/task-proof-images/${encodeURIComponent(fileName)}`;
   }
   return normalized;
 };
