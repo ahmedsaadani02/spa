@@ -61,6 +61,30 @@ const upsertProductMetadata = async (_db, kind, value, now = new Date().toISOStr
 const upsertProduct = async (_db, product) => {
   if (!product || !product.id) return false;
 
+  // Sanitize image input - throws error if full URL
+  let sanitizedImageUrl;
+  try {
+    sanitizedImageUrl = sanitizeImageInput(product.image_url);
+  } catch (error) {
+    console.error('[UPSERT_PRODUCT_IMAGE_SANITIZE_ERROR]', {
+      message: error.message,
+      productId: product.id,
+      image_url: product.image_url
+    });
+    // For upsert, don't fail, just use null
+    sanitizedImageUrl = null;
+  }
+
+  const normalizedImageRef = normalizeStoredProductImageRef(sanitizedImageUrl) || PLACEHOLDER_IMAGE;
+
+  console.log('[UPSERT_PRODUCT_IMAGE_DEBUG]', {
+    productId: product.id,
+    original_image_url: product.image_url,
+    sanitized: sanitizedImageUrl,
+    normalized: normalizedImageRef,
+    final_db_value: normalizedImageRef
+  });
+
   await query(
     `
       INSERT INTO products (
@@ -88,7 +112,7 @@ const upsertProduct = async (_db, product) => {
       normalizeTag(product.category),
       normalizeTag(product.serie),
       normalizeText(product.unit, 'piece'),
-      normalizeStoredProductImageRef(product.image_url) || PLACEHOLDER_IMAGE,
+      normalizedImageRef,
       Math.max(0, Number(product.low_stock_threshold ?? 0) || 0),
       product.last_updated ?? new Date().toISOString(),
       Number.isFinite(product.price_ttc) ? Number(product.price_ttc) : null
@@ -293,6 +317,15 @@ const createProduct = async (_db, payload) => {
   }
 
   const normalizedImageRef = normalizeStoredProductImageRef(sanitizedImageUrl) || PLACEHOLDER_IMAGE;
+
+  console.log('[CREATE_PRODUCT_IMAGE_DEBUG]', {
+    productId: id,
+    original_image_url: payload.image_url,
+    original_imageRef: payload.imageRef,
+    sanitized: sanitizedImageUrl,
+    normalized: normalizedImageRef,
+    final_db_value: normalizedImageRef
+  });
   const now = new Date().toISOString();
   const id = randomUUID();
 
@@ -426,6 +459,16 @@ const updateProduct = async (_db, productId, payload) => {
   }
 
   const imageRef = normalizeStoredProductImageRef(sanitizedImageUrl) || PLACEHOLDER_IMAGE;
+
+  console.log('[UPDATE_PRODUCT_IMAGE_DEBUG]', {
+    productId,
+    original_image_url: payload.image_url,
+    original_imageRef: payload.imageRef,
+    existing_image_url: existing.image_url,
+    sanitized: sanitizedImageUrl,
+    normalized: imageRef,
+    final_db_value: imageRef
+  });
   const priceTtc = Number.isFinite(Number(payload.priceTtc))
     ? Number(payload.priceTtc)
     : (Number(existing.price_ttc ?? 0) || 0);

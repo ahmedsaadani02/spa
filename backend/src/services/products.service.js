@@ -26,6 +26,12 @@ const { getUserDisplayName, notifyPrivilegedUsers } = require('./internal-notifi
 const normalizeProductRow = (row) => {
   const imageUrl = normalizeImage(row.image_url);
 
+  console.log('[PRODUCT_ROW_NORMALIZE_DEBUG]', {
+    productId: row.id,
+    db_image_url: row.image_url,
+    normalized_imageUrl: imageUrl
+  });
+
   return {
     ...row,
     imageUrl
