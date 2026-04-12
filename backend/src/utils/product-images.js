@@ -86,6 +86,13 @@ const normalizeStoredProductImageRef = (value) => {
   const trimmed = value.trim();
   if (!trimmed) return null;
 
+  // Clean corrupted localhost/127.0.0.1 URLs from old data
+  const localhostMatch = trimmed.match(/^https?:\/\/(127\.0\.0\.1|0\.0\.0\.0|localhost)(:\d+)?\/api\/product-images\/(.+)$/i);
+  if (localhostMatch) {
+    const fileName = localhostMatch[3];
+    if (fileName) return `product-images/${decodeURIComponent(fileName)}`;
+  }
+
   if (
     isAssetPath(trimmed)
     || isStoredProductImagePath(trimmed)

@@ -106,6 +106,41 @@ const stripTokenFromAuthResult = (result: AuthLikeResult): AuthBeginLoginResult 
   return next;
 };
 
+const normalizeProductImageUrl = (url: string | undefined | null): string | undefined | null => {
+  if (!url || typeof url !== 'string') return url;
+  const localhostMatch = url.match(/^https?:\/\/(127\.0\.0\.1|0\.0\.0\.0|localhost)(:\d+)?\/api\/product-images\/(.+)$/i);
+  if (localhostMatch) {
+    const fileName = localhostMatch[3];
+    if (fileName) return `/api/product-images/${decodeURIComponent(fileName)}`;
+  }
+  return url;
+};
+
+const normalizeProductsImageUrls = (data: unknown): unknown => {
+  if (Array.isArray(data)) {
+    return data.map((item) => {
+      if (item && typeof item === 'object') {
+        const obj = item as any;
+        return {
+          ...obj,
+          image_url: obj.image_url ? normalizeProductImageUrl(String(obj.image_url)) : obj.image_url,
+          imageUrl: obj.imageUrl ? normalizeProductImageUrl(String(obj.imageUrl)) : obj.imageUrl
+        };
+      }
+      return item;
+    });
+  }
+  if (data && typeof data === 'object') {
+    const obj = data as any;
+    return {
+      ...obj,
+      image_url: obj.image_url ? normalizeProductImageUrl(String(obj.image_url)) : obj.image_url,
+      imageUrl: obj.imageUrl ? normalizeProductImageUrl(String(obj.imageUrl)) : obj.imageUrl
+    };
+  }
+  return data;
+};
+
 const invokeWebApiRequest = async <T>(
   url: string,
   options: { method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'; body?: unknown; withAuth?: boolean } = {}
@@ -142,10 +177,10 @@ const invokeWebApiRequest = async <T>(
     if (!payload.success) {
       throw new Error(payload.message || `AUTH_HTTP_FAILED:${url}`);
     }
-    return payload.result as T;
+    return normalizeProductsImageUrls(payload.result) as T;
   }
 
-  return payload as T;
+  return normalizeProductsImageUrls(payload) as T;
 };
 
 const buildSalaryScopeQuery = (employeeId: string, month: number, year: number): string => {
