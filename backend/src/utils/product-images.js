@@ -87,6 +87,9 @@ const normalizeStoredProductImageRef = (value) => {
   const trimmed = value.trim();
   if (!trimmed) return null;
 
+  // Handle invalid string values
+  if (trimmed === 'null' || trimmed === 'undefined' || trimmed === 'false') return null;
+
   // Clean full /api/product-images/ URLs from old data, including localhost or any host
   const fullApiImageMatch = trimmed.match(/^https?:\/\/[^/]+\/api\/product-images\/(.+)$/i);
   if (fullApiImageMatch) {

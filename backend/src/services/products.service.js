@@ -134,7 +134,18 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
     async create(token, payload) {
       return withAuthorizedUser(token, async (user) => {
         assertProductCatalogPermission();
-        const result = await createProduct(getDb(), payload);
+        let result;
+        try {
+          result = await createProduct(getDb(), payload);
+        } catch (error) {
+          console.error('[PRODUCT_SERVICE_CREATE_DB_ERROR]', {
+            message: error.message,
+            stack: error.stack,
+            payload: JSON.stringify(payload, null, 2)
+          });
+          // Re-throw to let controller handle it
+          throw error;
+        }
         const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
         try {
           await notifyPrivilegedUsers(getDb, user, [{

@@ -20,21 +20,30 @@ const toHttpFailure = (error, fallback) => {
   if (message === 'PRODUCT_LABEL_REQUIRED' || message === 'PRODUCT_COLORS_REQUIRED' || message === 'INVALID_PAYLOAD') {
     return { status: 400, message: message.replace(/_/g, ' ').toLowerCase() };
   }
-  return { status: 500, message };
-};
-
-const createProductsController = ({ productsService }) => ({
-  async list(req, res) {
-    try {
-      const result = await productsService.list(getBearerToken(req));
-      return res.json({ success: true, result });
-    } catch (error) {
-      const failure = toHttpFailure(error, 'PRODUCTS_LIST_FAILED');
-      return res.status(failure.status).json({ success: false, message: failure.message });
-    }
-  },
-
-  async listArchived(req, res) {
+  // Handle common database errors
+  if (message.includes('connect') || message.includes('ECONNREFUSED') || message.includes('pool')) {
+    return { status: 503, message: 'Database temporarily unavailable' };
+  }
+  if (message.includes('duplicate key') || message.includes('unique constraint') || message.includes('violates unique constraint')) {
+    return { status: 409, message: 'Reference already exists' };
+  }
+  if (message.includes('relation') && message.includes('does not exist')) {
+    return { status: 500, message: 'Database schema error' };
+  }
+  if (message.includes('invalid input syntax') || message.includes('violates not-null constraint') || message.includes('violates check constraint')) {
+    return { status: 400, message: 'Invalid data provided' };
+  }
+  if (message.includes('timeout') || message.includes('canceling statement due to statement timeout')) {
+    return { status: 504, message: 'Request timeout' };
+  }
+  // For any other errors, return 500 but with more specific logging
+  console.error('[UNHANDLED_ERROR_TYPE]', {
+    message,
+    type: typeof error,
+    isError: error instanceof Error,
+    stack: error?.stack
+  });
+  return { status: 500, message: 'Internal server error' };
     try {
       const result = await productsService.listArchived(getBearerToken(req));
       return res.json({ success: true, result });

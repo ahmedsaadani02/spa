@@ -301,6 +301,11 @@ const createProduct = async (_db, payload) => {
     throw new Error('PRODUCT_COLORS_REQUIRED');
   }
 
+  // Ensure reference is not empty
+  if (!reference) {
+    throw new Error('PRODUCT_LABEL_REQUIRED');
+  }
+
   const lowStockThreshold = Math.max(0, Number(payload.lowStockThreshold ?? 0) || 0);
   const priceTtc = Number.isFinite(Number(payload.priceTtc)) ? Number(payload.priceTtc) : 0;
 
@@ -316,7 +321,7 @@ const createProduct = async (_db, payload) => {
     throw new Error('PRODUCT_IMAGE_URL_INVALID');
   }
 
-  const normalizedImageRef = normalizeStoredProductImageRef(sanitizedImageUrl) || PLACEHOLDER_IMAGE;
+  const normalizedImageRef = sanitizedImageUrl ? normalizeStoredProductImageRef(sanitizedImageUrl) : null;
 
   console.log('[CREATE_PRODUCT_IMAGE_DEBUG]', {
     productId: id,
@@ -458,7 +463,7 @@ const updateProduct = async (_db, productId, payload) => {
     throw new Error('PRODUCT_IMAGE_URL_INVALID');
   }
 
-  const imageRef = normalizeStoredProductImageRef(sanitizedImageUrl) || PLACEHOLDER_IMAGE;
+  const imageRef = sanitizedImageUrl ? normalizeStoredProductImageRef(sanitizedImageUrl) : null;
 
   console.log('[UPDATE_PRODUCT_IMAGE_DEBUG]', {
     productId,
