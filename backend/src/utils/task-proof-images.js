@@ -82,25 +82,33 @@ const normalizeStoredTaskProofRef = (value) => {
 const resolveTaskProofUrl = (value) => {
   try {
     const normalized = normalizeStoredTaskProofRef(value);
-    if (!normalized) return null;
+    if (!normalized) {
+      console.debug('[TASK_PROOF_URL_RESOLVE]', { value, normalized: null, reason: 'failed-to-normalize' });
+      return null;
+    }
 
     if (/^https?:\/\//i.test(normalized) || /^data:/i.test(normalized)) {
       return normalized;
     }
 
     const baseUrl = getBackendBaseUrl();
-    if (!baseUrl) return null;
+    if (!baseUrl) {
+      console.debug('[TASK_PROOF_URL_RESOLVE]', { value, normalized, reason: 'no-base-url' });
+      return null;
+    }
 
+    let result = null;
     if (/^task-proof-images\//i.test(normalized)) {
       const fileName = path.basename(normalized.slice('task-proof-images/'.length));
-      return `${baseUrl}/api/task-proof-images/${encodeURIComponent(fileName)}`;
+      result = `${baseUrl}/api/task-proof-images/${encodeURIComponent(fileName)}`;
+    } else if (/\.\w{2,4}$/i.test(normalized) && !/[\/\\]/.test(normalized)) {
+      result = `${baseUrl}/api/task-proof-images/${encodeURIComponent(normalized)}`;
+    } else {
+      result = normalized;
     }
 
-    if (/\.\w{2,4}$/i.test(normalized) && !/[\/\\]/.test(normalized)) {
-      return `${baseUrl}/api/task-proof-images/${encodeURIComponent(normalized)}`;
-    }
-
-    return normalized;
+    console.debug('[TASK_PROOF_URL_RESOLVE]', { value, normalized, result, baseUrl });
+    return result;
   } catch (error) {
     console.error('[TASK_PROOF_URL_ERROR]', {
       value,
@@ -142,11 +150,26 @@ const storeTaskProofDataUrl = (dataUrl, preferredName = 'task-proof') => {
   const absolutePath = path.join(directory, fileName);
 
   fs.writeFileSync(absolutePath, Buffer.from(base64Payload, 'base64'));
+  const existsAfterWrite = fs.existsSync(absolutePath);
+
+  console.log('[TASK_PROOF_WRITE_DEBUG]', {
+    fileName,
+    directory,
+    absolutePath,
+    existsAfterWrite,
+    fallbackUserDataDir: getFallbackUserDataDirectory(),
+    appdata: process.env.APPDATA || 'not-set',
+    cwd: process.cwd()
+  });
+
+  const imageRef = `task-proof-images/${fileName}`;
+  const imageUrl = resolveTaskProofUrl(imageRef);
+  console.log('[TASK_PROOF_STORE_RESULT]', { imageRef, imageUrl });
 
   return {
     fileName,
-    imageRef: `task-proof-images/${fileName}`,
-    imageUrl: resolveTaskProofUrl(`task-proof-images/${fileName}`)
+    imageRef,
+    imageUrl
   };
 };
 

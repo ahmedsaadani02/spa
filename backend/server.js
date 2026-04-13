@@ -212,6 +212,13 @@ function createApp() {
     maxAge: '7d'
   }));
 
+  console.log('[STATIC_ROUTES_DEBUG]', {
+    productsImagesDir,
+    productsImagesExists: fs.existsSync(productsImagesDir),
+    taskProofImagesDir,
+    taskProofImagesExists: fs.existsSync(taskProofImagesDir)
+  });
+
   app.get('/api/ping', (_req, res) => {
     res.json({ success: true, message: 'SPA SERVER OK', mode: 'http-ipc-bridge' });
   });

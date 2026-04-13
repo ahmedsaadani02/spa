@@ -1,6 +1,8 @@
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const { withClient } = require('../../db/postgres');
-const { resolveTaskProofUrl, storeTaskProofDataUrl } = require('../../utils/task-proof-images');
+const { resolveTaskProofUrl, storeTaskProofDataUrl, getTaskProofImagesDirectory } = require('../../utils/task-proof-images');
 
 const TASK_STATUSES = new Set(['todo', 'in_progress', 'done', 'blocked']);
 const TASK_PRIORITIES = new Set(['low', 'medium', 'high', 'urgent']);
@@ -295,6 +297,21 @@ const mapSubtaskRow = (row) => {
   };
 };
 
+const getPhotoProofPhysicalPath = (imageRef) => {
+  try {
+    if (!imageRef || typeof imageRef !== 'string') return null;
+    
+    const match = imageRef.match(/^task-proof-images\/(.+)$/i);
+    if (!match) return null;
+    
+    const fileName = match[1];
+    const directory = getTaskProofImagesDirectory();
+    return path.join(directory, fileName);
+  } catch (error) {
+    return null;
+  }
+};
+
 const mapPhotoProofRow = (row) => {
   if (!row) return null;
   let imageUrl = null;
@@ -310,6 +327,21 @@ const mapPhotoProofRow = (row) => {
     });
     imageUrl = null;
   }
+
+  // Debug: check if file exists physically
+  const physicalPath = getPhotoProofPhysicalPath(row.image_ref);
+  const fileExists = physicalPath ? fs.existsSync(physicalPath) : null;
+
+  console.log('[TASK_PROOF_READ_DEBUG]', {
+    id: row.id,
+    task_id: row.task_id,
+    imageRef: row.image_ref,
+    imageUrl,
+    physicalPath,
+    fileExists,
+    taskProofImagesDir: getTaskProofImagesDirectory()
+  });
+
   return {
     id: row.id,
     imageRef: row.image_ref,
