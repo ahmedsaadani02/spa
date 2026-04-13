@@ -33,14 +33,8 @@ const toSafeFilePart = (value) => {
   return normalized || 'task-proof';
 };
 
-const getFallbackUserDataDirectory = () => {
-  if (process.env.APPDATA) {
-    return path.join(process.env.APPDATA, 'spa-invoice-desktop');
-  }
-  return path.join(process.cwd(), '.spa-invoice-desktop');
-};
-
-const getTaskProofImagesDirectory = () => path.join(getFallbackUserDataDirectory(), 'task-proof-images');
+const getTaskProofImagesDirectory = () =>
+  path.join(process.cwd(), 'uploads', 'task-proof-images');
 
 const ensureTaskProofImagesDirectory = () => {
   const directory = getTaskProofImagesDirectory();
@@ -83,7 +77,11 @@ const resolveTaskProofUrl = (value) => {
   try {
     const normalized = normalizeStoredTaskProofRef(value);
     if (!normalized) {
-      console.debug('[TASK_PROOF_URL_RESOLVE]', { value, normalized: null, reason: 'failed-to-normalize' });
+      console.debug('[TASK_PROOF_URL_RESOLVE]', {
+        value,
+        normalized: null,
+        reason: 'failed-to-normalize'
+      });
       return null;
     }
 
@@ -93,11 +91,16 @@ const resolveTaskProofUrl = (value) => {
 
     const baseUrl = getBackendBaseUrl();
     if (!baseUrl) {
-      console.debug('[TASK_PROOF_URL_RESOLVE]', { value, normalized, reason: 'no-base-url' });
+      console.debug('[TASK_PROOF_URL_RESOLVE]', {
+        value,
+        normalized,
+        reason: 'no-base-url'
+      });
       return null;
     }
 
     let result = null;
+
     if (/^task-proof-images\//i.test(normalized)) {
       const fileName = path.basename(normalized.slice('task-proof-images/'.length));
       result = `${baseUrl}/api/task-proof-images/${encodeURIComponent(fileName)}`;
@@ -107,7 +110,13 @@ const resolveTaskProofUrl = (value) => {
       result = normalized;
     }
 
-    console.debug('[TASK_PROOF_URL_RESOLVE]', { value, normalized, result, baseUrl });
+    console.debug('[TASK_PROOF_URL_RESOLVE]', {
+      value,
+      normalized,
+      result,
+      baseUrl
+    });
+
     return result;
   } catch (error) {
     console.error('[TASK_PROOF_URL_ERROR]', {
@@ -157,13 +166,12 @@ const storeTaskProofDataUrl = (dataUrl, preferredName = 'task-proof') => {
     directory,
     absolutePath,
     existsAfterWrite,
-    fallbackUserDataDir: getFallbackUserDataDirectory(),
-    appdata: process.env.APPDATA || 'not-set',
     cwd: process.cwd()
   });
 
   const imageRef = `task-proof-images/${fileName}`;
   const imageUrl = resolveTaskProofUrl(imageRef);
+
   console.log('[TASK_PROOF_STORE_RESULT]', { imageRef, imageUrl });
 
   return {
