@@ -4,29 +4,35 @@ const crypto = require('crypto');
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']);
 
-// Safe backend base URL resolver - never defaults to localhost in production
 const getBackendBaseUrl = () => {
   const backendUrl = process.env.BACKEND_BASE_URL;
   if (backendUrl) {
     return backendUrl;
   }
 
-  // Only use localhost default in development
   const nodeEnv = process.env.NODE_ENV || 'development';
   if (nodeEnv === 'production') {
-    console.error('[BACKEND_BASE_URL_NOT_SET]', {
-      message: 'BACKEND_BASE_URL environment variable is required in production',
+    console.error('[BACKEND_BASE_URL_MISSING]', {
+      message: 'BACKEND_BASE_URL environment variable is required in production for task proof images',
       nodeEnv
     });
     return null;
   }
 
-  // Development default
+  // Development fallback
   const port = Number(process.env.PORT) || 3001;
   return `http://127.0.0.1:${port}`;
 };
 
 const toSafeFilePart = (value) => {
+  const normalized = String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  return normalized || 'task-proof';
+};
   const normalized = String(value ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
