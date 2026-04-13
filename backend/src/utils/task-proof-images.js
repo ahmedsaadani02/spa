@@ -19,20 +19,11 @@ const getBackendBaseUrl = () => {
     return null;
   }
 
-  // Development fallback
   const port = Number(process.env.PORT) || 3001;
   return `http://127.0.0.1:${port}`;
 };
 
 const toSafeFilePart = (value) => {
-  const normalized = String(value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-  return normalized || 'task-proof';
-};
   const normalized = String(value ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -59,28 +50,31 @@ const ensureTaskProofImagesDirectory = () => {
 
 const normalizeStoredTaskProofRef = (value) => {
   if (typeof value !== 'string') return null;
+
   const trimmed = value.trim();
   if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return null;
 
-  // Handle legacy full URLs - strip domain and keep only filename
   const fullUrlMatch = trimmed.match(/^https?:\/\/[^/]+\/api\/task-proof-images\/(.+)$/i);
   if (fullUrlMatch) {
-    const fileName = fullUrlMatch[1].split(/[?#]/)[0]; // Remove query params
+    const fileName = fullUrlMatch[1].split(/[?#]/)[0];
     try {
       return `task-proof-images/${decodeURIComponent(fileName)}`;
     } catch (error) {
-      console.error('[TASK_PROOF_NORMALIZE_URL_ERROR]', { value: trimmed, error: error?.message });
+      console.error('[TASK_PROOF_NORMALIZE_URL_ERROR]', {
+        value: trimmed,
+        error: error?.message
+      });
       return null;
     }
   }
 
-  // Handle /api/task-proof-images/ prefix
   if (/^\/?api\/task-proof-images\//i.test(trimmed)) {
     return `task-proof-images/${path.basename(trimmed)}`;
   }
 
-  // Already normalized format
-  if (/^task-proof-images\//i.test(trimmed)) return trimmed;
+  if (/^task-proof-images\//i.test(trimmed)) {
+    return trimmed;
+  }
 
   return trimmed;
 };
@@ -90,32 +84,28 @@ const resolveTaskProofUrl = (value) => {
     const normalized = normalizeStoredTaskProofRef(value);
     if (!normalized) return null;
 
-    // If it passes through as-is from normalizeStoredTaskProofRef, it should be relative
     if (/^https?:\/\//i.test(normalized) || /^data:/i.test(normalized)) {
-      // Shouldn't happen after normalization, but be safe
       return normalized;
     }
 
-    // Build the public URL from relative reference
+    const baseUrl = getBackendBaseUrl();
+    if (!baseUrl) return null;
+
     if (/^task-proof-images\//i.test(normalized)) {
       const fileName = path.basename(normalized.slice('task-proof-images/'.length));
-      const baseUrl = getBackendBaseUrl();
-      if (!baseUrl) return null;
       return `${baseUrl}/api/task-proof-images/${encodeURIComponent(fileName)}`;
     }
 
-    // Handle bare filename (without task-proof-images/ prefix)
-    // If it looks like a filename with an extension, build the full URL
     if (/\.\w{2,4}$/i.test(normalized) && !/[\/\\]/.test(normalized)) {
-      const baseUrl = getBackendBaseUrl();
-      if (!baseUrl) return null;
       return `${baseUrl}/api/task-proof-images/${encodeURIComponent(normalized)}`;
     }
 
-    // Fallback for other formats
     return normalized;
   } catch (error) {
-    console.error('[TASK_PROOF_URL_ERROR]', { value, error: error?.message });
+    console.error('[TASK_PROOF_URL_ERROR]', {
+      value,
+      error: error?.message
+    });
     return null;
   }
 };
@@ -143,11 +133,16 @@ const storeTaskProofDataUrl = (dataUrl, preferredName = 'task-proof') => {
   }
 
   const safePrefix = toSafeFilePart(preferredName);
-  const uniquePart = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const uniquePart = crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
   const fileName = `${safePrefix}-${uniquePart}${extension}`;
   const directory = ensureTaskProofImagesDirectory();
   const absolutePath = path.join(directory, fileName);
+
   fs.writeFileSync(absolutePath, Buffer.from(base64Payload, 'base64'));
+
   return {
     fileName,
     imageRef: `task-proof-images/${fileName}`,
