@@ -32,26 +32,62 @@ const ensureTaskProofImagesDirectory = () => {
 const normalizeStoredTaskProofRef = (value) => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
-  if (!trimmed) return null;
-  if (/^task-proof-images\//i.test(trimmed)) return trimmed;
+  if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return null;
+
+  // Handle legacy full URLs - strip domain and keep only filename
+  const fullUrlMatch = trimmed.match(/^https?:\/\/[^/]+\/api\/task-proof-images\/(.+)$/i);
+  if (fullUrlMatch) {
+    const fileName = fullUrlMatch[1].split(/[?#]/)[0]; // Remove query params
+    try {
+      return `task-proof-images/${decodeURIComponent(fileName)}`;
+    } catch (error) {
+      console.error('[TASK_PROOF_NORMALIZE_URL_ERROR]', { value: trimmed, error: error?.message });
+      return null;
+    }
+  }
+
+  // Handle /api/task-proof-images/ prefix
   if (/^\/?api\/task-proof-images\//i.test(trimmed)) {
     return `task-proof-images/${path.basename(trimmed)}`;
   }
+
+  // Already normalized format
+  if (/^task-proof-images\//i.test(trimmed)) return trimmed;
+
   return trimmed;
 };
 
 const resolveTaskProofUrl = (value) => {
-  const normalized = normalizeStoredTaskProofRef(value);
-  if (!normalized) return null;
-  if (/^https?:\/\//i.test(normalized) || /^data:/i.test(normalized)) {
+  try {
+    const normalized = normalizeStoredTaskProofRef(value);
+    if (!normalized) return null;
+
+    // If it passes through as-is from normalizeStoredTaskProofRef, it should be relative
+    if (/^https?:\/\//i.test(normalized) || /^data:/i.test(normalized)) {
+      // Shouldn't happen after normalization, but be safe
+      return normalized;
+    }
+
+    // Build the public URL from relative reference
+    if (/^task-proof-images\//i.test(normalized)) {
+      const fileName = path.basename(normalized.slice('task-proof-images/'.length));
+      const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || `http://127.0.0.1:${Number(process.env.PORT) || 3001}`;
+      return `${BACKEND_BASE_URL}/api/task-proof-images/${encodeURIComponent(fileName)}`;
+    }
+
+    // Handle bare filename (without task-proof-images/ prefix)
+    // If it looks like a filename with an extension, build the full URL
+    if (/\.\w{2,4}$/i.test(normalized) && !/[\/\\]/.test(normalized)) {
+      const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || `http://127.0.0.1:${Number(process.env.PORT) || 3001}`;
+      return `${BACKEND_BASE_URL}/api/task-proof-images/${encodeURIComponent(normalized)}`;
+    }
+
+    // Fallback for other formats
     return normalized;
+  } catch (error) {
+    console.error('[TASK_PROOF_URL_ERROR]', { value, error: error?.message });
+    return null;
   }
-  if (/^task-proof-images\//i.test(normalized)) {
-    const fileName = path.basename(normalized.slice('task-proof-images/'.length));
-    const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || `http://127.0.0.1:${Number(process.env.PORT) || 3001}`;
-    return `${BACKEND_BASE_URL}/api/task-proof-images/${encodeURIComponent(fileName)}`;
-  }
-  return normalized;
 };
 
 const storeTaskProofDataUrl = (dataUrl, preferredName = 'task-proof') => {

@@ -297,10 +297,23 @@ const mapSubtaskRow = (row) => {
 
 const mapPhotoProofRow = (row) => {
   if (!row) return null;
+  let imageUrl = null;
+  try {
+    imageUrl = resolveTaskProofUrl(row.image_ref);
+  } catch (error) {
+    console.error('[TASK_PHOTO_PROOF_URL_ERROR]', {
+      id: row.id,
+      task_id: row.task_id,
+      image_ref: row.image_ref,
+      error: error?.message,
+      stack: error?.stack
+    });
+    imageUrl = null;
+  }
   return {
     id: row.id,
     imageRef: row.image_ref,
-    imageUrl: resolveTaskProofUrl(row.image_ref),
+    imageUrl,
     fileName: row.file_name ?? null,
     createdBy: row.created_by ?? null,
     createdByName: row.created_by_name ?? null,
