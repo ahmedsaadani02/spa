@@ -4,6 +4,28 @@ const crypto = require('crypto');
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']);
 
+// Safe backend base URL resolver - never defaults to localhost in production
+const getBackendBaseUrl = () => {
+  const backendUrl = process.env.BACKEND_BASE_URL;
+  if (backendUrl) {
+    return backendUrl;
+  }
+
+  // Only use localhost default in development
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  if (nodeEnv === 'production') {
+    console.error('[BACKEND_BASE_URL_NOT_SET]', {
+      message: 'BACKEND_BASE_URL environment variable is required in production',
+      nodeEnv
+    });
+    return null;
+  }
+
+  // Development default
+  const port = Number(process.env.PORT) || 3001;
+  return `http://127.0.0.1:${port}`;
+};
+
 const toSafeFilePart = (value) => {
   const normalized = String(value ?? '')
     .normalize('NFD')
@@ -71,15 +93,17 @@ const resolveTaskProofUrl = (value) => {
     // Build the public URL from relative reference
     if (/^task-proof-images\//i.test(normalized)) {
       const fileName = path.basename(normalized.slice('task-proof-images/'.length));
-      const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || `http://127.0.0.1:${Number(process.env.PORT) || 3001}`;
-      return `${BACKEND_BASE_URL}/api/task-proof-images/${encodeURIComponent(fileName)}`;
+      const baseUrl = getBackendBaseUrl();
+      if (!baseUrl) return null;
+      return `${baseUrl}/api/task-proof-images/${encodeURIComponent(fileName)}`;
     }
 
     // Handle bare filename (without task-proof-images/ prefix)
     // If it looks like a filename with an extension, build the full URL
     if (/\.\w{2,4}$/i.test(normalized) && !/[\/\\]/.test(normalized)) {
-      const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || `http://127.0.0.1:${Number(process.env.PORT) || 3001}`;
-      return `${BACKEND_BASE_URL}/api/task-proof-images/${encodeURIComponent(normalized)}`;
+      const baseUrl = getBackendBaseUrl();
+      if (!baseUrl) return null;
+      return `${baseUrl}/api/task-proof-images/${encodeURIComponent(normalized)}`;
     }
 
     // Fallback for other formats
