@@ -44,6 +44,20 @@ const toHttpFailure = (error, fallback) => {
     stack: error?.stack
   });
   return { status: 500, message: 'Internal server error' };
+};
+
+const createProductsController = ({ productsService }) => ({
+  async list(req, res) {
+    try {
+      const result = await productsService.list(getBearerToken(req));
+      return res.json({ success: true, result });
+    } catch (error) {
+      const failure = toHttpFailure(error, 'PRODUCTS_LIST_FAILED');
+      return res.status(failure.status).json({ success: false, message: failure.message });
+    }
+  },
+
+  async listArchived(req, res) {
     try {
       const result = await productsService.listArchived(getBearerToken(req));
       return res.json({ success: true, result });
