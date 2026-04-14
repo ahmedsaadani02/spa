@@ -85,6 +85,11 @@ app-client-autocomplete {
     grid-template-columns: 1fr;
   }
 
+  /* Hide column header row when line-row collapses to single column */
+  .line-head {
+    display: none;
+  }
+
   .totals-grid {
     grid-template-columns: 1fr;
   }

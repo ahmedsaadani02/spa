@@ -100,3 +100,36 @@
   justify-content: flex-end;
   gap: 10px;
 }
+
+@media (max-width: 767px) {
+  .modal-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  .modal-card {
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .picker-row {
+    grid-template-columns: 1fr;
+  }
+
+  .new-client-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+}

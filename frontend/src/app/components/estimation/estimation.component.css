@@ -242,6 +242,17 @@
 @media (max-width: 980px) {
   .panel-header {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .panel-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .panel-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .results-grid {
@@ -252,5 +263,46 @@
   .piece-row,
   .accessory-row {
     grid-template-columns: 1fr;
+  }
+
+  /* Hide column header rows when grid collapses to single column */
+  .series-head,
+  .piece-head,
+  .accessory-head {
+    display: none;
+  }
+
+  .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .section-head .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .series-actions {
+    justify-content: stretch;
+  }
+
+  .series-actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 767px) {
+  /* breakdown table scrolls horizontally on mobile */
+  .breakdown {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* totals table scrolls if needed */
+  .results-grid div {
+    word-break: break-word;
   }
 }

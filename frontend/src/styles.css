@@ -244,6 +244,25 @@ p {
   }
 }
 
+@media (max-width: 767px) {
+  /* Cap headings to prevent overflow on narrow screens */
+  h1 { font-size: clamp(1.3rem, 6vw, 1.65rem); }
+  h2 { font-size: clamp(1.05rem, 5vw, 1.3rem); }
+  h3 { font-size: clamp(0.95rem, 4.5vw, 1.1rem); }
+
+  /* Prevent long words / URLs from breaking layout */
+  .card, .panel, .modal-card {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  /* Ensure all panels don't grow beyond viewport */
+  .panel {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 760px) {
   .confirm-modal {
     width: min(100%, calc(100vw - 20px));

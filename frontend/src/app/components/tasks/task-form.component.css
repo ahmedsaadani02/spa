@@ -185,5 +185,26 @@
 @media (max-width: 640px) {
   .actions .btn {
     width: 100%;
+    justify-content: center;
+  }
+
+  /* subtasks add/remove buttons full-width on small screens */
+  .subtasks-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .subtask-row {
+    grid-template-columns: 1fr;
+  }
+
+  .subtask-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* error message readable */
+  .error {
+    word-break: break-word;
   }
 }
