@@ -20,13 +20,13 @@ const {
   assertCanEditStockProduct,
   assertCanArchiveStockProduct
 } = require('../legacy-ipc/products.handlers');
-const { resolveProductImageUrl, normalizeImage } = require('../utils/product-images');
+const { resolveProductImageUrl } = require('../utils/product-images');
 const { getUserDisplayName, notifyPrivilegedUsers } = require('./internal-notifications.service');
 
 const normalizeProductRow = (row) => {
   let imageUrl;
   try {
-    imageUrl = normalizeImage(row.image_url);
+    imageUrl = resolveProductImageUrl(row.image_url);
   } catch (error) {
     console.error('[PRODUCT_ROW_NORMALIZE_ERROR]', {
       productId: row.id,

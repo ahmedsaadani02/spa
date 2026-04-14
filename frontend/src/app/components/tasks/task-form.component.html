@@ -107,7 +107,7 @@
         <div class="proof-gallery">
           <ng-container *ngFor="let photo of task?.photoProofs">
             <a class="proof-link" *ngIf="photo.imageUrl" [href]="photo.imageUrl" target="_blank" rel="noopener noreferrer">
-              <img [src]="photo.imageUrl" [alt]="photo.fileName || 'preuve-photo'" />
+              <img [src]="photo.imageUrl" [alt]="photo.fileName || 'preuve-photo'" (error)="onProofImageError($event)" />
               <span>{{ photo.createdAt ? (photo.createdAt | date:'dd/MM/yyyy HH:mm') : '-' }}</span>
             </a>
           </ng-container>

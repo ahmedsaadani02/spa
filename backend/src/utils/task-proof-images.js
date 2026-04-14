@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']);
 
@@ -135,7 +134,6 @@ const storeTaskProofDataUrl = (dataUrl, preferredName = 'task-proof') => {
   }
 
   const mime = match[1].toLowerCase();
-  const base64Payload = match[2];
   const extension = (() => {
     if (mime.includes('png')) return '.png';
     if (mime.includes('jpeg') || mime.includes('jpg')) return '.jpg';
@@ -149,30 +147,21 @@ const storeTaskProofDataUrl = (dataUrl, preferredName = 'task-proof') => {
     throw new Error('TASK_PHOTO_EXTENSION_INVALID');
   }
 
+  // Store the data URL directly in the database instead of writing to the local
+  // filesystem. Render.com (and similar platforms) use ephemeral containers —
+  // any file written to disk is lost on restart. Persisting the base64 data URL
+  // directly in `image_ref` makes photo proofs survive container restarts with
+  // zero extra infrastructure.
   const safePrefix = toSafeFilePart(preferredName);
-  const uniquePart = crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const fileName = `${safePrefix}${extension}`;
+  const imageRef = payload;  // the data URL IS the ref
+  const imageUrl = payload;  // and the serving URL
 
-  const fileName = `${safePrefix}-${uniquePart}${extension}`;
-  const directory = ensureTaskProofImagesDirectory();
-  const absolutePath = path.join(directory, fileName);
-
-  fs.writeFileSync(absolutePath, Buffer.from(base64Payload, 'base64'));
-  const existsAfterWrite = fs.existsSync(absolutePath);
-
-  console.log('[TASK_PROOF_WRITE_DEBUG]', {
+  console.log('[TASK_PROOF_STORE_RESULT]', {
     fileName,
-    directory,
-    absolutePath,
-    existsAfterWrite,
-    cwd: process.cwd()
+    imageRefType: 'data-url',
+    imageUrlType: 'data-url'
   });
-
-  const imageRef = `task-proof-images/${fileName}`;
-  const imageUrl = resolveTaskProofUrl(imageRef);
-
-  console.log('[TASK_PROOF_STORE_RESULT]', { imageRef, imageUrl });
 
   return {
     fileName,

@@ -153,6 +153,17 @@ export class TaskFormComponent implements OnInit, OnDestroy {
       : 'Les photos ajoutees par l employe apparaissent ici pour le suivi.';
   }
 
+  onProofImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (!img) return;
+    const anchor = img.closest('a');
+    if (anchor instanceof HTMLElement) {
+      anchor.style.display = 'none';
+    } else {
+      img.style.display = 'none';
+    }
+  }
+
   async ngOnInit(): Promise<void> {
     this.language.currentLanguage$
       .pipe(takeUntil(this.destroy$))

@@ -877,6 +877,12 @@ export class StockComponent implements OnInit, OnDestroy {
     if (!item) return [this.placeholderImage];
     const candidates: string[] = [];
     const direct = typeof item.imageUrl === 'string' ? item.imageUrl.trim().replace(/\\/g, '/') : '';
+
+    // Data URLs are self-contained — skip all asset fallback logic
+    if (/^data:/i.test(direct)) {
+      return [direct, 'assets/placeholder.png', this.placeholderImage];
+    }
+
     const directIsPlaceholder = this.isPlaceholderCandidate(direct);
     if (direct && !directIsPlaceholder) {
       candidates.push(direct);

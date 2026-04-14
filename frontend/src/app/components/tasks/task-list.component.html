@@ -108,7 +108,7 @@
           <div class="task-update-meta" *ngIf="subtaskSummary(task)">{{ subtaskSummary(task) }}</div>
           <div class="task-update-meta" *ngIf="proofRequirementLabel(task)">{{ proofRequirementLabel(task) }}</div>
           <div class="task-photo-summary" *ngIf="photoProofCountLabel(task)">
-            <img *ngIf="photoProofPreview(task)" class="task-photo-thumb" [src]="photoProofPreview(task)!" alt="task-photo-proof" />
+            <img *ngIf="photoProofPreview(task)" class="task-photo-thumb" [src]="photoProofPreview(task)!" alt="task-photo-proof" (error)="onProofThumbError($event)" />
             <span>{{ photoProofCountLabel(task) }}</span>
           </div>
           <div class="task-note" *ngIf="task.employeeNote">{{ ui.admin.employeeNote }} : {{ task.employeeNote }}</div>

@@ -18,7 +18,7 @@ const { registerMovementsHandlers } = require('./src/legacy-ipc/movements.handle
 const { registerInventoryHandlers } = require('./src/legacy-ipc/inventory.handlers');
 const { registerEmployeesHandlers } = require('./src/legacy-ipc/employees.handlers');
 const { registerSalaryHandlers } = require('./src/legacy-ipc/salary.handlers');
-const { resolveProductImageUrl, getProductsImagesDirectory } = require('./src/utils/product-images');
+const { getProductsImagesDirectory } = require('./src/utils/product-images');
 const { getTaskProofImagesDirectory } = require('./src/utils/task-proof-images');
 
 let httpServer = null;
@@ -390,15 +390,13 @@ function createApp() {
       }
 
       const mime = match[1].toLowerCase();
-      const base64Payload = match[2];
       const extension = (() => {
         if (mime.includes('png')) return '.png';
         if (mime.includes('jpeg') || mime.includes('jpg')) return '.jpg';
         if (mime.includes('webp')) return '.webp';
         if (mime.includes('gif')) return '.gif';
         if (mime.includes('bmp')) return '.bmp';
-        const rawExt = path.extname(fileName || '').toLowerCase();
-        return rawExt;
+        return path.extname(fileName || '').toLowerCase();
       })();
 
       if (!IMAGE_EXTENSIONS.has(extension)) {
@@ -406,14 +404,15 @@ function createApp() {
       }
 
       const safePrefix = sanitizeBaseName(preferredName || path.basename(fileName, extension));
-      const uniquePart = createToken();
-      const storedFileName = `${safePrefix}-${uniquePart}${extension}`;
-      const absolutePath = path.join(productsImagesDir, storedFileName);
-      const buffer = Buffer.from(base64Payload, 'base64');
-      fs.writeFileSync(absolutePath, buffer);
+      const storedFileName = `${safePrefix}${extension}`;
 
-      const imageRef = `product-images/${storedFileName}`;
-      const imageUrl = resolveProductImageUrl(imageRef);
+      // Store the data URL directly as imageRef/imageUrl — no filesystem write.
+      // Render.com uses ephemeral containers: any file written to disk is lost
+      // on restart/redeploy. By persisting the base64 data URL in the database
+      // column (products.image_url), product images survive container restarts
+      // with no extra infrastructure required.
+      const imageRef = dataUrl;
+      const imageUrl = dataUrl;
 
       return res.json({
         success: true,

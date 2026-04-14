@@ -400,6 +400,17 @@ export class MyTasksComponent implements OnInit, OnDestroy {
     }
   }
 
+  onProofImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (!img) return;
+    const anchor = img.closest('a');
+    if (anchor instanceof HTMLElement) {
+      anchor.style.display = 'none';
+    } else {
+      img.style.display = 'none';
+    }
+  }
+
   private readFileAsDataUrl(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();

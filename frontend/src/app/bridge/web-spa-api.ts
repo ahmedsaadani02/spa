@@ -108,10 +108,14 @@ const stripTokenFromAuthResult = (result: AuthLikeResult): AuthBeginLoginResult 
 
 const normalizeProductImageUrl = (url: string | undefined | null): string | undefined | null => {
   if (!url || typeof url !== 'string') return url;
-  const localhostMatch = url.match(/^https?:\/\/(127\.0\.0\.1|0\.0\.0\.0|localhost)(:\d+)?\/api\/product-images\/(.+)$/i);
-  if (localhostMatch) {
-    const fileName = localhostMatch[3];
-    if (fileName) return `/api/product-images/${decodeURIComponent(fileName)}`;
+  // data: URLs are stored directly in the DB — pass through unchanged
+  if (/^data:/i.test(url)) return url;
+  // Convert any absolute /api/product-images/ or /api/task-proof-images/ URL
+  // (localhost or production backend) to a relative path so the request goes
+  // through Vercel's proxy rewrite instead of hitting the backend directly.
+  const apiPathMatch = url.match(/^https?:\/\/[^/]+(\/api\/(?:product-images|task-proof-images)\/.+)$/i);
+  if (apiPathMatch) {
+    return apiPathMatch[1];
   }
   return url;
 };

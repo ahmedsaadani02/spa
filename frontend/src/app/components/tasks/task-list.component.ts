@@ -187,7 +187,14 @@ export class TaskListComponent implements OnInit, OnDestroy {
   }
 
   photoProofPreview(task: TaskRecord): string | null {
-    return task.photoProofs[0]?.imageUrl || task.photoProofs[0]?.imageRef || null;
+    return task.photoProofs[0]?.imageUrl ?? null;
+  }
+
+  onProofThumbError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (img) {
+      img.style.display = 'none';
+    }
   }
 
   taskTitle(task: TaskRecord): string {
