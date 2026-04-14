@@ -148,11 +148,27 @@ const toFileUrl = (sourcePath) => {
   return `file:///${encodeURI(normalized)}`;
 };
 
-const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || `http://127.0.0.1:${Number(process.env.PORT) || 3001}`;
-const toProductImagesApiUrl = (fileName) => `${BACKEND_BASE_URL}/api/product-images/${encodeURIComponent(fileName)}`;
+const getBackendBaseUrl = () => {
+  const backendUrl = process.env.BACKEND_BASE_URL;
+  if (backendUrl) {
+    return backendUrl;
+  }
+
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  if (nodeEnv === 'production') {
+    console.error('[BACKEND_BASE_URL_MISSING]', {
+      message: 'BACKEND_BASE_URL environment variable is required in production for product images',
+      nodeEnv
+    });
+  }
+
+  return `http://127.0.0.1:${Number(process.env.PORT) || 3001}`;
+};
+
+const toProductImagesApiUrl = (fileName) => `${getBackendBaseUrl()}/api/product-images/${encodeURIComponent(fileName)}`;
 
 const normalizeImage = (value) => {
-  return safeBuildProductImageUrl(value, BACKEND_BASE_URL);
+  return safeBuildProductImageUrl(value, getBackendBaseUrl());
 };
 
 const safeBuildProductImageUrl = (imageUrl, baseUrl) => {
