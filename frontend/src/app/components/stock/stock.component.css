@@ -87,20 +87,21 @@
 
 .stock-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(220px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
 .stock-card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 14px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   min-width: 0;
+  font-size: 13px;
 }
 
 .stock-card.low-stock {
@@ -112,7 +113,7 @@
   border-radius: 12px;
   overflow: hidden;
   background: #fff;
-  height: clamp(180px, 22vw, 200px);
+  height: clamp(120px, 15vw, 140px);
   position: relative;
   display: flex;
   align-items: center;
@@ -155,13 +156,15 @@
 }
 
 .stock-ref {
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 
 .stock-label {
   color: #334155;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 
@@ -184,7 +187,7 @@
   align-items: center;
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 6px 10px;
+  padding: 4px 7px;
 }
 
 .color-row.is-zero {
@@ -203,6 +206,7 @@
 }
 
 .color-qty {
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -555,20 +559,12 @@
 }
 
 @media (max-width: 1024px) {
-  .stock-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 720px) {
-  .stock-grid {
-    grid-template-columns: 1fr;
-  }
-
   .panel-header {
     flex-direction: column;
   }
@@ -641,13 +637,8 @@
     width: 100%;
   }
 
-  .stock-card {
-    padding: 12px;
-    gap: 10px;
-  }
-
   .stock-image {
-    height: 180px;
+    height: 120px;
   }
 
   .color-row {

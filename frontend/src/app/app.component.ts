@@ -56,6 +56,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   dropdownOpen = false;
   notificationsOpen = false;
+  drawerOpen = false;
   navigationLoading = false;
   liveNotifications: TaskNotificationRecord[] = [];
   liveNotificationToasts: TaskToast[] = [];
@@ -100,6 +101,7 @@ export class AppComponent implements OnInit, OnDestroy {
         if (event instanceof NavigationEnd) {
           this.logRouteEntry(event.urlAfterRedirects);
           this.setNavigationLoading(false);
+          this.drawerOpen = false;
           return;
         }
 
@@ -297,6 +299,14 @@ export class AppComponent implements OnInit, OnDestroy {
     this.language.setLanguage(language);
   }
 
+  openDrawer(): void {
+    this.drawerOpen = true;
+  }
+
+  closeDrawer(): void {
+    this.drawerOpen = false;
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
@@ -305,6 +315,9 @@ export class AppComponent implements OnInit, OnDestroy {
     }
     if (!target.closest('.notifications-menu')) {
       this.notificationsOpen = false;
+    }
+    if (!target.closest('.mobile-drawer') && !target.closest('.hamburger-btn')) {
+      this.drawerOpen = false;
     }
   }
 

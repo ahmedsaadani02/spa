@@ -27,6 +27,14 @@
     </nav>
 
     <div class="actions" *ngIf="isLoggedIn">
+      <button class="hamburger-btn" type="button" (click)="openDrawer()" aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
       <div class="lang-switcher" role="group" aria-label="Language switcher">
         <button
           class="lang-option"
@@ -193,6 +201,31 @@
     </div>
   </div>
 </header>
+
+<div class="mobile-drawer-overlay" [class.open]="drawerOpen" (click)="closeDrawer()" *ngIf="isLoggedIn"></div>
+
+<nav class="mobile-drawer" [class.open]="drawerOpen" *ngIf="isLoggedIn">
+  <div class="mobile-drawer-header">
+    <span class="mobile-drawer-title">{{ shellText.appTitle }}</span>
+    <button class="mobile-drawer-close" type="button" (click)="closeDrawer()" aria-label="Fermer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
+  </div>
+  <div class="mobile-drawer-links">
+    <a
+      *ngFor="let item of navItems; trackBy: trackByNavRoute"
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+      (click)="closeDrawer()"
+    >
+      {{ item.label }}
+    </a>
+  </div>
+</nav>
 
 <main class="app-main" [class.app-main--login]="isLoginRoute">
   <router-outlet></router-outlet>
