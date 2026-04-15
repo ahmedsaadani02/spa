@@ -272,6 +272,38 @@
   }
 }
 
+@media (max-width: 767px) {
+  .panel-header {
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .panel-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: auto;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  .panel-actions > * {
+    width: auto;
+    flex-basis: auto;
+    flex: 0 0 auto;
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+}
+
 @page {
   size: A4;
   margin: 12mm;

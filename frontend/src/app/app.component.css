@@ -1006,5 +1006,67 @@ html[dir='rtl'] .mobile-drawer.open {
 
   .hamburger-btn {
     display: inline-flex;
+    width: 36px;
+    height: 36px;
+  }
+
+  .header-inner {
+    max-height: 56px;
+    padding: 0 12px;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .brand-logo {
+    height: 32px;
+    width: auto;
+  }
+
+  .brand-title {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+  }
+
+  .lang-switcher {
+    padding: 2px;
+    min-height: unset;
+  }
+
+  .lang-option {
+    width: 32px;
+    height: 32px;
+    min-width: 0;
+    padding: 0;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .notifications-pill {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    min-width: 32px;
+  }
+
+  .user-pill {
+    min-height: 32px;
+    padding: 4px 6px;
+  }
+
+  .avatar {
+    width: 26px;
+    height: 26px;
+    font-size: 0.68rem;
+  }
+
+  .actions {
+    gap: 6px;
   }
 }

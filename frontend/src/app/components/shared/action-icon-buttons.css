@@ -66,3 +66,15 @@
     height: 42px;
   }
 }
+
+@media (max-width: 767px) {
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .icon-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+}

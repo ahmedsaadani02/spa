@@ -251,10 +251,21 @@ p {
 }
 
 @media (max-width: 767px) {
-  /* Cap headings to prevent overflow on narrow screens */
-  h1 { font-size: clamp(1.3rem, 6vw, 1.65rem); }
-  h2 { font-size: clamp(1.05rem, 5vw, 1.3rem); }
-  h3 { font-size: clamp(0.95rem, 4.5vw, 1.1rem); }
+  /* Headings */
+  h1 { font-size: 16px; font-weight: 600; }
+  h2 { font-size: 15px; font-weight: 600; }
+  h3 { font-size: 14px; font-weight: 600; }
+
+  /* Body text */
+  p, span, div, li, td, th {
+    font-size: 13px;
+  }
+
+  /* Labels uppercase (data-label, field labels) */
+  .field > span:first-child {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
 
   /* Prevent long words / URLs from breaking layout */
   .card, .panel, .modal-card {
@@ -262,10 +273,37 @@ p {
     overflow-wrap: anywhere;
   }
 
-  /* Ensure all panels don't grow beyond viewport */
+  /* Panels */
   .panel {
     min-width: 0;
     max-width: 100%;
+  }
+
+  /* Card padding */
+  .card {
+    padding: 10px 12px;
+  }
+
+  /* Buttons — taille réduite */
+  .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .btn svg {
+    width: 13px;
+    height: 13px;
+    max-width: 13px;
+    max-height: 13px;
+  }
+
+  /* Panel actions — côte à côte */
+  .panel-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
   }
 }
 

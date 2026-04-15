@@ -144,3 +144,31 @@
     justify-content: center;
   }
 }
+
+@media (max-width: 767px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .dashboard-card,
+  .dashboard-card:visited {
+    padding: 12px 10px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .card-label {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .dashboard-card p,
+  .card-action {
+    display: none;
+  }
+}
