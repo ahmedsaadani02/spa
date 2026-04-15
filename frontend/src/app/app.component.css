@@ -957,14 +957,19 @@ html[dir='rtl'] .toast-stack {
 
 .mobile-drawer-links {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
   padding: 12px 10px;
   overflow-y: auto;
   flex: 1;
+  align-content: flex-start;
 }
 
 .mobile-drawer-links a {
-  display: block;
+  display: inline-flex;
+  align-items: center;
   padding: 12px 14px;
   border-radius: 10px;
   font-size: 0.9rem;
