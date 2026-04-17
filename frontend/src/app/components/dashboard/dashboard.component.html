@@ -149,21 +149,23 @@
     </header>
 
     <!-- Tasks mini-section for employees -->
-    <section class="kpi-section" *ngIf="kpis?.tasks && !kpisLoading">
+    <section class="kpi-section">
       <div class="kpi-grid kpi-grid--single">
         <div class="kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-icon">✅</span>
             <span class="kpi-card-title">Mes tâches</span>
           </div>
-          <div class="kpi-row">
-            <span class="kpi-label">En cours</span>
-            <span class="kpi-value">{{ tasksInProgressDisplay }}</span>
-          </div>
-          <div class="kpi-row">
-            <span class="kpi-label">En retard</span>
-            <span class="kpi-value" [class.kpi-value--danger]="(kpis?.tasks?.myTasksLate ?? 0) > 0">{{ tasksLateDisplay }}</span>
-          </div>
+          <ng-container *ngIf="!kpisLoading; else kpiSkeleton">
+            <div class="kpi-row">
+              <span class="kpi-label">En cours</span>
+              <span class="kpi-value">{{ tasksInProgressDisplay }}</span>
+            </div>
+            <div class="kpi-row">
+              <span class="kpi-label">En retard</span>
+              <span class="kpi-value" [class.kpi-value--danger]="(kpis?.tasks?.myTasksLate ?? 0) > 0">{{ tasksLateDisplay }}</span>
+            </div>
+          </ng-container>
         </div>
       </div>
     </section>
