@@ -44,7 +44,8 @@ const createDashboardService = ({ resolveSessionUser }) => {
           : Promise.resolve(null),
         can(user, 'viewStock') ? getStockKpis() : Promise.resolve(null),
         can(user, 'manageTasks') || can(user, 'receiveTasks')
-          ? getTasksKpis(can(user, 'receiveTasks') ? user.id : null)
+          ? getTasksKpis(can(user, 'manageTasks') ? null : user.id)
+              .catch(() => ({ totalTasks: 0, myTasksInProgress: 0, myTasksLate: 0 }))
           : Promise.resolve(null),
         can(user, 'manageSalary') ? getEmployeesKpis() : Promise.resolve(null)
       ]);

@@ -19,7 +19,7 @@
       <div class="kpi-grid">
 
         <!-- Finance card -->
-        <div class="kpi-card" *ngIf="kpis?.finance !== undefined || kpisLoading">
+        <div class="kpi-card" *ngIf="viewKpis && (kpis?.finance !== undefined || kpisLoading)">
           <div class="kpi-card-header">
             <span class="kpi-icon">💰</span>
             <span class="kpi-card-title">Finance</span>
@@ -43,7 +43,7 @@
         </div>
 
         <!-- Stock card -->
-        <div class="kpi-card" *ngIf="kpis?.stock !== undefined || kpisLoading">
+        <div class="kpi-card" *ngIf="viewKpis && (kpis?.stock !== undefined || kpisLoading)">
           <div class="kpi-card-header">
             <span class="kpi-icon">📦</span>
             <span class="kpi-card-title">Stock</span>
@@ -65,7 +65,7 @@
         </div>
 
         <!-- Tasks card -->
-        <div class="kpi-card" *ngIf="kpis?.tasks !== undefined || kpisLoading">
+        <div class="kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-icon">✅</span>
             <span class="kpi-card-title">Tâches</span>
@@ -87,7 +87,7 @@
         </div>
 
         <!-- Employees card -->
-        <div class="kpi-card" *ngIf="kpis?.employees !== undefined || kpisLoading">
+        <div class="kpi-card" *ngIf="viewKpis && (kpis?.employees !== undefined || kpisLoading)">
           <div class="kpi-card-header">
             <span class="kpi-icon">👥</span>
             <span class="kpi-card-title">Salariés</span>

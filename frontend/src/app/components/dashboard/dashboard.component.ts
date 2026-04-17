@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DASHBOARD_I18N } from '../../i18n/ui-i18n';
 import { CaMensuelEntry, DashboardKpis } from '../../types/electron';
@@ -25,6 +25,7 @@ export class DashboardComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly ipc = inject(IpcService);
   private readonly language = inject(LanguageService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   kpis: DashboardKpis | null = null;
   caMensuel: CaMensuelEntry[] = [];
@@ -251,6 +252,7 @@ export class DashboardComponent implements OnInit {
       this.kpisError = true;
     } finally {
       this.kpisLoading = false;
+      this.cdr.markForCheck();
     }
   }
 
