@@ -112,7 +112,7 @@
             <span class="ca-bar-tip">{{ formatCaTooltip(entry.ca) }}</span>
             <div
               class="ca-bar"
-              [style.height.%]="barHeightPct(entry.ca)"
+              [style.height.px]="barHeightPx(entry.ca)"
               [class.ca-bar--zero]="entry.ca === 0"
             ></div>
           </div>

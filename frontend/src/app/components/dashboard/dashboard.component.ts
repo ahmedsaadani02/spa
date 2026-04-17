@@ -197,8 +197,11 @@ export class DashboardComponent implements OnInit {
     return Math.max(...this.caMensuel.map((e) => e.ca), 1);
   }
 
-  barHeightPct(ca: number): number {
-    return Math.round((ca / this.chartMax) * 100);
+  private readonly BAR_MAX_HEIGHT_PX = 112;
+
+  barHeightPx(ca: number): number {
+    if (ca <= 0) return 4;
+    return Math.max(4, Math.round((ca / this.chartMax) * this.BAR_MAX_HEIGHT_PX));
   }
 
   formatMonthLabel(mois: string): string {
