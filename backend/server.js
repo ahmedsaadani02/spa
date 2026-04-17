@@ -433,15 +433,6 @@ function startServer(port = Number(process.env.PORT) || 3000, host = process.env
     const routing = getDatabaseRoutingSummary();
     console.log(`SPA SERVER running on http://${host}:${port}`);
     console.log('[db-driver] configured driver:', routing.configuredDriver);
-    console.log('[db-driver] quotes read opt-in:', routing.quotesReadOptInEnabled ? 'enabled' : 'disabled');
-    console.log('[db-driver] quotes write opt-in:', routing.quotesWriteOptInEnabled ? 'enabled' : 'disabled');
-    console.log('[db-driver] invoices read opt-in:', routing.invoicesReadOptInEnabled ? 'enabled' : 'disabled');
-    console.log('[db-driver] invoices write opt-in:', routing.invoicesWriteOptInEnabled ? 'enabled' : 'disabled');
-    console.log('[db-driver] catalog read opt-in:', routing.catalogReadOptInEnabled ? 'enabled' : 'disabled');
-    console.log('[db-driver] product write opt-in:', routing.productWriteOptInEnabled ? 'enabled' : 'disabled');
-    console.log('[db-driver] stock write opt-in:', routing.stockWriteOptInEnabled ? 'enabled' : 'disabled');
-    console.log('[db-driver] postgres-ready scopes:', routing.postgresReadyScopes.join(', '));
-    console.log('[db-driver] active postgres scopes:', routing.activePostgresScopes.length ? routing.activePostgresScopes.join(', ') : 'none');
     console.log('Server started');
   });
 
