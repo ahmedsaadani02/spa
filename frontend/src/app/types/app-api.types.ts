@@ -34,5 +34,7 @@ export type {
   SalaryBonusRecord,
   SalaryOvertimeInput,
   SalaryOvertimeRecord,
-  SalarySummary
+  SalarySummary,
+  DashboardKpis,
+  CaMensuelEntry
 } from './electron';

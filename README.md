@@ -84,7 +84,7 @@ npm.cmd run frontend:start
 
 Ports par defaut :
 
-- frontend Angular : `http://127.0.0.1:4201`
+- frontend Angular : `http://127.0.0.1:4200`
 - backend Express : `http://127.0.0.1:3000`
 
 ## Verification

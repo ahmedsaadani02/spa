@@ -34,6 +34,7 @@ export interface Employee {
   canManageSalary: boolean;
   canManageTasks: boolean;
   canReceiveTasks: boolean;
+  canViewKpis: boolean;
   canManageAll: boolean;
   lastLoginAt: string | null;
   createdAt: string | null;
@@ -74,6 +75,7 @@ export interface EmployeeUpsertInput {
   canManageSalary?: boolean;
   canManageTasks?: boolean;
   canReceiveTasks?: boolean;
+  canViewKpis?: boolean;
   canManageAll?: boolean;
 }
 

@@ -236,7 +236,43 @@ export interface PermissionSet {
   manageSalary: boolean;
   manageTasks: boolean;
   receiveTasks: boolean;
+  viewKpis: boolean;
   manageAll: boolean;
+}
+
+export interface DashboardFinanceKpis {
+  caMonthTtc: number;
+  invoicesUnpaidCount: number;
+  invoicesUnpaidAmount: number;
+  quotesThisMonth: number;
+}
+
+export interface DashboardStockKpis {
+  totalProducts: number;
+  lowStockCount: number;
+  ruptureCount: number;
+}
+
+export interface DashboardTasksKpis {
+  totalTasks: number;
+  myTasksInProgress: number;
+  myTasksLate: number;
+}
+
+export interface DashboardEmployeesKpis {
+  totalActive: number;
+}
+
+export interface DashboardKpis {
+  finance?: DashboardFinanceKpis;
+  stock?: DashboardStockKpis;
+  tasks?: DashboardTasksKpis;
+  employees?: DashboardEmployeesKpis;
+}
+
+export interface CaMensuelEntry {
+  mois: string;
+  ca: number;
 }
 
 export interface AppUser {
@@ -306,6 +342,7 @@ export interface EmployeeRecord {
   canManageSalary: boolean;
   canManageTasks: boolean;
   canReceiveTasks: boolean;
+  canViewKpis: boolean;
   canManageAll: boolean;
   lastLoginAt: string | null;
   createdAt: string | null;
@@ -347,6 +384,7 @@ export interface EmployeeUpsertInput {
   canManageSalary?: boolean;
   canManageTasks?: boolean;
   canReceiveTasks?: boolean;
+  canViewKpis?: boolean;
   canManageAll?: boolean;
 }
 
@@ -556,6 +594,10 @@ export interface SpaApi {
     backup: () => Promise<SpaDbBackupResult>;
     listBackups: () => Promise<SpaDbBackupEntry[]>;
     restore: (backupFileName: string) => Promise<boolean>;
+  };
+  dashboard: {
+    getKpis: () => Promise<DashboardKpis>;
+    getCaMensuel: () => Promise<CaMensuelEntry[]>;
   };
 }
 

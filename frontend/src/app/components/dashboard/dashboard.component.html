@@ -1,26 +1,196 @@
 <section class="dashboard-shell">
-  <header class="dashboard-hero">
-    <div>
-      <p class="eyebrow">{{ roleLabel }}</p>
-      <h1>{{ ui.title }}</h1>
-      <p class="hero-copy">
-        {{ ui.hello }} {{ displayName }}, {{ ui.greeting }}
-      </p>
-    </div>
-  </header>
 
-  <section class="dashboard-grid" *ngIf="availableLinks.length; else emptyState">
-    <a class="dashboard-card" *ngFor="let item of availableLinks" [routerLink]="item.route">
-      <span class="card-label">{{ item.label }}</span>
-      <p>{{ item.description }}</p>
-      <span class="card-action">{{ ui.open }}</span>
-    </a>
-  </section>
+  <!-- ═══════════════════════════════════════════════════════════════
+       ADMIN / KPI VIEW  (viewKpis = true)
+  ════════════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="viewKpis; else employeeView">
 
-  <ng-template #emptyState>
-    <section class="dashboard-empty">
-      <h2>{{ ui.emptyTitle }}</h2>
-      <p>{{ ui.emptyText }}</p>
+    <!-- Compact banner -->
+    <header class="dashboard-hero dashboard-hero--compact">
+      <div class="hero-inner">
+        <p class="eyebrow">{{ roleLabel }}</p>
+        <h1>{{ ui.title }}</h1>
+        <p class="hero-copy">{{ ui.hello }} {{ displayName }}</p>
+      </div>
+    </header>
+
+    <!-- KPI grid -->
+    <section class="kpi-section">
+      <div class="kpi-grid">
+
+        <!-- Finance card -->
+        <div class="kpi-card" *ngIf="kpis?.finance !== undefined || kpisLoading">
+          <div class="kpi-card-header">
+            <span class="kpi-icon">💰</span>
+            <span class="kpi-card-title">Finance</span>
+          </div>
+          <ng-container *ngIf="!kpisLoading; else kpiSkeleton">
+            <div class="kpi-row">
+              <span class="kpi-label">CA du mois</span>
+              <span class="kpi-value" [class.kpi-value--good]="!!kpis?.finance">{{ caMonthDisplay }}</span>
+            </div>
+            <div class="kpi-row">
+              <span class="kpi-label">Impayées</span>
+              <span class="kpi-value" [class.kpi-value--warn]="(kpis?.finance?.invoicesUnpaidCount ?? 0) > 0">
+                {{ unpaidCountDisplay }} · {{ unpaidAmountDisplay }}
+              </span>
+            </div>
+            <div class="kpi-row">
+              <span class="kpi-label">Devis ce mois</span>
+              <span class="kpi-value">{{ quotesCountDisplay }}</span>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Stock card -->
+        <div class="kpi-card" *ngIf="kpis?.stock !== undefined || kpisLoading">
+          <div class="kpi-card-header">
+            <span class="kpi-icon">📦</span>
+            <span class="kpi-card-title">Stock</span>
+          </div>
+          <ng-container *ngIf="!kpisLoading; else kpiSkeleton">
+            <div class="kpi-row">
+              <span class="kpi-label">Total produits</span>
+              <span class="kpi-value">{{ totalProductsDisplay }}</span>
+            </div>
+            <div class="kpi-row">
+              <span class="kpi-label">Stock bas</span>
+              <span class="kpi-value" [class.kpi-value--warn]="(kpis?.stock?.lowStockCount ?? 0) > 0">{{ lowStockDisplay }}</span>
+            </div>
+            <div class="kpi-row">
+              <span class="kpi-label">Rupture</span>
+              <span class="kpi-value" [class.kpi-value--danger]="(kpis?.stock?.ruptureCount ?? 0) > 0">{{ ruptureDisplay }}</span>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Tasks card -->
+        <div class="kpi-card" *ngIf="kpis?.tasks !== undefined || kpisLoading">
+          <div class="kpi-card-header">
+            <span class="kpi-icon">✅</span>
+            <span class="kpi-card-title">Tâches</span>
+          </div>
+          <ng-container *ngIf="!kpisLoading; else kpiSkeleton">
+            <div class="kpi-row">
+              <span class="kpi-label">Total</span>
+              <span class="kpi-value">{{ tasksTotalDisplay }}</span>
+            </div>
+            <div class="kpi-row">
+              <span class="kpi-label">En cours (moi)</span>
+              <span class="kpi-value">{{ tasksInProgressDisplay }}</span>
+            </div>
+            <div class="kpi-row">
+              <span class="kpi-label">En retard (moi)</span>
+              <span class="kpi-value" [class.kpi-value--danger]="(kpis?.tasks?.myTasksLate ?? 0) > 0">{{ tasksLateDisplay }}</span>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Employees card -->
+        <div class="kpi-card" *ngIf="kpis?.employees !== undefined || kpisLoading">
+          <div class="kpi-card-header">
+            <span class="kpi-icon">👥</span>
+            <span class="kpi-card-title">Salariés</span>
+          </div>
+          <ng-container *ngIf="!kpisLoading; else kpiSkeleton">
+            <div class="kpi-row kpi-row--solo">
+              <span class="kpi-label">Actifs</span>
+              <span class="kpi-value kpi-value--large">{{ employeesActiveDisplay }}</span>
+            </div>
+          </ng-container>
+        </div>
+
+      </div>
     </section>
+
+    <!-- CA mensuel chart -->
+    <section class="ca-chart-section" *ngIf="caMensuel.length > 0">
+      <h2 class="section-title">Chiffre d'affaires — 6 derniers mois</h2>
+      <div class="ca-chart">
+        <div class="ca-bar-group" *ngFor="let entry of caMensuel">
+          <div class="ca-bar-wrap">
+            <span class="ca-bar-tip">{{ formatCaTooltip(entry.ca) }}</span>
+            <div
+              class="ca-bar"
+              [style.height.%]="barHeightPct(entry.ca)"
+              [class.ca-bar--zero]="entry.ca === 0"
+            ></div>
+          </div>
+          <span class="ca-bar-label">{{ formatMonthLabel(entry.mois) }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Nav cards -->
+    <section class="dashboard-grid" *ngIf="availableLinks.length">
+      <a class="dashboard-card" *ngFor="let item of availableLinks" [routerLink]="item.route">
+        <span class="card-label">{{ item.label }}</span>
+        <p>{{ item.description }}</p>
+        <span class="card-action">{{ ui.open }}</span>
+      </a>
+    </section>
+
+  </ng-container>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       EMPLOYEE VIEW  (viewKpis = false)
+  ════════════════════════════════════════════════════════════════════ -->
+  <ng-template #employeeView>
+
+    <header class="dashboard-hero">
+      <div>
+        <p class="eyebrow">{{ roleLabel }}</p>
+        <h1>{{ ui.title }}</h1>
+        <p class="hero-copy">
+          {{ ui.hello }} {{ displayName }}, {{ ui.greeting }}
+        </p>
+      </div>
+    </header>
+
+    <!-- Tasks mini-section for employees -->
+    <section class="kpi-section" *ngIf="kpis?.tasks && !kpisLoading">
+      <div class="kpi-grid kpi-grid--single">
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-icon">✅</span>
+            <span class="kpi-card-title">Mes tâches</span>
+          </div>
+          <div class="kpi-row">
+            <span class="kpi-label">En cours</span>
+            <span class="kpi-value">{{ tasksInProgressDisplay }}</span>
+          </div>
+          <div class="kpi-row">
+            <span class="kpi-label">En retard</span>
+            <span class="kpi-value" [class.kpi-value--danger]="(kpis?.tasks?.myTasksLate ?? 0) > 0">{{ tasksLateDisplay }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="dashboard-grid" *ngIf="availableLinks.length; else emptyState">
+      <a class="dashboard-card" *ngFor="let item of availableLinks" [routerLink]="item.route">
+        <span class="card-label">{{ item.label }}</span>
+        <p>{{ item.description }}</p>
+        <span class="card-action">{{ ui.open }}</span>
+      </a>
+    </section>
+
+    <ng-template #emptyState>
+      <section class="dashboard-empty">
+        <h2>{{ ui.emptyTitle }}</h2>
+        <p>{{ ui.emptyText }}</p>
+      </section>
+    </ng-template>
+
   </ng-template>
+
+  <!-- Skeleton template -->
+  <ng-template #kpiSkeleton>
+    <div class="kpi-skeleton">
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line skeleton-line--short"></div>
+    </div>
+  </ng-template>
+
 </section>

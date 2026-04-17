@@ -12,6 +12,7 @@ const { createInventoryRouter } = require('./routes/inventory.routes');
 const { createTasksRouter } = require('./routes/tasks.routes');
 const { createMyTasksRouter } = require('./routes/my-tasks.routes');
 const { createTaskNotificationsRouter } = require('./routes/task-notifications.routes');
+const { createDashboardRouter } = require('./routes/dashboard.routes');
 
 const registerBackendRoutes = (app, deps) => {
   const router = express.Router();
@@ -28,6 +29,7 @@ const registerBackendRoutes = (app, deps) => {
   router.use('/tasks', createTasksRouter(deps));
   router.use('/my-tasks', createMyTasksRouter(deps));
   router.use('/task-notifications', createTaskNotificationsRouter(deps));
+  router.use('/dashboard', createDashboardRouter(deps));
   app.use('/api', router);
 };
 

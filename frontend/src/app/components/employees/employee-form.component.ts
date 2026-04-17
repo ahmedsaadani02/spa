@@ -25,6 +25,7 @@ type PermissionControlKey =
   | 'canManageSalary'
   | 'canManageTasks'
   | 'canReceiveTasks'
+  | 'canViewKpis'
   | 'canManageEmployees'
   | 'canManageAll';
 
@@ -96,6 +97,7 @@ export class EmployeeFormComponent implements OnInit {
     {
       title: 'Global',
       items: [
+        { key: 'canViewKpis' as PermissionControlKey, label: 'Voir les indicateurs du tableau de bord' },
         { key: 'canManageAll' as PermissionControlKey, label: 'G\u00e9rer tout' }
       ]
     }
@@ -119,6 +121,7 @@ export class EmployeeFormComponent implements OnInit {
     'canManageSalary',
     'canManageTasks',
     'canReceiveTasks',
+    'canViewKpis',
     'canManageEmployees',
     'canManageAll'
   ];
@@ -155,6 +158,7 @@ export class EmployeeFormComponent implements OnInit {
     canManageSalary: [false],
     canManageTasks: [false],
     canReceiveTasks: [false],
+    canViewKpis: [false],
     canManageAll: [false]
   });
 
@@ -217,6 +221,7 @@ export class EmployeeFormComponent implements OnInit {
           canManageSalary: true,
           canManageTasks: true,
           canReceiveTasks: true,
+          canViewKpis: true,
           canManageAll: true
         });
       } else {
@@ -282,6 +287,7 @@ export class EmployeeFormComponent implements OnInit {
       canManageSalary: !!raw.canManageSalary,
       canManageTasks: !!raw.canManageTasks,
       canReceiveTasks: !!raw.canReceiveTasks,
+      canViewKpis: !!raw.canViewKpis,
       canManageAll: !!raw.canManageAll && this.canUseGlobalManageAll
     };
 
@@ -371,6 +377,7 @@ export class EmployeeFormComponent implements OnInit {
       canManageSalary: employee.canManageSalary,
       canManageTasks: employee.canManageTasks,
       canReceiveTasks: employee.canReceiveTasks,
+      canViewKpis: employee.canViewKpis,
       canManageAll: employee.canManageAll
     });
     this.syncPermissionDependencies();

@@ -17,6 +17,7 @@ const PERMISSION_KEYS = Object.freeze({
   manageSalary: 'can_manage_salary',
   manageTasks: 'can_manage_tasks',
   receiveTasks: 'can_receive_tasks',
+  viewKpis: 'can_view_kpis',
   manageAll: 'can_manage_all'
 });
 
@@ -44,6 +45,7 @@ const buildPermissionSet = (row) => ({
   manageSalary: toBool(row.can_manage_salary),
   manageTasks: toBool(row.can_manage_tasks),
   receiveTasks: toBool(row.can_receive_tasks),
+  viewKpis: toBool(row.can_view_kpis),
   manageAll: toBool(row.can_manage_all)
 });
 
@@ -89,6 +91,7 @@ const toAppUser = (row) => {
         manageSalary: true,
         manageTasks: true,
         receiveTasks: true,
+        viewKpis: true,
         manageAll: true
       }
     };

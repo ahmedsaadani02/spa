@@ -798,7 +798,7 @@ const registerProductsHandlers = (ipcMain, getDb) => {
       assertPermission('viewStock');
       return (await listProductsRead(getDb())).map((row) => ({
         ...row,
-        image_url: resolveProductImageUrl(row.image_url)
+        image_url: normalizeStoredProductImageRef(row.image_url) || row.image_url || null
       }));
     } catch (error) {
       console.error('[products:list] error', error);
@@ -811,7 +811,7 @@ const registerProductsHandlers = (ipcMain, getDb) => {
       assertProductCatalogPermission();
       return (await listArchivedProductsRead(getDb())).map((row) => ({
         ...row,
-        image_url: resolveProductImageUrl(row.image_url)
+        image_url: normalizeStoredProductImageRef(row.image_url) || row.image_url || null
       }));
     } catch (error) {
       console.error('[products:listArchived] error', error);

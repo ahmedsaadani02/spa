@@ -36,7 +36,6 @@ const isHttpUrl = (value) => /^https?:\/\//i.test(value);
 const isDataUrl = (value) => /^data:/i.test(value);
 const isFileUrl = (value) => /^file:\/\//i.test(value);
 const isApiProductImagesPath = (value) => /^\/?api\/product-images\//i.test(value);
-const isFullProductImageUrl = (value) => typeof value === 'string' && /^https?:\/\/[^/]+\/api\/product-images\//i.test(value);
 const isAbsoluteFsPath = (value) => /^[a-z]:[\\/]/i.test(value) || /^\/[^/]/.test(value) || /^\\\\/.test(value);
 const looksLikeLegacyFsPath = (value) => /[\\/]/.test(value);
 const looksLikeImageFileName = (value) => /^[^\\/]+\.(png|jpe?g|webp|gif|bmp)$/i.test(value);
@@ -87,36 +86,6 @@ const normalizeStoredProductImageRef = (value) => {
   const trimmed = value.trim();
   if (!trimmed) return null;
 
-  // Handle invalid string values
-  if (trimmed === 'null' || trimmed === 'undefined' || trimmed === 'false') return null;
-
-  // Clean full /api/product-images/ URLs from old data, including localhost or any host
-  const fullApiImageMatch = trimmed.match(/^https?:\/\/[^/]+\/api\/product-images\/(.+)$/i);
-  if (fullApiImageMatch) {
-    const fileName = fullApiImageMatch[1].split(/[?#]/)[0];
-    if (fileName) {
-      try {
-        return `product-images/${decodeURIComponent(fileName)}`;
-      } catch (error) {
-        console.error('normalizeStoredProductImageRef decodeURIComponent error:', error, 'fileName:', fileName);
-        return `product-images/${fileName}`;
-      }
-    }
-  }
-
-  const localhostMatch = trimmed.match(/^https?:\/\/(127\.0\.0\.1|0\.0\.0\.0|localhost)(:\d+)?\/api\/product-images\/(.+)$/i);
-  if (localhostMatch) {
-    const fileName = localhostMatch[3];
-    if (fileName) {
-      try {
-        return `product-images/${decodeURIComponent(fileName)}`;
-      } catch (error) {
-        console.error('normalizeStoredProductImageRef decodeURIComponent error:', error, 'fileName:', fileName);
-        return `product-images/${fileName}`;
-      }
-    }
-  }
-
   if (
     isAssetPath(trimmed)
     || isStoredProductImagePath(trimmed)
@@ -148,41 +117,7 @@ const toFileUrl = (sourcePath) => {
   return `file:///${encodeURI(normalized)}`;
 };
 
-const getBackendBaseUrl = () => {
-  const backendUrl = process.env.BACKEND_BASE_URL;
-  if (backendUrl) {
-    return backendUrl;
-  }
-
-  const nodeEnv = process.env.NODE_ENV || 'development';
-  if (nodeEnv === 'production') {
-    console.error('[BACKEND_BASE_URL_MISSING]', {
-      message: 'BACKEND_BASE_URL environment variable is required in production for product images',
-      nodeEnv
-    });
-  }
-
-  return `http://127.0.0.1:${Number(process.env.PORT) || 3001}`;
-};
-
-const toProductImagesApiUrl = (fileName) => `${getBackendBaseUrl()}/api/product-images/${encodeURIComponent(fileName)}`;
-
-const normalizeImage = (value) => {
-  return safeBuildProductImageUrl(value, getBackendBaseUrl());
-};
-
-const safeBuildProductImageUrl = (imageUrl, baseUrl) => {
-  if (!imageUrl || typeof imageUrl !== 'string') return null;
-
-  try {
-    const filename = imageUrl.replace(/^https?:\/\/[^/]+\/api\/product-images\//, '').trim();
-    if (!filename) return null;
-    return `${baseUrl}/api/product-images/${filename}`;
-  } catch (error) {
-    console.error('[PRODUCT_IMAGE_URL_ERROR]', { imageUrl, error: error?.message });
-    return null;
-  }
-};
+const toProductImagesApiUrl = (fileName) => `http://127.0.0.1:3000/api/product-images/${encodeURIComponent(fileName)}`;
 
 const resolveLegacyImageSourcePath = (value) => {
   const direct = tryResolveLegacySourcePath(value);
@@ -203,59 +138,54 @@ const resolveLegacyImageSourcePath = (value) => {
 };
 
 const resolveProductImageUrl = (value) => {
-  try {
-    const normalized = normalizeStoredProductImageRef(value);
-    if (!normalized) {
-      const legacyPath = resolveLegacyImageSourcePath(value);
-      if (legacyPath && fs.existsSync(legacyPath) && isAllowedImageFile(legacyPath)) {
-        const fileName = path.basename(legacyPath);
-        const productsImagesDirectory = ensureProductsImagesDirectory();
-        const normalizedLegacyPath = path.normalize(legacyPath);
-        const normalizedStorePath = path.normalize(path.join(productsImagesDirectory, fileName));
-        if (normalizedLegacyPath.toLowerCase() === normalizedStorePath.toLowerCase()) {
-          return toProductImagesApiUrl(fileName);
-        }
-
-        return toFileUrl(normalizedLegacyPath);
+  const normalized = normalizeStoredProductImageRef(value);
+  if (!normalized) {
+    const legacyPath = resolveLegacyImageSourcePath(value);
+    if (legacyPath && fs.existsSync(legacyPath) && isAllowedImageFile(legacyPath)) {
+      const fileName = path.basename(legacyPath);
+      const productsImagesDirectory = ensureProductsImagesDirectory();
+      const normalizedLegacyPath = path.normalize(legacyPath);
+      const normalizedStorePath = path.normalize(path.join(productsImagesDirectory, fileName));
+      if (normalizedLegacyPath.toLowerCase() === normalizedStorePath.toLowerCase()) {
+        return toProductImagesApiUrl(fileName);
       }
-      if (typeof value === 'string' && looksLikeImageFileName(value.trim())) {
-        return `assets/${encodeURIComponent(value.trim())}`;
-      }
-      return PLACEHOLDER_IMAGE;
-    }
 
-    if (isAssetPath(normalized)) {
-      const sourcePath = resolveLegacyImageSourcePath(normalized);
-      if (sourcePath && fs.existsSync(sourcePath) && isAllowedImageFile(sourcePath)) {
-        const fileName = path.basename(sourcePath);
-        const storedPath = path.join(ensureProductsImagesDirectory(), fileName);
-        if (fs.existsSync(storedPath)) {
-          return toProductImagesApiUrl(fileName);
-        }
-      }
-      return encodeAssetPath(repairLikelyMojibake(normalized));
+      return toFileUrl(normalizedLegacyPath);
     }
-
-    if (isHttpUrl(normalized) || isDataUrl(normalized)) {
-      return normalized;
+    if (typeof value === 'string' && looksLikeImageFileName(value.trim())) {
+      return `assets/${encodeURIComponent(value.trim())}`;
     }
-
-    if (isApiProductImagesPath(normalized)) {
-      const fileName = path.basename(normalized);
-      return toProductImagesApiUrl(fileName);
-    }
-
-    if (isStoredProductImagePath(normalized)) {
-      const fileName = path.basename(normalized.slice('product-images/'.length));
-      if (!fileName) return PLACEHOLDER_IMAGE;
-      return toProductImagesApiUrl(fileName);
-    }
-
-    return normalized;
-  } catch (error) {
-    console.error('resolveProductImageUrl error:', error, 'value:', value);
     return PLACEHOLDER_IMAGE;
   }
+
+  if (isAssetPath(normalized)) {
+    const sourcePath = resolveLegacyImageSourcePath(normalized);
+    if (sourcePath && fs.existsSync(sourcePath) && isAllowedImageFile(sourcePath)) {
+      const fileName = path.basename(sourcePath);
+      const storedPath = path.join(ensureProductsImagesDirectory(), fileName);
+      if (fs.existsSync(storedPath)) {
+        return toProductImagesApiUrl(fileName);
+      }
+    }
+    return encodeAssetPath(repairLikelyMojibake(normalized));
+  }
+
+  if (isHttpUrl(normalized) || isDataUrl(normalized)) {
+    return normalized;
+  }
+
+  if (isApiProductImagesPath(normalized)) {
+    const fileName = path.basename(normalized);
+    return toProductImagesApiUrl(fileName);
+  }
+
+  if (isStoredProductImagePath(normalized)) {
+    const fileName = path.basename(normalized.slice('product-images/'.length));
+    if (!fileName) return PLACEHOLDER_IMAGE;
+    return toProductImagesApiUrl(fileName);
+  }
+
+  return normalized;
 };
 
 const isAllowedImageFile = (filePath) => {
@@ -351,30 +281,12 @@ const migrateLegacyProductImageRef = (value, preferredName = 'product') => {
   }
 };
 
-const sanitizeImageInput = (imageUrl) => {
-  if (!imageUrl) return null;
-  if (typeof imageUrl !== 'string') return null;
-
-  const trimmed = imageUrl.trim();
-  if (!trimmed) return null;
-
-  if (/^https?:\/\//i.test(trimmed)) {
-    throw new Error('Full image URLs are not allowed in image_url');
-  }
-
-  return trimmed;
-};
-
 module.exports = {
   PLACEHOLDER_IMAGE,
   normalizeStoredProductImageRef,
-  normalizeImage,
-  isFullProductImageUrl,
   resolveProductImageUrl,
   copyProductImageToStore,
   migrateLegacyProductImageRef,
-  sanitizeImageInput,
-  safeBuildProductImageUrl,
   getProductsImagesDirectory,
   ensureProductsImagesDirectory
 };

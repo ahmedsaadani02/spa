@@ -68,6 +68,7 @@ const rowToEmployee = (row) => {
     canManageSalary: Number(row.can_manage_salary) === 1,
     canManageTasks: Number(row.can_manage_tasks) === 1,
     canReceiveTasks: Number(row.can_receive_tasks) === 1,
+    canViewKpis: Number(row.can_view_kpis) === 1,
     canManageAll: Number(row.can_manage_all) === 1,
     lastLoginAt: row.last_login_at ?? null,
     createdAt: row.created_at ?? null,

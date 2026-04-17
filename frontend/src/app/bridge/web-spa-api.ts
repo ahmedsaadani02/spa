@@ -34,7 +34,9 @@ import type {
   SpaProductUpdateResult,
   SpaQuoteConvertResult,
   SpaStockRow,
-  SpaUpdateStatusPayload
+  SpaUpdateStatusPayload,
+  DashboardKpis,
+  CaMensuelEntry
 } from '../types/electron';
 import type { Client } from '../models/client';
 import type { Invoice } from '../models/invoice';
@@ -63,6 +65,7 @@ const MY_TASKS_URL = '/api/my-tasks';
 const TASK_NOTIFICATIONS_URL = '/api/task-notifications';
 const SALARY_URL = '/api/salary';
 const INVENTORY_URL = '/api/inventory';
+const DASHBOARD_URL = '/api/dashboard';
 
 type AuthLikeResult = AuthBeginLoginResult & { token?: string };
 
@@ -106,45 +109,6 @@ const stripTokenFromAuthResult = (result: AuthLikeResult): AuthBeginLoginResult 
   return next;
 };
 
-const normalizeProductImageUrl = (url: string | undefined | null): string | undefined | null => {
-  if (!url || typeof url !== 'string') return url;
-  // data: URLs are stored directly in the DB — pass through unchanged
-  if (/^data:/i.test(url)) return url;
-  // Convert any absolute /api/product-images/ or /api/task-proof-images/ URL
-  // (localhost or production backend) to a relative path so the request goes
-  // through Vercel's proxy rewrite instead of hitting the backend directly.
-  const apiPathMatch = url.match(/^https?:\/\/[^/]+(\/api\/(?:product-images|task-proof-images)\/.+)$/i);
-  if (apiPathMatch) {
-    return apiPathMatch[1];
-  }
-  return url;
-};
-
-const normalizeProductsImageUrls = (data: unknown): unknown => {
-  if (Array.isArray(data)) {
-    return data.map((item) => {
-      if (item && typeof item === 'object') {
-        const obj = item as any;
-        return {
-          ...obj,
-          image_url: obj.image_url ? normalizeProductImageUrl(String(obj.image_url)) : obj.image_url,
-          imageUrl: obj.imageUrl ? normalizeProductImageUrl(String(obj.imageUrl)) : obj.imageUrl
-        };
-      }
-      return item;
-    });
-  }
-  if (data && typeof data === 'object') {
-    const obj = data as any;
-    return {
-      ...obj,
-      image_url: obj.image_url ? normalizeProductImageUrl(String(obj.image_url)) : obj.image_url,
-      imageUrl: obj.imageUrl ? normalizeProductImageUrl(String(obj.imageUrl)) : obj.imageUrl
-    };
-  }
-  return data;
-};
-
 const invokeWebApiRequest = async <T>(
   url: string,
   options: { method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'; body?: unknown; withAuth?: boolean } = {}
@@ -181,10 +145,10 @@ const invokeWebApiRequest = async <T>(
     if (!payload.success) {
       throw new Error(payload.message || `AUTH_HTTP_FAILED:${url}`);
     }
-    return normalizeProductsImageUrls(payload.result) as T;
+    return payload.result as T;
   }
 
-  return normalizeProductsImageUrls(payload) as T;
+  return payload as T;
 };
 
 const buildSalaryScopeQuery = (employeeId: string, month: number, year: number): string => {
@@ -926,6 +890,10 @@ const createWebSpaApi = (): SpaApi => ({
     backup: async () => ({ ok: false, message: 'DB_BACKUP_UNAVAILABLE_WEB' } as SpaDbBackupResult),
     listBackups: async () => [] as SpaDbBackupEntry[],
     restore: async () => false
+  },
+  dashboard: {
+    getKpis: () => invokeWebApiRequest<DashboardKpis>(`${DASHBOARD_URL}/kpis`, { method: 'GET', withAuth: true }),
+    getCaMensuel: () => invokeWebApiRequest<CaMensuelEntry[]>(`${DASHBOARD_URL}/ca-mensuel`, { method: 'GET', withAuth: true })
   }
 });
 

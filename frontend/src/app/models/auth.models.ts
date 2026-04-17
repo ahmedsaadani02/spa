@@ -19,6 +19,7 @@ export interface PermissionSet {
   manageSalary: boolean;
   manageTasks: boolean;
   receiveTasks: boolean;
+  viewKpis: boolean;
   manageAll: boolean;
 }
 

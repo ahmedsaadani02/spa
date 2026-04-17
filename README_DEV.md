@@ -52,5 +52,5 @@ npm.cmd run frontend:start
 ## Depannage rapide
 
 - Si PowerShell bloque `npm.ps1`, utiliser `npm.cmd`.
-- Si `npm run web:serve` echoue avec `EADDRINUSE`, liberer le port `3000` ou `4201` puis relancer.
+- Si `npm run web:serve` echoue avec `EADDRINUSE`, liberer le port `3000` ou `4200` puis relancer.
 - Si `better-sqlite3` ne charge pas, relancer `npm.cmd run web:setup`.

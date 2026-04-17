@@ -26,6 +26,7 @@ const ensureEmployeeTaskPermissionColumns = async () => {
     ensureEmployeeTaskPermissionColumnsPromise = exec(`
       ALTER TABLE employees ADD COLUMN IF NOT EXISTS can_manage_tasks BOOLEAN NOT NULL DEFAULT FALSE;
       ALTER TABLE employees ADD COLUMN IF NOT EXISTS can_receive_tasks BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS can_view_kpis BOOLEAN NOT NULL DEFAULT FALSE;
     `).catch((error) => {
       ensureEmployeeTaskPermissionColumnsPromise = null;
       throw error;
@@ -53,6 +54,7 @@ const applyPermissionParams = (payload = {}) => ({
   can_manage_salary: !!payload.canManageSalary,
   can_manage_tasks: !!payload.canManageTasks,
   can_receive_tasks: !!payload.canReceiveTasks,
+  can_view_kpis: !!payload.canViewKpis,
   can_manage_all: !!payload.canManageAll
 });
 
@@ -129,6 +131,7 @@ const baseSelect = `
     can_manage_salary,
     can_manage_tasks,
     can_receive_tasks,
+    can_view_kpis,
     can_manage_all,
     last_login_at,
     created_at,

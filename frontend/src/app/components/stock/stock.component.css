@@ -91,25 +91,6 @@
   gap: 12px;
 }
 
-/* Responsive grid for stock cards */
-@media (min-width: 768px) {
-  .stock-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1200px) {
-  .stock-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (min-width: 1600px) {
-  .stock-grid {
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
-
 .stock-card {
   background: var(--card);
   border: 1px solid var(--border);

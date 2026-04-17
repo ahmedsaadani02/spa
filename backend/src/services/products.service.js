@@ -20,36 +20,13 @@ const {
   assertCanEditStockProduct,
   assertCanArchiveStockProduct
 } = require('../legacy-ipc/products.handlers');
-const { resolveProductImageUrl } = require('../utils/product-images');
+const { normalizeStoredProductImageRef } = require('../utils/product-images');
 const { getUserDisplayName, notifyPrivilegedUsers } = require('./internal-notifications.service');
 
-const normalizeProductRow = (row) => {
-  let imageUrl;
-  try {
-    imageUrl = resolveProductImageUrl(row.image_url);
-  } catch (error) {
-    console.error('[PRODUCT_ROW_NORMALIZE_ERROR]', {
-      productId: row.id,
-      reference: row.reference,
-      image_url: row.image_url,
-      error: error.message,
-      stack: error.stack
-    });
-    imageUrl = null;
-  }
-
-  console.log('[PRODUCT_ROW_NORMALIZE_DEBUG]', {
-    productId: row.id,
-    reference: row.reference,
-    db_image_url: row.image_url,
-    normalized_imageUrl: imageUrl
-  });
-
-  return {
-    ...row,
-    imageUrl
-  };
-};
+const normalizeProductRow = (row) => ({
+  ...row,
+  image_url: normalizeStoredProductImageRef(row.image_url) || row.image_url || null
+});
 
 const normalizeText = (value) => String(value ?? '').trim();
 
@@ -72,48 +49,14 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
     async list(token) {
       return withAuthorizedUser(token, async () => {
         assertPermission('viewStock');
-        const rawProducts = await listProducts(getDb());
-        return rawProducts.map((row) => {
-          try {
-            return normalizeProductRow(row);
-          } catch (error) {
-            console.error('[SERVICE_PRODUCT_ROW_NORMALIZE_ERROR]', {
-              productId: row.id,
-              reference: row.reference,
-              error: error.message,
-              stack: error.stack
-            });
-            // Return row with imageUrl: null
-            return {
-              ...row,
-              imageUrl: null
-            };
-          }
-        });
+        return (await listProducts(getDb())).map(normalizeProductRow);
       });
     },
 
     async listArchived(token) {
       return withAuthorizedUser(token, async () => {
         assertProductCatalogPermission();
-        const rawProducts = await listArchivedProducts(getDb());
-        return rawProducts.map((row) => {
-          try {
-            return normalizeProductRow(row);
-          } catch (error) {
-            console.error('[SERVICE_PRODUCT_ROW_NORMALIZE_ERROR]', {
-              productId: row.id,
-              reference: row.reference,
-              error: error.message,
-              stack: error.stack
-            });
-            // Return row with imageUrl: null
-            return {
-              ...row,
-              imageUrl: null
-            };
-          }
-        });
+        return (await listArchivedProducts(getDb())).map(normalizeProductRow);
       });
     },
 
@@ -134,20 +77,9 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
     async create(token, payload) {
       return withAuthorizedUser(token, async (user) => {
         assertProductCatalogPermission();
-        let result;
-        try {
-          result = await createProduct(getDb(), payload);
-        } catch (error) {
-          console.error('[PRODUCT_SERVICE_CREATE_DB_ERROR]', {
-            message: error.message,
-            stack: error.stack,
-            payload: JSON.stringify(payload, null, 2)
-          });
-          // Re-throw to let controller handle it
-          throw error;
-        }
-        const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
-        try {
+        const result = await createProduct(getDb(), payload);
+        if (result?.ok) {
+          const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
           await notifyPrivilegedUsers(getDb, user, [{
             kind: 'stock_product_created',
             title: 'Produit ajoute',
@@ -162,13 +94,6 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
               serie: normalizeText(payload?.serie) || null
             }
           }]);
-        } catch (notificationError) {
-          console.error('[PRODUCT_CREATE_NOTIFICATION_ERROR]', {
-            message: notificationError.message,
-            stack: notificationError.stack,
-            productId: result.id
-          });
-          // Don't fail the creation if notification fails
         }
         return result;
       });
@@ -178,21 +103,23 @@ const createProductsService = ({ getDb, resolveSessionUser, setCurrentUser, clea
       return withAuthorizedUser(token, async (user) => {
         assertCanEditStockProduct();
         const result = await updateProduct(getDb(), id, payload);
-        const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
-        await notifyPrivilegedUsers(getDb, user, [{
-          kind: 'stock_product_updated',
-          title: 'Produit modifie',
-          message: `${getUserDisplayName(user)} a modifie le produit "${productLabel}".`,
-          entityType: 'product',
-          entityId: id,
-          route: '/stock',
-          metadata: {
-            productLabel,
-            reference: normalizeText(payload?.reference) || null,
-            addedColors: result.addedColors ?? [],
-            removedColors: result.removedColors ?? []
-          }
-        }]);
+        if (result?.ok) {
+          const productLabel = normalizeText(payload?.label) || normalizeText(payload?.reference) || 'produit';
+          await notifyPrivilegedUsers(getDb, user, [{
+            kind: 'stock_product_updated',
+            title: 'Produit modifie',
+            message: `${getUserDisplayName(user)} a modifie le produit "${productLabel}".`,
+            entityType: 'product',
+            entityId: id,
+            route: '/stock',
+            metadata: {
+              productLabel,
+              reference: normalizeText(payload?.reference) || null,
+              addedColors: result.addedColors ?? [],
+              removedColors: result.removedColors ?? []
+            }
+          }]);
+        }
         return result;
       });
     },

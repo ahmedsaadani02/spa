@@ -42,7 +42,9 @@ import type {
   SpaQuoteConvertResult,
   SpaProductRow,
   SpaStockRow,
-  SpaUpdateStatusPayload
+  SpaUpdateStatusPayload,
+  DashboardKpis,
+  CaMensuelEntry
 } from '../types/app-api.types';
 
 @Injectable({
@@ -523,5 +525,13 @@ export class IpcService {
 
   async salarySummary(employeeId: string, month: number, year: number): Promise<SalarySummary | null> {
     return this.invoke('salary.summary', null, (api) => api.salary.summary(employeeId, month, year));
+  }
+
+  async getDashboardKpis(): Promise<DashboardKpis> {
+    return this.invoke('dashboard.getKpis', {}, (api) => api.dashboard.getKpis());
+  }
+
+  async getCaMensuel(): Promise<CaMensuelEntry[]> {
+    return this.invoke('dashboard.getCaMensuel', [], (api) => api.dashboard.getCaMensuel());
   }
 }

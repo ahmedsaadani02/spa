@@ -28,6 +28,7 @@ const EMPTY_PERMISSIONS: PermissionSet = {
   manageSalary: false,
   manageTasks: false,
   receiveTasks: false,
+  viewKpis: false,
   manageAll: false
 };
 

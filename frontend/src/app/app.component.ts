@@ -409,7 +409,6 @@ export class AppComponent implements OnInit, OnDestroy {
       { label: this.shellText.nav.invoices, route: '/invoices', visible: this.canManageInvoices },
       { label: this.shellText.nav.quotes, route: '/quotes', visible: this.canManageQuotes },
       { label: this.shellText.nav.clients, route: '/clients', visible: this.canManageClients },
-      { label: this.shellText.nav.estimation, route: '/estimation', visible: this.canManageEstimations },
       { label: this.shellText.nav.stock, route: '/stock', visible: this.canViewStock, exact: true },
       { label: this.shellText.nav.inventory, route: '/inventaire', visible: this.canOpenInventory },
       { label: this.shellText.nav.employees, route: '/employees', visible: this.canOpenEmployees }
@@ -420,7 +419,6 @@ export class AppComponent implements OnInit, OnDestroy {
     return [
       { label: this.shellText.nav.dashboard, route: '/dashboard', visible: this.isLoggedIn, exact: true },
       { label: this.shellText.nav.tasks, route: '/my-tasks', visible: this.canOpenMyTasks },
-      { label: this.shellText.nav.estimation, route: '/estimation', visible: this.canManageEstimations },
       { label: this.shellText.nav.stock, route: '/stock', visible: this.canViewStock, exact: true },
       { label: this.shellText.nav.inventory, route: '/inventaire', visible: this.canOpenInventory }
     ];
