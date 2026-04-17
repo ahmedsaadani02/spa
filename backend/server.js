@@ -8,6 +8,7 @@ const { registerBackendRoutes } = require('./src/app');
 const { getDatabaseRoutingSummary } = require('./src/config/database');
 const { setCurrentUser, clearCurrentUser, hasPermission } = require('./src/services/auth-session.service');
 const { createSessionResolver } = require('./src/services/session-resolver');
+const { createJwt } = require('./src/services/jwt.service');
 const { registerAuthHandlers } = require('./src/legacy-ipc/auth.handlers');
 const { registerClientsHandlers } = require('./src/legacy-ipc/clients.handlers');
 const { registerInvoicesHandlers } = require('./src/legacy-ipc/invoices.handlers');
@@ -22,7 +23,6 @@ const { getProductsImagesDirectory } = require('./src/utils/product-images');
 const { getTaskProofImagesDirectory } = require('./src/utils/task-proof-images');
 
 let httpServer = null;
-const sessions = new Map();
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']);
 const TRACE_CHANNEL_TAGS = new Map([
   ['invoices:getAll', 'invoices-api'],
@@ -86,7 +86,7 @@ const isActionSuccessful = (channel, result) => {
   return !!result;
 };
 
-const createToken = () => crypto.randomUUID?.() ?? crypto.randomBytes(24).toString('hex');
+// createToken removed — JWT issued by jwt.service.js
 const nowIso = () => new Date().toISOString();
 
 const sanitizeBaseName = (value) => String(value ?? 'product')
@@ -145,7 +145,7 @@ const createIpcBridge = () => {
   };
 };
 
-const resolveSessionUser = createSessionResolver({ sessions, getDb: () => db });
+const resolveSessionUser = createSessionResolver({ getDb: () => db });
 
 const authMiddleware = async (req, res, next) => {
   const header = req.headers.authorization ?? '';
@@ -193,8 +193,7 @@ function createApp() {
   app.use(express.json({ limit: '25mb' }));
   registerBackendRoutes(app, {
     getDb: () => db,
-    sessions,
-    createToken,
+    createJwt,
     nowIso,
     resolveSessionUser,
     setCurrentUser,
