@@ -34,6 +34,7 @@ export class ClientsComponent implements OnInit, OnDestroy {
   filteredClients: Client[] = [];
   isSaving = false;
   editingId: string | null = null;
+  drawerOpen = false;
 
   notice = {
     open: false,
@@ -94,6 +95,9 @@ export class ClientsComponent implements OnInit, OnDestroy {
       mf: '',
       email: ''
     });
+    this.hideNotice();
+    this.drawerOpen = true;
+    this.cdr.markForCheck();
   }
 
   editClient(client: Client): void {
@@ -106,6 +110,23 @@ export class ClientsComponent implements OnInit, OnDestroy {
       mf: client.mf ?? '',
       email: client.email ?? ''
     });
+    this.hideNotice();
+    this.drawerOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeDrawer(): void {
+    this.drawerOpen = false;
+    this.editingId = null;
+    this.form.reset({
+      id: null,
+      nom: '',
+      tel: '',
+      adresse: '',
+      mf: '',
+      email: ''
+    });
+    this.cdr.markForCheck();
   }
 
   trackByClientId = (_: number, client: Client): string =>
@@ -141,12 +162,7 @@ export class ClientsComponent implements OnInit, OnDestroy {
 
       await this.clientStore.refresh();
 
-      if (saved) {
-        this.editClient(saved);
-      } else {
-        this.startCreate();
-      }
-
+      this.closeDrawer();
       this.showNotice('success', wasEdit ? 'Client mis a jour.' : 'Client enregistre.');
     } catch {
       this.showNotice('error', 'Impossible d enregistrer le client.');
@@ -171,7 +187,7 @@ export class ClientsComponent implements OnInit, OnDestroy {
     await this.clientStore.refresh();
 
     if (this.editingId === client.id) {
-      this.startCreate();
+      this.closeDrawer();
     }
 
     this.showNotice('success', 'Client supprime.');
