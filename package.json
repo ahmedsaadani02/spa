@@ -38,9 +38,6 @@
     "db:pg:movements-write:audit": "node database/scripts/audit-postgres-movements-write.js",
     "db:pg:stock-apply-movement:audit": "node database/scripts/audit-postgres-stock-apply-movement.js",
     "db:pg:catalog-stock-domain:audit": "node database/scripts/audit-postgres-catalog-stock-domain.js",
-    "db:sqlite:introspect": "node database/scripts/introspect-sqlite.js",
-    "db:sqlite:audit": "node database/scripts/audit-sqlite-data.js",
-    "db:migrate:sqlite-to-postgres": "node database/scripts/migrate-sqlite-to-postgres.js",
     "build": "npm run frontend:build",
     "typecheck": "npm run frontend:typecheck"
   },
@@ -52,7 +49,6 @@
     "@angular/platform-browser": "21.2.4",
     "@angular/router": "21.2.4",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "11.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
